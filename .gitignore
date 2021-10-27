@@ -1,0 +1,4 @@
+.*
+build
+*.class
+/src/main/gen
