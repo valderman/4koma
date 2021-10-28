@@ -11,7 +11,10 @@ internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
 }
 
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
-    ctx.key_value()?.let { set(extractKey(it.key()), extractValue(it.value())) }
+    ctx.key_value()?.let {
+        val value = extractValue(it.value())
+        set(extractKey(it.key()), value)
+    }
         ?: ctx.table()?.let { extractTable(it) }
         ?: ctx.comment()
         ?: error("unreachable")
@@ -23,7 +26,7 @@ private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
         ?: error("not a table context: ${ctx::class}")
 }
 
-private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
+private fun TomlBuilder.extractValue(value: TomlParser.ValueContext): MutableTomlValue =
     value.string()?.let { MutableTomlValue.Primitive(TomlValue.String(extractString(it))) }
         ?: value.integer()?.let { MutableTomlValue.Primitive(TomlValue.Integer(extractInteger(it))) }
         ?: value.floating_point()?.let { MutableTomlValue.Primitive(TomlValue.Double(extractDouble(it))) }
@@ -65,7 +68,7 @@ private fun extractDateTime(ctx: TomlParser.Date_timeContext): TomlValue.Primiti
         ?: ctx.LOCAL_TIME()?.text?.let { TomlValue.LocalTime(LocalTime.parse(it)) }
         ?: error("unreachable")
 
-private fun extractList(ctx0: TomlParser.Array_Context): MutableList<MutableTomlValue> {
+private fun TomlBuilder.extractList(ctx0: TomlParser.Array_Context): MutableList<MutableTomlValue> {
     val list = mutableListOf<MutableTomlValue>()
     var ctx = ctx0.array_values()
     while (ctx != null) {
@@ -75,7 +78,16 @@ private fun extractList(ctx0: TomlParser.Array_Context): MutableList<MutableToml
     return list
 }
 
-private fun extractMap(ctx: TomlParser.Inline_tableContext): MutableMap<String, MutableTomlValue> { TODO() }
+private fun TomlBuilder.extractMap(ctx0: TomlParser.Inline_tableContext): MutableMap<String, MutableTomlValue> {
+    val map = mutableMapOf<String, MutableTomlValue>()
+    var ctx = ctx0.inline_table_keyvals().inline_table_keyvals_non_empty()
+    while (ctx != null) {
+        val key = extractKey(ctx.key())
+        set(map, key.first(), key.drop(1), extractValue(ctx.value()))
+        ctx = ctx.inline_table_keyvals_non_empty()
+    }
+    return map
+}
 
 // TODO: escape sequences
 private fun extractString(ctx: TomlParser.StringContext): String =
@@ -88,7 +100,7 @@ private fun extractString(ctx: TomlParser.StringContext): String =
 private fun String.trimFirst(): String = when {
     isEmpty() -> this
     first() == '\n' -> drop(1)
-    substring(0, 2) == "\r\n" -> drop(2)
+    substring(0, 2.coerceAtMost(length)) == "\r\n" -> drop(2)
     else -> this
 }
 

@@ -4,14 +4,22 @@ internal class TomlBuilder private constructor(private val values: MutableMap<St
     operator fun set(fragments: List<String>, value: MutableTomlValue) {
         require(fragments.isNotEmpty())
         val fragmentsWithContext = tableContext?.let { it + fragments } ?: fragments
-        set(fragmentsWithContext.first(), fragmentsWithContext.drop(1), value)
+        set(values, fragmentsWithContext.first(), fragmentsWithContext.drop(1), value)
     }
 
     var tableContext: List<String>? = null
 
     fun build(): TomlValue = TomlValue.Map(values.mapValues { it.value.freeze() })
 
-    private fun set(key: String, fragments: List<String>, value: MutableTomlValue) {
+    /**
+     * Helper method to write values to potentially dotted keys.
+     */
+    fun set(
+        values: MutableMap<String, MutableTomlValue>,
+        key: String,
+        fragments: List<String>,
+        value: MutableTomlValue
+    ) {
         when {
             fragments.isEmpty() -> {
                 values[key] = value
@@ -19,8 +27,7 @@ internal class TomlBuilder private constructor(private val values: MutableMap<St
             else -> {
                 val innerValues = values.getOrPut(key) { MutableTomlValue.Map(mutableMapOf()) }
                 require(innerValues is MutableTomlValue.Map)
-                val innerBuilder = TomlBuilder(innerValues.value)
-                innerBuilder.set(fragments.first(), fragments.drop(1), value)
+                set(innerValues.value, fragments.first(), fragments.drop(1), value)
             }
         }
     }

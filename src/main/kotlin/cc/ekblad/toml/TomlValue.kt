@@ -20,8 +20,12 @@ sealed class TomlValue {
     data class LocalDate(val value: java.time.LocalDate) : Primitive()
     data class LocalTime(val value: java.time.LocalTime) : Primitive()
 
-    data class Map(val value: kotlin.collections.Map<kotlin.String, TomlValue>) : TomlValue()
-    data class List(val value: kotlin.collections.List<TomlValue>) : TomlValue()
+    data class Map(val properties: kotlin.collections.Map<kotlin.String, TomlValue>) : TomlValue() {
+        constructor(vararg entries: Pair<kotlin.String, TomlValue>) : this(entries.toMap())
+    }
+    data class List(val value: kotlin.collections.List<TomlValue>) : TomlValue() {
+        constructor(vararg values: TomlValue) : this(values.toList())
+    }
 
     companion object {
         fun from(string: kotlin.String): TomlValue =

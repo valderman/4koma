@@ -19,4 +19,11 @@ interface UnitTest {
             TomlValue.from("test = $valueToParse")
         )
     }
+
+    fun String.trimFirst(): String = when {
+        isEmpty() -> this
+        first() == '\n' -> drop(1)
+        substring(0, 2.coerceAtMost(length)) == "\r\n" -> drop(2)
+        else -> this
+    }
 }

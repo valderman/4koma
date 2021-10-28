@@ -10,14 +10,14 @@ import java.util.*
 
 class TomlErrorListener : ANTLRErrorListener {
     override fun syntaxError(
-        recognizer: Recognizer<*, *>?,
-        offendingSymbol: Any?,
+        recognizer: Recognizer<*, *>,
+        offendingSymbol: Any,
         line: Int,
         charPositionInLine: Int,
-        msg: String?,
+        msg: String,
         e: RecognitionException?
     ) {
-        println(msg)
+        error(msg)
     }
 
     override fun reportAmbiguity(
