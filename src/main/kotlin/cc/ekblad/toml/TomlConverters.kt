@@ -11,29 +11,26 @@ internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
 }
 
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
-    ctx.key_value()?.let {
-        val value = extractValue(it.value())
-        set(extractKey(it.key()), value)
-    }
+    ctx.key_value()?.let { set(extractKey(it.key()), extractValue(it.value())) }
         ?: ctx.table()?.let { extractTable(it) }
         ?: ctx.comment()
         ?: error("unreachable")
 }
 
 private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
-    ctx.standard_table()?.let { tableContext = extractKey(it.key()) }
-        ?: ctx.array_table()?.let { TODO() }
+    ctx.standard_table()?.let { defineTable(extractKey(it.key())) }
+        ?: ctx.array_table()?.let { addTableArrayEntry(extractKey(it.key())) }
         ?: error("not a table context: ${ctx::class}")
 }
 
-private fun TomlBuilder.extractValue(value: TomlParser.ValueContext): MutableTomlValue =
+private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
     value.string()?.let { MutableTomlValue.Primitive(TomlValue.String(extractString(it))) }
         ?: value.integer()?.let { MutableTomlValue.Primitive(TomlValue.Integer(extractInteger(it))) }
         ?: value.floating_point()?.let { MutableTomlValue.Primitive(TomlValue.Double(extractDouble(it))) }
         ?: value.bool_()?.let { MutableTomlValue.Primitive(TomlValue.Bool(extractBool(it))) }
         ?: value.date_time()?.let { MutableTomlValue.Primitive(extractDateTime(it)) }
-        ?: value.array_()?.let { MutableTomlValue.List(extractList(it)) }
-        ?: value.inline_table()?.let { MutableTomlValue.Map(extractMap(it)) }
+        ?: value.array_()?.let { MutableTomlValue.InlineList(extractList(it)) }
+        ?: value.inline_table()?.let { MutableTomlValue.InlineMap(extractInlineTable(it)) }
         ?: error("unreachable")
 
 private fun extractInteger(ctx: TomlParser.IntegerContext): Long {
@@ -68,26 +65,25 @@ private fun extractDateTime(ctx: TomlParser.Date_timeContext): TomlValue.Primiti
         ?: ctx.LOCAL_TIME()?.text?.let { TomlValue.LocalTime(LocalTime.parse(it)) }
         ?: error("unreachable")
 
-private fun TomlBuilder.extractList(ctx0: TomlParser.Array_Context): MutableList<MutableTomlValue> {
-    val list = mutableListOf<MutableTomlValue>()
+private fun extractList(ctx0: TomlParser.Array_Context): TomlValue.List {
+    val list = mutableListOf<TomlValue>()
     var ctx = ctx0.array_values()
     while (ctx != null) {
-        list.add(extractValue(ctx.value()))
+        list.add(extractValue(ctx.value()).freeze())
         ctx = ctx.array_values()
     }
-    return list
+    return TomlValue.List(list)
 }
 
-private fun TomlBuilder.extractMap(ctx0: TomlParser.Inline_tableContext): MutableMap<String, MutableTomlValue> {
-    val map = mutableMapOf<String, MutableTomlValue>()
-    var ctx = ctx0.inline_table_keyvals().inline_table_keyvals_non_empty()
-    while (ctx != null) {
-        val key = extractKey(ctx.key())
-        set(map, key.first(), key.drop(1), extractValue(ctx.value()))
-        ctx = ctx.inline_table_keyvals_non_empty()
-    }
-    return map
-}
+private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.Map =
+    TomlBuilder.create().apply {
+        var ctx = ctx0.inline_table_keyvals().inline_table_keyvals_non_empty()
+        while (ctx != null) {
+            val key = extractKey(ctx.key())
+            set(key, extractValue(ctx.value()))
+            ctx = ctx.inline_table_keyvals_non_empty()
+        }
+    }.build()
 
 // TODO: escape sequences
 private fun extractString(ctx: TomlParser.StringContext): String =

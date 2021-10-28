@@ -1,39 +1,45 @@
 package cc.ekblad.toml
 
-internal class TomlBuilder private constructor(private val values: MutableMap<String, MutableTomlValue>){
+internal class TomlBuilder private constructor(){
     operator fun set(fragments: List<String>, value: MutableTomlValue) {
         require(fragments.isNotEmpty())
-        val fragmentsWithContext = tableContext?.let { it + fragments } ?: fragments
-        set(values, fragmentsWithContext.first(), fragmentsWithContext.drop(1), value)
+        val oldContext = tableContext
+        defineTableInCurrentContext(fragments.dropLast(1))
+        val previousValue = tableContext.putIfAbsent(fragments.last(), value)
+        check(previousValue == null)
+        tableContext = oldContext
     }
 
-    var tableContext: List<String>? = null
+    fun addTableArrayEntry(fragments: List<String>) {
+        // TODO: table arrays with dotted keys
+        require(fragments.size == 1)
+        tableContext = mutableMapOf()
+        val list = topLevelTable.getOrPut(fragments.single()) { MutableTomlValue.List(mutableListOf()) }
+        check(list is MutableTomlValue.List)
+        list.value.add(MutableTomlValue.Map(tableContext))
+    }
 
-    fun build(): TomlValue = TomlValue.Map(values.mapValues { it.value.freeze() })
+    fun defineTable(fragments: List<String>) {
+        tableContext = topLevelTable
+        defineTableInCurrentContext(fragments)
+    }
 
-    /**
-     * Helper method to write values to potentially dotted keys.
-     */
-    fun set(
-        values: MutableMap<String, MutableTomlValue>,
-        key: String,
-        fragments: List<String>,
-        value: MutableTomlValue
-    ) {
-        when {
-            fragments.isEmpty() -> {
-                values[key] = value
-            }
-            else -> {
-                val innerValues = values.getOrPut(key) { MutableTomlValue.Map(mutableMapOf()) }
-                require(innerValues is MutableTomlValue.Map)
-                set(innerValues.value, fragments.first(), fragments.drop(1), value)
-            }
+    private tailrec fun defineTableInCurrentContext(fragments: List<String>) {
+        if (fragments.isNotEmpty()) {
+            val newContext = tableContext.getOrPut(fragments.first()) { MutableTomlValue.Map(mutableMapOf()) }
+            check(newContext is MutableTomlValue.Map)
+            tableContext = newContext.value
+            defineTableInCurrentContext(fragments.drop(1))
         }
     }
+    
+    private val topLevelTable: MutableMap<String, MutableTomlValue> = mutableMapOf()
+    private var tableContext: MutableMap<String, MutableTomlValue> = topLevelTable
+
+    fun build(): TomlValue.Map = TomlValue.Map(topLevelTable.mapValues { it.value.freeze() })
 
     companion object {
-        fun create(): TomlBuilder = TomlBuilder(mutableMapOf())
+        fun create(): TomlBuilder = TomlBuilder()
     }
 }
 
@@ -42,9 +48,15 @@ internal sealed class MutableTomlValue {
     data class List(val value: MutableList<MutableTomlValue>) : MutableTomlValue()
     data class Primitive(val value: TomlValue.Primitive) : MutableTomlValue()
 
+    // Inline maps and lists are self-contained and thus immutable
+    data class InlineMap(val value: TomlValue.Map) : MutableTomlValue()
+    data class InlineList(val value: TomlValue.List) : MutableTomlValue()
+
     fun freeze(): TomlValue = when (this) {
         is List -> TomlValue.List(value.map { it.freeze() })
         is Map -> TomlValue.Map(value.mapValues { it.value.freeze() })
+        is InlineMap -> value
+        is InlineList -> value
         is Primitive -> value
     }
 }

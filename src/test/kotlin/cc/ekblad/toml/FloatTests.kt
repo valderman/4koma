@@ -26,7 +26,7 @@ class FloatTests : RandomTest {
         random.values(100) {
             Pair(
                 nextInt(-1000, 1000),
-                nextInt(-10, 10)
+                nextInt(-10, 11)
             )
         }.assertAll { (nom, exp) ->
             val expected = nom * 10.0.pow(exp)
@@ -40,7 +40,7 @@ class FloatTests : RandomTest {
         random.values(100) {
             Pair(
                 nextDouble(-1000.0, 1000.0),
-                nextInt(-10, 10)
+                nextInt(-10, 11)
             )
         }.assertAll { (nom, exp) ->
             val expected = nom * 10.0.pow(exp)
@@ -51,6 +51,6 @@ class FloatTests : RandomTest {
 
     private fun assertParsesWithin(expected: Double, valueToParse: String) {
         val value = ((TomlValue.from("test = $valueToParse") as TomlValue.Map).properties["test"] as TomlValue.Double).value
-        assertTrue(abs(value - expected) < 0.00001)
+        assertTrue(abs(value - expected) < 0.0001)
     }
 }

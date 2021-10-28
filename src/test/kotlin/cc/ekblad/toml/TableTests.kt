@@ -86,7 +86,7 @@ class TableTests : UnitTest {
             
             [hello.world]
             say.it = true
-            inline = { a = 1,b=2 ,c={d=3},c.e=4}
+            inline = { a = 1,b=2 ,c={d=3}}
             last = [{}]
         """.trimIndent()
 
@@ -106,8 +106,7 @@ class TableTests : UnitTest {
                         "a" to TomlValue.Integer(1),
                         "b" to TomlValue.Integer(2),
                         "c" to TomlValue.Map(
-                            "d" to TomlValue.Integer(3),
-                            "e" to TomlValue.Integer(4)
+                            "d" to TomlValue.Integer(3)
                         )
                     ),
                     "last" to TomlValue.List(TomlValue.Map())
