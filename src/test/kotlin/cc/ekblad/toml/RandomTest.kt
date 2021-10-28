@@ -1,6 +1,10 @@
 package cc.ekblad.toml
 
-import java.time.*
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.random.Random.Default.nextInt
@@ -9,7 +13,7 @@ interface RandomTest : UnitTest {
     companion object {
         private val random = Random(42)
     }
-    
+
     val random: Random
         get() = Companion.random
 
@@ -17,8 +21,8 @@ interface RandomTest : UnitTest {
      * Uniformly chooses a number 0 < n < maxDigits, then returns the receiver number modulo 10^n.
      */
     fun Long.withMaxDigits(maxDigits: Int): Long =
-        this % 10.0.pow(nextInt(0, maxDigits+1)).toInt()
-    
+        this % 10.0.pow(nextInt(0, maxDigits + 1)).toInt()
+
     fun Int.withMaxDigits(maxDigits: Int): Int =
         toLong().withMaxDigits(maxDigits).toInt()
 
@@ -27,7 +31,7 @@ interface RandomTest : UnitTest {
 
     fun <T> Random.weighted(vararg alternatives: Pair<Int, Random.() -> T>): T =
         weighted(alternatives.toList())
-    
+
     fun <T> Random.weighted(alternatives: Collection<Pair<Int, Random.() -> T>>): T {
         require(alternatives.isNotEmpty())
         var gas = Random.nextInt(0, alternatives.sumOf { it.first } + 1)
@@ -56,13 +60,13 @@ interface RandomTest : UnitTest {
         val second = random.nextInt(0, 60)
         return LocalTime.of(hour, minute, second)
     }
-    
+
     fun Random.nextZoneOffset(): ZoneOffset =
         ZoneOffset.ofHoursMinutes(nextInt(0, 12), nextInt(0, 60))
-    
+
     fun Random.nextLocalDateTime(): LocalDateTime =
         LocalDateTime.of(nextLocalDate(), nextLocalTime())
-    
+
     fun Random.nextOffsetDateTime(): OffsetDateTime =
         OffsetDateTime.of(nextLocalDateTime(), nextZoneOffset())
 

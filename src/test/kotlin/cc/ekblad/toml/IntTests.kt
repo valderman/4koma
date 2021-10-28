@@ -15,7 +15,7 @@ class IntTests : RandomTest {
     @Test
     fun `can parse explicitly positive integers`() {
         random.values(10) { nextLong(0, 100) }.assertAll {
-            assertParsesTo(TomlValue.Integer(it), "+${it}")
+            assertParsesTo(TomlValue.Integer(it), "+$it")
         }
     }
 

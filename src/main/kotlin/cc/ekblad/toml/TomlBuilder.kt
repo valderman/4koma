@@ -1,6 +1,6 @@
 package cc.ekblad.toml
 
-internal class TomlBuilder private constructor(){
+internal class TomlBuilder private constructor() {
     operator fun set(fragments: List<String>, value: MutableTomlValue) {
         require(fragments.isNotEmpty())
         val oldContext = tableContext
@@ -32,7 +32,7 @@ internal class TomlBuilder private constructor(){
             defineTableInCurrentContext(fragments.drop(1))
         }
     }
-    
+
     private val topLevelTable: MutableMap<String, MutableTomlValue> = mutableMapOf()
     private var tableContext: MutableMap<String, MutableTomlValue> = topLevelTable
 

@@ -15,7 +15,7 @@ class FloatTests : RandomTest {
                 nextInt(0, 1000)
             )
         }.assertAll { (int, frac) ->
-            val doubleFrac = if (int < 0) { -(frac/1000.0) } else { frac/1000.0 }
+            val doubleFrac = if (int < 0) { -(frac/1000.0) } else { frac / 1000.0 }
             val valueToParse = String.format("%d.%03d", int, frac)
             assertParsesTo(TomlValue.Double(int.toDouble() + doubleFrac), valueToParse)
         }
