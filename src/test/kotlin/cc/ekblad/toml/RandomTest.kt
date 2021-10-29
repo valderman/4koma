@@ -48,17 +48,21 @@ interface RandomTest : UnitTest {
         (1..numValues).map { gen() }
 
     fun Random.nextLocalDate(): LocalDate {
-        val year = random.nextInt(0, 3000)
-        val month = random.nextInt(1, 13)
-        val day = random.nextInt(1, daysInMonth(year, month) + 1)
+        val year = nextInt(0, 3000)
+        val month = nextInt(1, 13)
+        val day = nextInt(1, daysInMonth(year, month) + 1)
         return LocalDate.of(year, month, day)
     }
 
     fun Random.nextLocalTime(): LocalTime {
-        val hour = random.nextInt(0, 24)
-        val minute = random.nextInt(0, 60)
-        val second = random.nextInt(0, 60)
-        return LocalTime.of(hour, minute, second)
+        val hour = nextInt(0, 24)
+        val minute = nextInt(0, 60)
+        val second = nextInt(0, 60)
+        val nano = weighted(
+            9 to { nextInt(0, 9999) * 10000 },
+            1 to { 0 }
+        )
+        return LocalTime.of(hour, minute, second, nano)
     }
 
     fun Random.nextZoneOffset(): ZoneOffset =

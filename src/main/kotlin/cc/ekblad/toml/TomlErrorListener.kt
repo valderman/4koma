@@ -11,13 +11,13 @@ import java.util.BitSet
 class TomlErrorListener : ANTLRErrorListener {
     override fun syntaxError(
         recognizer: Recognizer<*, *>,
-        offendingSymbol: Any,
+        offendingSymbol: Any?,
         line: Int,
         charPositionInLine: Int,
         msg: String,
         e: RecognitionException?
     ) {
-        error(msg)
+        throw TomlException(msg, line, e)
     }
 
     override fun reportAmbiguity(

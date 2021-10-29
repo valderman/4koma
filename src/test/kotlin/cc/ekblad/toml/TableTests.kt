@@ -1,5 +1,6 @@
 package cc.ekblad.toml
 
+import org.junit.jupiter.api.Nested
 import java.time.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,12 +45,27 @@ class TableTests : UnitTest {
     }
 
     @Test
+    fun `can implicitly define subtables`() {
+        val expr = """
+            [foo]
+            [foo.bar]
+        """.trimIndent()
+
+        val expected = TomlValue.Map(
+            "foo" to TomlValue.Map(
+                "bar" to TomlValue.Map()
+            )
+        )
+
+        assertEquals(expected, TomlValue.from(expr))
+    }
+
+    @Test
     fun `can parse subtables with plain keys`() {
         val expr = """
             top = '''
                 top!
             '''
-            hello.universe = "no"
             [foo]
             bar = 123
             baz="qwe"
@@ -67,7 +83,6 @@ class TableTests : UnitTest {
             ),
             "hello" to TomlValue.Map(
                 "world" to TomlValue.Bool(true),
-                "universe" to TomlValue.String("no"),
                 "earth" to TomlValue.Map(
                     "gravity" to TomlValue.Double(9.82)
                 )
@@ -115,5 +130,79 @@ class TableTests : UnitTest {
         )
 
         assertEquals(expected, TomlValue.from(expr))
+    }
+
+    @Nested
+    inner class MalformedInput {
+        @Test
+        fun `throws on bad inline table`() {
+            listOf(
+                "{,}", "{a=1,}", "{,a=1}", "{a=1,\nb=2}", "{a=1,,b=2}", "{a={}, a.b=1}", "{a.b=1, a={}}"
+            ).assertAll(::assertValueParseError)
+        }
+
+        @Test
+        fun `throws on redeclared table`() {
+            assertDocumentParseError(
+                """
+                    [foo]
+                    [foo]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    [foo]
+                    bar = 'hello'
+                    [foo.bar]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    [foo.bar]
+                    [foo]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    [foo]
+                    [bar]
+                    baz = false
+                    [foo]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    foo.bar = 1
+                    [foo]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    [fruit]
+                    apple.color = "red"
+                    
+                    [fruit.apple]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    foo = {}
+                    [foo]
+                """.trimIndent()
+            )
+
+            assertDocumentParseError(
+                """
+                    foo = 123
+                    [foo.bar]
+                """.trimIndent()
+            )
+        }
     }
 }

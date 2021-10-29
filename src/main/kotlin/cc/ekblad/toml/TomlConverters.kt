@@ -1,25 +1,27 @@
 package cc.ekblad.toml
 
 import TomlParser
+import java.lang.NumberFormatException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
+import java.time.format.DateTimeParseException
 
 internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
     ctx.expression().forEach { extractExpression(it) }
 }
 
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
-    ctx.key_value()?.let { set(extractKey(it.key()), extractValue(it.value())) }
+    ctx.key_value()?.let { set(ctx.start.line, extractKey(it.key()), extractValue(it.value())) }
         ?: ctx.table()?.let { extractTable(it) }
         ?: ctx.comment()
         ?: error("unreachable")
 }
 
 private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
-    ctx.standard_table()?.let { defineTable(extractKey(it.key())) }
-        ?: ctx.array_table()?.let { addTableArrayEntry(extractKey(it.key())) }
+    ctx.standard_table()?.let { defineTable(ctx.start.line, extractKey(it.key())) }
+        ?: ctx.array_table()?.let { addTableArrayEntry(ctx.start.line, extractKey(it.key())) }
         ?: error("not a table context: ${ctx::class}")
 }
 
@@ -35,12 +37,16 @@ private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
 
 private fun extractInteger(ctx: TomlParser.IntegerContext): Long {
     val text = ctx.text.replace("_", "")
-    return when {
-        ctx.DEC_INT() != null -> text.toLong(10)
-        ctx.HEX_INT() != null -> text.substring(2).toLong(16)
-        ctx.BIN_INT() != null -> text.substring(2).toLong(2)
-        ctx.OCT_INT() != null -> text.substring(2).toLong(8)
-        else -> error("unreachable")
+    try {
+        return when {
+            ctx.DEC_INT() != null -> text.toLong(10)
+            ctx.HEX_INT() != null -> text.substring(2).toLong(16)
+            ctx.BIN_INT() != null -> text.substring(2).toLong(2)
+            ctx.OCT_INT() != null -> text.substring(2).toLong(8)
+            else -> error("unreachable")
+        }
+    } catch (e: NumberFormatException) {
+        throw TomlException("integer '${ctx.text}' is out of range", ctx.start.line, e)
     }
 }
 
@@ -58,12 +64,15 @@ private fun String.parseInfinity(): Double = when (first()) {
 private fun extractBool(ctx: TomlParser.Bool_Context): Boolean =
     ctx.BOOLEAN().text.toBooleanStrict()
 
-private fun extractDateTime(ctx: TomlParser.Date_timeContext): TomlValue.Primitive =
-    ctx.OFFSET_DATE_TIME()?.text?.let { TomlValue.OffsetDateTime(OffsetDateTime.parse(it)) }
-        ?: ctx.LOCAL_DATE_TIME()?.text?.let { TomlValue.LocalDateTime(LocalDateTime.parse(it)) }
+private fun extractDateTime(ctx: TomlParser.Date_timeContext): TomlValue.Primitive = try {
+    ctx.OFFSET_DATE_TIME()?.text?.let { TomlValue.OffsetDateTime(OffsetDateTime.parse(it.replace(' ', 'T'))) }
+        ?: ctx.LOCAL_DATE_TIME()?.text?.let { TomlValue.LocalDateTime(LocalDateTime.parse(it.replace(' ', 'T'))) }
         ?: ctx.LOCAL_DATE()?.text?.let { TomlValue.LocalDate(LocalDate.parse(it)) }
         ?: ctx.LOCAL_TIME()?.text?.let { TomlValue.LocalTime(LocalTime.parse(it)) }
         ?: error("unreachable")
+} catch (e: DateTimeParseException) {
+    throw TomlException("date/time '${ctx.text}' has invalid format", ctx.start.line, e)
+}
 
 private fun extractList(ctx0: TomlParser.Array_Context): TomlValue.List {
     val list = mutableListOf<TomlValue>()
@@ -80,7 +89,7 @@ private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.
         var ctx = ctx0.inline_table_keyvals().inline_table_keyvals_non_empty()
         while (ctx != null) {
             val key = extractKey(ctx.key())
-            set(key, extractValue(ctx.value()))
+            set(ctx.start.line, key, extractValue(ctx.value()))
             ctx = ctx.inline_table_keyvals_non_empty()
         }
     }.build()

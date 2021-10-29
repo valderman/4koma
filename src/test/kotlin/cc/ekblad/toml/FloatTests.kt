@@ -1,5 +1,6 @@
 package cc.ekblad.toml
 
+import org.junit.jupiter.api.assertThrows
 import kotlin.math.abs
 import kotlin.math.pow
 import kotlin.test.Test
@@ -46,6 +47,13 @@ class FloatTests : RandomTest {
             val expected = nom * 10.0.pow(exp)
             assertParsesWithin(expected, "${nom}e$exp")
             assertParsesWithin(expected, "${nom}E$exp")
+        }
+    }
+
+    @Test
+    fun `throws on bad float`() {
+        listOf("1e3.4", "e1", "1e", ".4", "3.", "1.9_", "1._9", "1e_9").assertAll {
+            assertThrows<TomlException> { TomlValue.from("foo = $it") }
         }
     }
 

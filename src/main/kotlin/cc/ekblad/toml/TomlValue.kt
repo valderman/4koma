@@ -38,11 +38,14 @@ sealed class TomlValue {
             from(CharStreams.fromPath(path))
 
         fun from(charStream: CharStream): TomlValue {
+            val errorListener = TomlErrorListener()
             val lexer = TomlLexer(charStream)
+            lexer.removeErrorListeners()
+            lexer.addErrorListener(errorListener)
             val tokenStream = CommonTokenStream(lexer)
             val parser = TomlParser(tokenStream)
             parser.removeErrorListeners()
-            parser.addErrorListener(TomlErrorListener())
+            parser.addErrorListener(errorListener)
             val documentContext = parser.document()
             val builder = TomlBuilder.create()
             builder.extractDocument(documentContext)

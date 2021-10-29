@@ -61,4 +61,9 @@ class ListTests : UnitTest {
             assertParsesTo(TomlValue.List(list), expr)
         }
     }
+
+    @Test
+    fun `throws on bad list`() {
+        listOf("][", "[[", "[[]", "[]]", "]]", "[,]", "[1,,2]", "[1,,]", "[,1]").assertAll(::assertValueParseError)
+    }
 }

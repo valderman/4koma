@@ -36,4 +36,47 @@ class TableArrayTests : UnitTest {
 
         assertEquals(expected, TomlValue.from(expr))
     }
+
+    @Test
+    fun `throws on extending simple inline array`() {
+        assertDocumentParseError(
+            """
+                foo = []
+                [[foo]]
+            """.trimIndent()
+        )
+
+        assertDocumentParseError(
+            """
+                [foo]
+                [[foo]]
+            """.trimIndent()
+        )
+
+        assertDocumentParseError(
+            """
+                [[foo]]
+                [foo]
+            """.trimIndent()
+        )
+
+        assertDocumentParseError(
+            """
+                foo = 123
+                [[foo]]
+            """.trimIndent()
+        )
+
+        assertDocumentParseError(
+            """
+                [fruit.physical]  # subtable, but to which parent element should it belong?
+                color = "red"
+                shape = "round"
+                
+                [[fruit]]  # parser must throw an error upon discovering that "fruit" is
+                           # an array rather than a table
+                name = "apple"
+            """.trimIndent()
+        )
+    }
 }

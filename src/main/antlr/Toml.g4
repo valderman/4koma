@@ -4,7 +4,7 @@ grammar Toml;
  * Parser Rules
  */
 
-document : expression (NL expression)* ;
+document : expression (NL expression)* EOF ;
 
 expression : key_value comment | table comment | comment ;
 
@@ -96,7 +96,7 @@ BIN_INT : '0b' DIGIT_0_1 (DIGIT_0_1 | '_' DIGIT_0_1)* ;
 fragment YEAR : DIGIT DIGIT DIGIT DIGIT ;
 fragment MONTH : DIGIT DIGIT ;
 fragment DAY : DIGIT DIGIT ;
-fragment DELIM : 'T' | 't' ;
+fragment DELIM : 'T' | 't' | ' ' ;
 fragment HOUR : DIGIT DIGIT ;
 fragment MINUTE : DIGIT DIGIT ;
 fragment SECOND : DIGIT DIGIT ;

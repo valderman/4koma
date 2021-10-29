@@ -1,5 +1,6 @@
 package cc.ekblad.toml
 
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 
 // TODO: underscore separators
@@ -37,6 +38,13 @@ class IntTests : RandomTest {
     fun `can parse binary integers`() {
         random.values(100) { nextLong(0, Long.MAX_VALUE).withMaxDigits(10) }.assertAll {
             assertParsesTo(TomlValue.Integer(it), "0b${it.toString(2)}")
+        }
+    }
+
+    @Test
+    fun `throws on bad int`() {
+        listOf("10_", "_8", "ffff", "0b2", "0o8", "0xFFFFFFFFFFFFFFFFF").assertAll {
+            assertThrows<TomlException> { TomlValue.from("foo = $it") }
         }
     }
 }
