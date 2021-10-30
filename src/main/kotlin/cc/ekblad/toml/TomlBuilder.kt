@@ -14,19 +14,19 @@ internal class TomlBuilder private constructor() {
     }
 
     fun addTableArrayEntry(line: Int, fragments: List<String>) {
-        // TODO: table arrays with dotted keys
-        require(fragments.size == 1)
-        val head = fragments.single()
-        tableContext = mutableMapOf()
-        val list = topLevelTable.getOrPut(head) { MutableTomlValue.List(mutableListOf()) }
-        when (list) {
-            is MutableTomlValue.List -> { /* all ok! */ }
-            is MutableTomlValue.InlineList ->
-                throw TomlException("appending to inline array '$head' is not allowed", line)
-            else ->
-                throw TomlException("tried to append to non-list '$head'", line)
+        tableContext = topLevelTable
+        defineTableInCurrentContext(line, fragments.dropLast(1), true)
+        val list = tableContext.compute(fragments.last()) { _, previousValue ->
+            val list = (previousValue as? MutableTomlValue.List) ?: MutableTomlValue.List(mutableListOf())
+            if (previousValue != null && previousValue !is MutableTomlValue.List) {
+                val path = fragments.joinToString(".")
+                throw TomlException("tried to append to non-list '$path'", line)
+            }
+            list.value.add(MutableTomlValue.Map(mutableMapOf()))
+            list
         }
-        list.value.add(MutableTomlValue.Map(tableContext))
+        check(list is MutableTomlValue.List)
+        tableContext = list.value.last().value
     }
 
     fun defineTable(line: Int, fragments: List<String>) {
@@ -48,9 +48,9 @@ internal class TomlBuilder private constructor() {
                 throw TomlException("table '$head' already declared", line)
             }
 
-            val newContext = tableContext.getOrPut(head) { MutableTomlValue.Map(mutableMapOf()) }
-            when (newContext) {
-                is MutableTomlValue.Map -> { /* all ok! */ }
+            val newContext = when (val ctx = tableContext.getOrPut(head) { MutableTomlValue.Map(mutableMapOf()) }) {
+                is MutableTomlValue.Map -> ctx
+                is MutableTomlValue.List -> ctx.value.last()
                 is MutableTomlValue.InlineMap ->
                     throw TomlException("extending inline table '$head' is not allowed", line)
                 else ->
@@ -73,7 +73,7 @@ internal class TomlBuilder private constructor() {
 
 internal sealed class MutableTomlValue {
     data class Map(val value: MutableMap<String, MutableTomlValue>) : MutableTomlValue()
-    data class List(val value: MutableList<MutableTomlValue>) : MutableTomlValue()
+    data class List(val value: MutableList<MutableTomlValue.Map>) : MutableTomlValue()
     data class Primitive(val value: TomlValue.Primitive) : MutableTomlValue()
 
     // Inline maps and lists are self-contained and thus immutable
