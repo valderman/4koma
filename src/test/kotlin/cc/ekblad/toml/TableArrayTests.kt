@@ -155,7 +155,7 @@ class TableArrayTests : UnitTest {
 
         assertEquals(expected, TomlValue.from(expr))
     }
-    
+
     @Test
     fun `can't overwrite table array`() {
         assertDocumentParseError(

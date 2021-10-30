@@ -1,7 +1,6 @@
 package cc.ekblad.toml
 
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class MiscTests : UnitTest {
     @Test

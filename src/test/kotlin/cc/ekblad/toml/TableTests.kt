@@ -135,13 +135,6 @@ class TableTests : UnitTest {
     @Nested
     inner class MalformedInput {
         @Test
-        fun `throws on bad inline table`() {
-            listOf(
-                "{,}", "{a=1,}", "{,a=1}", "{a=1,\nb=2}", "{a=1,,b=2}", "{a={}, a.b=1}", "{a.b=1, a={}}"
-            ).assertAll(::assertValueParseError)
-        }
-
-        @Test
         fun `throws on redeclared table`() {
             assertDocumentParseError(
                 """

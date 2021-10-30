@@ -13,6 +13,28 @@ class ListTests : UnitTest {
     }
 
     @Test
+    fun `can parse list of inline tables`() {
+        assertParsesTo(
+            TomlValue.List(TomlValue.Map()),
+            "[{}]"
+        )
+        assertParsesTo(
+            TomlValue.List(
+                TomlValue.Map("a" to TomlValue.Integer(1)),
+                TomlValue.Map("b" to TomlValue.String("qwe"))
+            ),
+            "[{a=1},{b='qwe'}]"
+        )
+        assertParsesTo(
+            TomlValue.List(
+                TomlValue.Map("a" to TomlValue.Integer(1)),
+                TomlValue.Map("b" to TomlValue.String("qwe"))
+            ),
+            "[  { a=1},\n{b='qwe'}\n]"
+        )
+    }
+
+    @Test
     fun `can parse simple lists`() {
         listOf(
             listOf(1, 2, 3) to "[1,2,3]",
