@@ -13,7 +13,7 @@ class MiscTests : UnitTest {
     @Test
     fun `can parse keys overlapping with keywords`() {
         listOf(
-            "nan",  "inf",  "-10",   "123",        "ff",  "0b1",
+            "nan", "inf", "-10", "123", "ff", "0b1",
             "1e19", "true", "false", "2011-11-11", "0x1", "0o1",
         ).assertAll { key ->
             val actual = TomlValue.from("$key = true")
@@ -44,6 +44,18 @@ class MiscTests : UnitTest {
     }
 
     @Test
+    fun `can parse blank quoted keys`() {
+        assertEquals(
+            TomlValue.Map("" to TomlValue.String("world")),
+            TomlValue.from("\"\" = 'world'")
+        )
+        assertEquals(
+            TomlValue.Map("" to TomlValue.String("world")),
+            TomlValue.from("'' = 'world'")
+        )
+    }
+
+    @Test
     fun `throws on trailing garbage`() {
         assertDocumentParseError(
             """
@@ -61,7 +73,8 @@ class MiscTests : UnitTest {
     }
 
     @Test
-    fun `throws on triple-quoted keys`() {1
+    fun `throws on triple-quoted keys`() {
+        1
         assertDocumentParseError("'''foo''' = q")
         assertDocumentParseError("\"\"\"foo\"\"\" = q")
     }
