@@ -13,15 +13,15 @@ internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
 }
 
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
-    ctx.key_value()?.let { set(ctx.start.line, extractKey(it.key()), extractValue(it.value())) }
+    ctx.key_value()?.let { set(ctx.start.line, it.key().extractKey(), extractValue(it.value())) }
         ?: ctx.table()?.let { extractTable(it) }
         ?: ctx.comment()
         ?: error("unreachable")
 }
 
 private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
-    ctx.standard_table()?.let { defineTable(ctx.start.line, extractKey(it.key())) }
-        ?: ctx.array_table()?.let { addTableArrayEntry(ctx.start.line, extractKey(it.key())) }
+    ctx.standard_table()?.let { defineTable(ctx.start.line, it.key().extractKey()) }
+        ?: ctx.array_table()?.let { addTableArrayEntry(ctx.start.line, it.key().extractKey()) }
         ?: error("not a table context: ${ctx::class}")
 }
 
@@ -88,7 +88,7 @@ private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.
     TomlBuilder.create().apply {
         var ctx = ctx0.inline_table_keyvals().inline_table_keyvals_non_empty()
         while (ctx != null) {
-            val key = extractKey(ctx.key())
+            val key = ctx.key().extractKey()
             set(ctx.start.line, key, extractValue(ctx.value()))
             ctx = ctx.inline_table_keyvals_non_empty()
         }
@@ -110,14 +110,17 @@ private fun String.trimFirstNewline(): String = when {
     else -> this
 }
 
-private fun extractKey(ctx: TomlParser.KeyContext): List<String> =
-    ctx.simple_key()?.let { extractSimpleKey(it) }
-        ?: ctx.dotted_key()?.let { ctx.dotted_key().simple_key().flatMap { extractSimpleKey(it) } }
+private fun TomlParser.KeyContext.extractKey(): List<String> =
+    simple_key()?.extractSimpleKey()
+        ?: dotted_key()?.extractDottedKey()
         ?: error("unreachable")
 
-private fun extractSimpleKey(ctx: TomlParser.Simple_keyContext): List<String> =
-    ctx.quoted_key()?.extractQuotedKey()
-        ?: ctx.unquoted_key()?.text?.processUnquotedKey(ctx.start.line)
+private fun TomlParser.Dotted_keyContext.extractDottedKey(): List<String> =
+    simple_key().flatMap { it.extractSimpleKey() }
+
+private fun TomlParser.Simple_keyContext.extractSimpleKey(): List<String> =
+    quoted_key()?.extractQuotedKey()
+        ?: unquoted_key()?.extractUnquotedKey()
         ?: error("unreachable")
 
 private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
@@ -129,10 +132,10 @@ private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
  * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
  * that some "simple" keys may actually be dotted keys, and that the parser lets '+' signs through.
  */
-private fun String.processUnquotedKey(line: Int): List<String> {
-    val fragments = split('.')
+private fun TomlParser.Unquoted_keyContext.extractUnquotedKey(): List<String> {
+    val fragments = text.split('.')
     if (fragments.any { it.contains('+') }) {
-        throw TomlException("illegal character '+' encountered in key", line)
+        throw TomlException("illegal character '+' encountered in key", start.line)
     }
     return fragments
 }
