@@ -26,34 +26,34 @@ private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
 }
 
 private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
-    value.string()?.let { MutableTomlValue.Primitive(TomlValue.String(extractString(it))) }
-        ?: value.integer()?.let { MutableTomlValue.Primitive(TomlValue.Integer(extractInteger(it))) }
-        ?: value.floating_point()?.let { MutableTomlValue.Primitive(TomlValue.Double(extractDouble(it))) }
-        ?: value.bool_()?.let { MutableTomlValue.Primitive(TomlValue.Bool(extractBool(it))) }
-        ?: value.date_time()?.let { MutableTomlValue.Primitive(extractDateTime(it)) }
-        ?: value.array_()?.let { MutableTomlValue.InlineList(extractList(it)) }
-        ?: value.inline_table()?.let { MutableTomlValue.InlineMap(extractInlineTable(it)) }
+    value.string()?.let { MutableTomlValue.Primitive(TomlValue.String(it.extractString())) }
+        ?: value.integer()?.let { MutableTomlValue.Primitive(TomlValue.Integer(it.extractInteger())) }
+        ?: value.floating_point()?.let { MutableTomlValue.Primitive(TomlValue.Double(it.extractDouble())) }
+        ?: value.bool_()?.let { MutableTomlValue.Primitive(TomlValue.Bool(it.extractBool())) }
+        ?: value.date_time()?.let { MutableTomlValue.Primitive(it.extractDateTime()) }
+        ?: value.array_()?.let { MutableTomlValue.InlineList(it.extractList()) }
+        ?: value.inline_table()?.let { MutableTomlValue.InlineMap(it.extractInlineTable()) }
         ?: error("unreachable")
 
-private fun extractInteger(ctx: TomlParser.IntegerContext): Long {
-    val text = ctx.text.replace("_", "")
+private fun TomlParser.IntegerContext.extractInteger(): Long {
+    val text = text.replace("_", "")
     try {
         return when {
-            ctx.DEC_INT() != null -> text.toLong(10)
-            ctx.HEX_INT() != null -> text.substring(2).toLong(16)
-            ctx.BIN_INT() != null -> text.substring(2).toLong(2)
-            ctx.OCT_INT() != null -> text.substring(2).toLong(8)
+            DEC_INT() != null -> text.toLong(10)
+            HEX_INT() != null -> text.substring(2).toLong(16)
+            BIN_INT() != null -> text.substring(2).toLong(2)
+            OCT_INT() != null -> text.substring(2).toLong(8)
             else -> error("unreachable")
         }
     } catch (e: NumberFormatException) {
-        throw TomlException("integer '${ctx.text}' is out of range", ctx.start.line, e)
+        throw TomlException("integer '$text' is out of range", start.line, e)
     }
 }
 
-private fun extractDouble(ctx: TomlParser.Floating_pointContext): Double =
-    ctx.FLOAT()?.text?.replace("_", "")?.toDouble()
-        ?: ctx.INF()?.text?.parseInfinity()
-        ?: ctx.NAN()?.let { Double.NaN }
+private fun TomlParser.Floating_pointContext.extractDouble(): Double =
+    FLOAT()?.text?.replace("_", "")?.toDouble()
+        ?: INF()?.text?.parseInfinity()
+        ?: NAN()?.let { Double.NaN }
         ?: error("unreachable")
 
 private fun String.parseInfinity(): Double = when (first()) {
@@ -61,22 +61,22 @@ private fun String.parseInfinity(): Double = when (first()) {
     else -> Double.POSITIVE_INFINITY
 }
 
-private fun extractBool(ctx: TomlParser.Bool_Context): Boolean =
-    ctx.BOOLEAN().text.toBooleanStrict()
+private fun TomlParser.Bool_Context.extractBool(): Boolean =
+    BOOLEAN().text.toBooleanStrict()
 
-private fun extractDateTime(ctx: TomlParser.Date_timeContext): TomlValue.Primitive = try {
-    ctx.OFFSET_DATE_TIME()?.text?.let { TomlValue.OffsetDateTime(OffsetDateTime.parse(it.replace(' ', 'T'))) }
-        ?: ctx.LOCAL_DATE_TIME()?.text?.let { TomlValue.LocalDateTime(LocalDateTime.parse(it.replace(' ', 'T'))) }
-        ?: ctx.LOCAL_DATE()?.text?.let { TomlValue.LocalDate(LocalDate.parse(it)) }
-        ?: ctx.LOCAL_TIME()?.text?.let { TomlValue.LocalTime(LocalTime.parse(it)) }
+private fun TomlParser.Date_timeContext.extractDateTime(): TomlValue.Primitive = try {
+    OFFSET_DATE_TIME()?.text?.let { TomlValue.OffsetDateTime(OffsetDateTime.parse(it.replace(' ', 'T'))) }
+        ?: LOCAL_DATE_TIME()?.text?.let { TomlValue.LocalDateTime(LocalDateTime.parse(it.replace(' ', 'T'))) }
+        ?: LOCAL_DATE()?.text?.let { TomlValue.LocalDate(LocalDate.parse(it)) }
+        ?: LOCAL_TIME()?.text?.let { TomlValue.LocalTime(LocalTime.parse(it)) }
         ?: error("unreachable")
 } catch (e: DateTimeParseException) {
-    throw TomlException("date/time '${ctx.text}' has invalid format", ctx.start.line, e)
+    throw TomlException("date/time '$text' has invalid format", start.line, e)
 }
 
-private fun extractList(ctx0: TomlParser.Array_Context): TomlValue.List {
+private fun TomlParser.Array_Context.extractList(): TomlValue.List {
     val list = mutableListOf<TomlValue>()
-    var ctx = ctx0.array_values()
+    var ctx = array_values()
     while (ctx != null) {
         list.add(extractValue(ctx.value()).freeze())
         ctx = ctx.array_values()
@@ -84,9 +84,9 @@ private fun extractList(ctx0: TomlParser.Array_Context): TomlValue.List {
     return TomlValue.List(list)
 }
 
-private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.Map =
+private fun TomlParser.Inline_tableContext.extractInlineTable(): TomlValue.Map =
     TomlBuilder.create().apply {
-        var ctx = ctx0.inline_table_keyvals().inline_table_keyvals_non_empty()
+        var ctx = inline_table_keyvals().inline_table_keyvals_non_empty()
         while (ctx != null) {
             val key = ctx.key().extractKey()
             set(ctx.start.line, key, extractValue(ctx.value()))
@@ -94,11 +94,11 @@ private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.
         }
     }.build()
 
-private fun extractString(ctx: TomlParser.StringContext): String =
-    ctx.BASIC_STRING()?.text?.stripQuotes(1)?.convertEscapeCodes()
-        ?: ctx.ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.convertEscapeCodes()
-        ?: ctx.LITERAL_STRING()?.text?.stripQuotes(1)
-        ?: ctx.ML_LITERAL_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()
+private fun TomlParser.StringContext.extractString(): String =
+    BASIC_STRING()?.text?.stripQuotes(1)?.convertEscapeCodes()
+        ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.convertEscapeCodes()
+        ?: LITERAL_STRING()?.text?.stripQuotes(1)
+        ?: ML_LITERAL_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()
         ?: error("unreachable")
 
 private fun String.stripQuotes(quoteSize: Int): String =
