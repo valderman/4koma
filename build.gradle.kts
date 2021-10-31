@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 
 plugins {
     kotlin("jvm") version "1.5.31"
@@ -22,28 +22,45 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-val compileKotlin: KotlinCompile by tasks
-val compileTestKotlin: KotlinCompile by tasks
-val compileJava: JavaCompile by tasks
-val compileTestJava: JavaCompile by tasks
+tasks {
+    compileKotlin {
+        dependsOn("generateGrammarSource")
+        kotlinOptions {
+            jvmTarget = kotlinJvmTarget.toString()
+        }
+    }
+    compileTestKotlin {
+        dependsOn("generateGrammarSource")
+        kotlinOptions {
+            jvmTarget = kotlinJvmTarget.toString()
+        }
+    }
+    compileJava { options.release.set(kotlinJvmTarget) }
+    compileTestJava { options.release.set(kotlinJvmTarget) }
 
-compileKotlin.dependsOn("generateGrammarSource")
-compileKotlin.kotlinOptions {
-    jvmTarget = kotlinJvmTarget.toString()
-    
-}
-compileTestKotlin.dependsOn("generateGrammarSource")
-compileTestKotlin.kotlinOptions {
-    jvmTarget = kotlinJvmTarget.toString()
-}
-compileJava.options.release.set(kotlinJvmTarget)
-compileTestJava.options.release.set(kotlinJvmTarget)
+    test {
+        useJUnitPlatform()
+        finalizedBy(jacocoTestReport)
+    }
 
-tasks.test {
-    useJUnitPlatform()
-    finalizedBy(tasks.jacocoTestReport)
-}
+    check {
+        dependsOn(test)
+        dependsOn(ktlintCheck)
+        dependsOn(jacocoTestCoverageVerification)
+    }
 
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
+    jacocoTestReport {
+        dependsOn(test)
+    }
+
+    jacocoTestCoverageVerification {
+        dependsOn(jacocoTestReport)
+        violationRules {
+            rule {
+                limit {
+                    minimum = BigDecimal(0.8)
+                }
+            }
+        }
+    }
 }
