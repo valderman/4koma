@@ -1,5 +1,7 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.UnitTest
 import org.junit.jupiter.api.Nested
 import java.time.LocalTime
 import kotlin.test.Test

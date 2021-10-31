@@ -1,5 +1,8 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.RandomTest
+import cc.ekblad.toml.TomlException
+import cc.ekblad.toml.TomlValue
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 
@@ -53,7 +56,7 @@ class IntTests : RandomTest {
     @Test
     fun `throws on bad int`() {
         listOf("10_", "_8", "ffff", "0b2", "0o8", "0xFFFFFFFFFFFFFFFFF").assertAll {
-            assertThrows<TomlException> { TomlValue.from("foo = $it") }
+            assertThrows<TomlException.ParseError> { TomlValue.from("foo = $it") }
         }
     }
 }

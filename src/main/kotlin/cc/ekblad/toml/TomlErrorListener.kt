@@ -17,7 +17,7 @@ class TomlErrorListener : ANTLRErrorListener {
         msg: String,
         e: RecognitionException?
     ) {
-        throw TomlException(msg, line, e)
+        throw TomlException.ParseError(msg, line, e)
     }
 
     override fun reportAmbiguity(

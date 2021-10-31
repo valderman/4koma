@@ -1,11 +1,10 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.StringTest
+import cc.ekblad.toml.TomlValue
 import org.junit.jupiter.api.Test
 
 class StringTests : StringTest {
-    private val alphabet =
-        "abcdefghijklmnopqrstuvwxyzåäöABCDEFGHIJKLMNOPQRSTUBWXYZÅÄÖ \t!#¤%&/()=.,[]{};:<>|ひらがなカタカナ漢字火事"
-
     @Test
     fun `can parse basic string`() {
         val basicAlphabet = "$alphabet'"

@@ -1,5 +1,7 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.StringTest
+import cc.ekblad.toml.TomlValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

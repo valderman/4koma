@@ -13,4 +13,7 @@ interface StringTest : RandomTest {
             "\\u00e5" to "å",
             "\\U0001f63f" to "😿"
         )
+
+    val alphabet: String
+        get() = "abcdefghijklmnopqrstuvwxyzåäöABCDEFGHIJKLMNOPQRSTUBWXYZÅÄÖ \t!#¤%&/()=.,[]{};:<>|ひらがなカタカナ漢字火事"
 }

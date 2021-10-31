@@ -21,13 +21,13 @@ interface UnitTest {
     }
 
     fun assertValueParseError(badValue: String) {
-        assertThrows<TomlException>("parser accepted '$badValue'") {
+        assertThrows<TomlException.ParseError>("parser accepted '$badValue'") {
             TomlValue.from("foo = $badValue")
         }
     }
 
     fun assertDocumentParseError(badDocument: String) {
-        assertThrows<TomlException>("parser accepted bad document:\n$badDocument\n") {
+        assertThrows<TomlException.ParseError>("parser accepted bad document:\n$badDocument\n") {
             TomlValue.from(badDocument)
         }
     }

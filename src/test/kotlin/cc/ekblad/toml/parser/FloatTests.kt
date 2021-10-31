@@ -1,5 +1,8 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.RandomTest
+import cc.ekblad.toml.TomlException
+import cc.ekblad.toml.TomlValue
 import org.junit.jupiter.api.assertThrows
 import kotlin.math.abs
 import kotlin.math.pow
@@ -79,7 +82,7 @@ class FloatTests : RandomTest {
     @Test
     fun `throws on bad float`() {
         listOf("1e3.4", "e1", "1e", ".4", "3.", "1.9_", "1._9", "1e_9").assertAll {
-            assertThrows<TomlException> { TomlValue.from("foo = $it") }
+            assertThrows<TomlException.ParseError> { TomlValue.from("foo = $it") }
         }
     }
 

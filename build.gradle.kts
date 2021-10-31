@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
+    implementation(kotlin("reflect"))
     antlr("org.antlr:antlr4:4.9.2")
 
     testImplementation(kotlin("test"))

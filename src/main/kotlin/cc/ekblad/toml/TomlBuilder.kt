@@ -8,7 +8,7 @@ internal class TomlBuilder private constructor() {
         val previousValue = tableContext.putIfAbsent(fragments.last(), value)
         if (previousValue != null) {
             val path = fragments.joinToString(".")
-            throw TomlException("overwriting previously defined value at '$path' is not allowed", line)
+            throw TomlException.ParseError("overwriting previously defined value at '$path' is not allowed", line)
         }
         tableContext = oldContext
     }
@@ -20,7 +20,7 @@ internal class TomlBuilder private constructor() {
             val list = (previousValue as? MutableTomlValue.List) ?: MutableTomlValue.List(mutableListOf())
             if (previousValue != null && previousValue !is MutableTomlValue.List) {
                 val path = fragments.joinToString(".")
-                throw TomlException("tried to append to non-list '$path'", line)
+                throw TomlException.ParseError("tried to append to non-list '$path'", line)
             }
             list.value.add(MutableTomlValue.Map(mutableMapOf()))
             list
@@ -45,16 +45,16 @@ internal class TomlBuilder private constructor() {
         if (fragments.isNotEmpty()) {
             val head = fragments.first()
             if (!allowTableRedeclaration && fragments.size == 1 && head in tableContext) {
-                throw TomlException("table '$head' already declared", line)
+                throw TomlException.ParseError("table '$head' already declared", line)
             }
 
             val newContext = when (val ctx = tableContext.getOrPut(head) { MutableTomlValue.Map(mutableMapOf()) }) {
                 is MutableTomlValue.Map -> ctx
                 is MutableTomlValue.List -> ctx.value.last()
                 is MutableTomlValue.InlineMap ->
-                    throw TomlException("extending inline table '$head' is not allowed", line)
+                    throw TomlException.ParseError("extending inline table '$head' is not allowed", line)
                 else ->
-                    throw TomlException("tried to extend non-table '$head'", line)
+                    throw TomlException.ParseError("tried to extend non-table '$head'", line)
             }
             tableContext = newContext.value
             defineTableInCurrentContext(line, fragments.drop(1), allowTableRedeclaration)

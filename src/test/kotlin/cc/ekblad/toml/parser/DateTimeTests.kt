@@ -1,5 +1,7 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.RandomTest
+import cc.ekblad.toml.TomlValue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.time.format.DateTimeFormatter

@@ -43,7 +43,7 @@ private fun TomlParser.IntegerContext.extractInteger(): Long {
             else -> error("unreachable")
         }
     } catch (e: NumberFormatException) {
-        throw TomlException("integer '$text' is out of range", start.line, e)
+        throw TomlException.ParseError("integer '$text' is out of range", start.line, e)
     }
 }
 
@@ -66,7 +66,7 @@ private fun TomlParser.Date_timeContext.extractDateTime(): TomlValue.Primitive =
         ?: LOCAL_DATE()?.let { TomlValue.LocalDate(LocalDate.parse(it.text)) }
         ?: LOCAL_TIME().let { TomlValue.LocalTime(LocalTime.parse(it.text)) }
 } catch (e: DateTimeParseException) {
-    throw TomlException("date/time '$text' has invalid format", start.line, e)
+    throw TomlException.ParseError("date/time '$text' has invalid format", start.line, e)
 }
 
 private fun TomlParser.Array_Context.extractList(): TomlValue.List {
@@ -126,7 +126,7 @@ private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
 private fun TomlParser.Unquoted_keyContext.extractUnquotedKey(): List<String> {
     val fragments = text.split('.')
     if (fragments.any { it.contains('+') }) {
-        throw TomlException("illegal character '+' encountered in key", start.line)
+        throw TomlException.ParseError("illegal character '+' encountered in key", start.line)
     }
     return fragments
 }
