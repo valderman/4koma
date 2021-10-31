@@ -20,7 +20,7 @@ simple_key : quoted_key | unquoted_key ;
  * The converter step needs to further process unquoted keys, to split float-looking keys into dotted keys and
  * reject keys containing plus signs.
  */
-unquoted_key : UNQUOTED_KEY | 'nan' | 'inf' | BOOLEAN | LOCAL_DATE | FLOAT | integer ;
+unquoted_key : UNQUOTED_KEY | NAN | INF | BOOLEAN | LOCAL_DATE | FLOAT | integer ;
 
 quoted_key :  BASIC_STRING | LITERAL_STRING ;
 

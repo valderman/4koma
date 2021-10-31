@@ -13,7 +13,7 @@ class MiscTests : UnitTest {
     @Test
     fun `can parse keys overlapping with keywords`() {
         listOf(
-            "nan", "inf", "-10", "123", "ff", "0b1",
+            "nan", "inf", "-nan", "-inf", "-10", "123", "ff", "0b1",
             "1e19", "true", "false", "2011-11-11", "0x1", "0o1",
         ).assertAll { key ->
             val actual = TomlValue.from("$key = true")
