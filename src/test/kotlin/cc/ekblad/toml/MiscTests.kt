@@ -44,6 +44,14 @@ class MiscTests : UnitTest {
     }
 
     @Test
+    fun `escape codes are not converted in single quoted keys`() {
+        assertEquals(
+            TomlValue.Map("\\nhello\\t" to TomlValue.String("world")),
+            TomlValue.from("'\\nhello\\t' = 'world'")
+        )
+    }
+
+    @Test
     fun `can parse blank quoted keys`() {
         assertEquals(
             TomlValue.Map("" to TomlValue.String("world")),
@@ -74,7 +82,6 @@ class MiscTests : UnitTest {
 
     @Test
     fun `throws on triple-quoted keys`() {
-        1
         assertDocumentParseError("'''foo''' = q")
         assertDocumentParseError("\"\"\"foo\"\"\" = q")
     }

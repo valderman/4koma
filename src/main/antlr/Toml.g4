@@ -72,7 +72,7 @@ fragment ALPHA : [A-Za-z] ;
 BOOLEAN : 'true' | 'false' ;
 
 // strings
-fragment ESC : '\\' (["\\/bfnrt] | UNICODE | EX_UNICODE) ;
+fragment ESC : '\\' (["\\bfnrt] | UNICODE | EX_UNICODE) ;
 fragment ML_ESC : '\\' '\r'? '\n' | ESC ;
 fragment UNICODE : 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT ;
 fragment EX_UNICODE : 'U' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT ;

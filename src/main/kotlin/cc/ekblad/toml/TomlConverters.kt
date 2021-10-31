@@ -94,18 +94,19 @@ private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.
         }
     }.build()
 
-// TODO: escape sequences
 private fun extractString(ctx: TomlParser.StringContext): String =
-    ctx.BASIC_STRING()?.text?.let { escapeQuotedString(1, it) }
-        ?: ctx.ML_BASIC_STRING()?.text?.let { escapeQuotedString(3, it).trimFirst() }
-        ?: ctx.LITERAL_STRING()?.text?.let { it.substring(1, it.length - 1) }
-        ?: ctx.ML_LITERAL_STRING()?.text?.let { it.substring(3, it.length - 3).trimFirst() }
+    ctx.BASIC_STRING()?.text?.stripQuotes(1)?.convertEscapeCodes()
+        ?: ctx.ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.convertEscapeCodes()
+        ?: ctx.LITERAL_STRING()?.text?.stripQuotes(1)
+        ?: ctx.ML_LITERAL_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()
         ?: error("unreachable")
 
-private fun String.trimFirst(): String = when {
-    isEmpty() -> this
-    first() == '\n' -> drop(1)
-    substring(0, 2.coerceAtMost(length)) == "\r\n" -> drop(2)
+private fun String.stripQuotes(quoteSize: Int): String =
+    substring(quoteSize, length - quoteSize)
+
+private fun String.trimFirstNewline(): String = when {
+    startsWith('\n') -> drop(1)
+    startsWith("\r\n") -> drop(2)
     else -> this
 }
 
@@ -115,13 +116,41 @@ private fun extractKey(ctx: TomlParser.KeyContext): List<String> =
         ?: error("unreachable")
 
 private fun extractSimpleKey(ctx: TomlParser.Simple_keyContext): List<String> =
-    ctx.quoted_key()?.text?.let { listOf(escapeQuotedString(1, it)) }
-        ?: ctx.unquoted_key()?.text?.split('.')?.also { fragments ->
-            if (fragments.any { it.contains('+') }) {
-                throw TomlException("illegal character '+' encountered in key", ctx.start.line)
-            }
-        }
+    ctx.quoted_key()?.extractQuotedKey()
+        ?: ctx.unquoted_key()?.text?.processUnquotedKey(ctx.start.line)
         ?: error("unreachable")
 
-private fun escapeQuotedString(quoteSize: Int, key: String): String =
-    key.substring(quoteSize, key.length - quoteSize)
+private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
+    BASIC_STRING()?.let { listOf(it.text.stripQuotes(1).convertEscapeCodes()) }
+        ?: LITERAL_STRING()?.let { listOf(it.text.stripQuotes(1)) }
+        ?: error("unreachable")
+
+/**
+ * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
+ * that some "simple" keys may actually be dotted keys, and that the parser lets '+' signs through.
+ */
+private fun String.processUnquotedKey(line: Int): List<String> {
+    val fragments = split('.')
+    if (fragments.any { it.contains('+') }) {
+        throw TomlException("illegal character '+' encountered in key", line)
+    }
+    return fragments
+}
+
+private fun String.convertEscapeCodes(): String =
+    escapeRegex.replace(this, ::replaceEscapeMatch)
+
+private fun replaceEscapeMatch(match: MatchResult): String = when (match.value[1]) {
+    '"' -> "\""
+    '\\' -> "\\"
+    'b' -> "\b"
+    'f' -> "\u000C"
+    'n' -> "\n"
+    'r' -> "\r"
+    't' -> "\t"
+    'u' -> String(Character.toChars(match.groupValues[2].toInt(16)))
+    'U' -> String(Character.toChars(match.groupValues[3].toInt(16)))
+    else -> error("unreachable")
+}
+
+val escapeRegex = Regex("\\\\([\\\\\"bnfrt]|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))")
