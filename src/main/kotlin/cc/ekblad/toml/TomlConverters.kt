@@ -96,8 +96,8 @@ private fun extractInlineTable(ctx0: TomlParser.Inline_tableContext): TomlValue.
 
 // TODO: escape sequences
 private fun extractString(ctx: TomlParser.StringContext): String =
-    ctx.BASIC_STRING()?.text?.let { it.substring(1, it.length - 1) }
-        ?: ctx.ML_BASIC_STRING()?.text?.let { it.substring(3, it.length - 3).trimFirst() }
+    ctx.BASIC_STRING()?.text?.let { escapeQuotedString(1, it) }
+        ?: ctx.ML_BASIC_STRING()?.text?.let { escapeQuotedString(3, it).trimFirst() }
         ?: ctx.LITERAL_STRING()?.text?.let { it.substring(1, it.length - 1) }
         ?: ctx.ML_LITERAL_STRING()?.text?.let { it.substring(3, it.length - 3).trimFirst() }
         ?: error("unreachable")
@@ -110,11 +110,18 @@ private fun String.trimFirst(): String = when {
 }
 
 private fun extractKey(ctx: TomlParser.KeyContext): List<String> =
-    ctx.simple_key()?.let { listOf(extractSimpleKey(it)) }
-        ?: ctx.dotted_key()?.let { ctx.dotted_key().simple_key().map { extractSimpleKey(it) } }
+    ctx.simple_key()?.let { extractSimpleKey(it) }
+        ?: ctx.dotted_key()?.let { ctx.dotted_key().simple_key().flatMap { extractSimpleKey(it) } }
         ?: error("unreachable")
 
-private fun extractSimpleKey(ctx: TomlParser.Simple_keyContext): String =
-    ctx.quoted_key()?.text?.trim('"', '\'')
-        ?: ctx.unquoted_key()?.UNQUOTED_KEY()?.text
+private fun extractSimpleKey(ctx: TomlParser.Simple_keyContext): List<String> =
+    ctx.quoted_key()?.text?.let { listOf(escapeQuotedString(1, it)) }
+        ?: ctx.unquoted_key()?.text?.split('.')?.also { fragments ->
+            if (fragments.any { it.contains('+') }) {
+                throw TomlException("illegal character '+' encountered in key", ctx.start.line)
+            }
+        }
         ?: error("unreachable")
+
+private fun escapeQuotedString(quoteSize: Int, key: String): String =
+    key.substring(quoteSize, key.length - quoteSize)

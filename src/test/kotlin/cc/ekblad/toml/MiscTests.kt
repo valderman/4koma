@@ -1,12 +1,46 @@
 package cc.ekblad.toml
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class MiscTests : UnitTest {
     @Test
     fun `can parse trailing whitespace`() {
         assertParsesTo(TomlValue.Bool(true), "true    ")
         assertParsesTo(TomlValue.Bool(false), "false\n\n")
+    }
+
+    @Test
+    fun `can parse keys overlapping with keywords`() {
+        listOf(
+            "nan",  "inf",  "-10",   "123",        "ff",  "0b1",
+            "1e19", "true", "false", "2011-11-11", "0x1", "0o1",
+        ).assertAll { key ->
+            val actual = TomlValue.from("$key = true")
+            val expected = TomlValue.Map(key to TomlValue.Bool(true))
+            assertEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun `can parse float-looking keys`() {
+        val actual = TomlValue.from("3.14 = 'pi'")
+        val expected = TomlValue.Map(
+            "3" to TomlValue.Map("14" to TomlValue.String("pi"))
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `can parse key containing quotes`() {
+        assertEquals(
+            TomlValue.Map("'hello'" to TomlValue.String("world")),
+            TomlValue.from("\"'hello'\" = 'world'")
+        )
+        assertEquals(
+            TomlValue.Map("\"hello\"" to TomlValue.String("world")),
+            TomlValue.from("'\"hello\"' = 'world'")
+        )
     }
 
     @Test
@@ -24,5 +58,21 @@ class MiscTests : UnitTest {
     @Test
     fun `throws on unspecified value`() {
         assertDocumentParseError("foo =")
+    }
+
+    @Test
+    fun `throws on triple-quoted keys`() {1
+        assertDocumentParseError("'''foo''' = q")
+        assertDocumentParseError("\"\"\"foo\"\"\" = q")
+    }
+
+    @Test
+    fun `throws on unspecified key`() {
+        assertDocumentParseError("= 123")
+    }
+
+    @Test
+    fun `throws on key containing plus sign`() {
+        assertDocumentParseError("+12 = 12")
     }
 }
