@@ -3,7 +3,6 @@ package cc.ekblad.toml
 import java.time.LocalDate
 import kotlin.test.Test
 
-// TODO: lists of inline tables
 class ListTests : UnitTest {
     @Test
     fun `can parse empty list`() {

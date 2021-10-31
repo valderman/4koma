@@ -3,7 +3,7 @@ package cc.ekblad.toml
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class KeyTests : UnitTest {
+class KeyTests : StringTest {
     @Test
     fun `can parse keys overlapping with keywords`() {
         listOf(
@@ -44,6 +44,16 @@ class KeyTests : UnitTest {
             TomlValue.Map("\"hello\"" to TomlValue.String("world")),
             TomlValue.from("'\"hello\"' = 'world'")
         )
+    }
+
+    @Test
+    fun `can parse keys containing escape codes`() {
+        escapeCodeSamples.assertAll { (string, expected) ->
+            assertEquals(
+                TomlValue.Map(expected to TomlValue.String("world")),
+                TomlValue.from("\"$string\" = 'world'")
+            )
+        }
     }
 
     @Test

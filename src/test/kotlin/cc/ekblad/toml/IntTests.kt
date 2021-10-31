@@ -3,13 +3,22 @@ package cc.ekblad.toml
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 
-// TODO: underscore separators
 class IntTests : RandomTest {
     @Test
     fun `can parse decimal integers`() {
         random.values(100) { nextLong().withMaxDigits(10) }.assertAll {
-
             assertParsesTo(TomlValue.Integer(it), it.toString())
+        }
+    }
+
+    @Test
+    fun `can parse decimal integers with underscore separators`() {
+        random.values(100) {
+            values(nextInt(1, 5)) { nextLong(1, 1000) }
+        }.assertAll {
+            val actual = it.joinToString("").toLong()
+            val string = it.joinToString("_")
+            assertParsesTo(TomlValue.Integer(actual), string)
         }
     }
 

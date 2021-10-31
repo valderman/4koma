@@ -6,7 +6,6 @@ import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-// TODO: underscore separators
 class FloatTests : RandomTest {
     @Test
     fun `can parse fractional notation`() {
@@ -47,6 +46,19 @@ class FloatTests : RandomTest {
             val expected = nom * 10.0.pow(exp)
             assertParsesWithin(expected, "${nom}e$exp")
             assertParsesWithin(expected, "${nom}E$exp")
+        }
+    }
+
+    @Test
+    fun `can parse floats with underscore separators`() {
+        listOf(
+            "1_2e3" to 12e3,
+            "1_2e3_4" to 12e34,
+            "1_1.2_2e3_4" to 11.22e34,
+            "1.9_1" to 1.91,
+            "1e0_9" to 1e9
+        ).assertAll { (string, expected) ->
+            assertParsesWithin(expected, string)
         }
     }
 

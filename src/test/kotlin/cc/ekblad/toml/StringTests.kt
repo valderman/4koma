@@ -2,8 +2,7 @@ package cc.ekblad.toml
 
 import org.junit.jupiter.api.Test
 
-// TODO: escape sequences for basic and basic ML strings
-class StringTests : RandomTest {
+class StringTests : StringTest {
     private val alphabet =
         "abcdefghijklmnopqrstuvwxyzåäöABCDEFGHIJKLMNOPQRSTUBWXYZÅÄÖ \t!#¤%&/()=.,[]{};:<>|ひらがなカタカナ漢字火事"
 
@@ -29,17 +28,7 @@ class StringTests : RandomTest {
 
     @Test
     fun `can parse basic and basic multiline string with escape codes`() {
-        listOf(
-            "\\b" to "\b",
-            "\\f" to "\u000C",
-            "\\n" to "\n",
-            "\\r" to "\r",
-            "\\t" to "\t",
-            "\\\"" to "\"",
-            "\\\\" to "\\",
-            "\\u00e5" to "å",
-            "\\U0001f63f" to "😿"
-        ).assertAll { (string, expected) ->
+        escapeCodeSamples.assertAll { (string, expected) ->
             assertParsesTo(TomlValue.String(expected), "\"$string\"")
             assertParsesTo(TomlValue.String(expected), "\"\"\"$string\"\"\"")
         }
