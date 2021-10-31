@@ -16,13 +16,11 @@ private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
     ctx.key_value()?.let { set(ctx.start.line, it.key().extractKey(), extractValue(it.value())) }
         ?: ctx.table()?.let { extractTable(it) }
         ?: ctx.comment()
-        ?: error("unreachable")
 }
 
 private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
     ctx.standard_table()?.let { defineTable(ctx.start.line, it.key().extractKey()) }
-        ?: ctx.array_table()?.let { addTableArrayEntry(ctx.start.line, it.key().extractKey()) }
-        ?: error("not a table context: ${ctx::class}")
+        ?: ctx.array_table().let { addTableArrayEntry(ctx.start.line, it.key().extractKey()) }
 }
 
 private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
@@ -32,8 +30,7 @@ private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
         ?: value.bool_()?.let { MutableTomlValue.Primitive(TomlValue.Bool(it.extractBool())) }
         ?: value.date_time()?.let { MutableTomlValue.Primitive(it.extractDateTime()) }
         ?: value.array_()?.let { MutableTomlValue.InlineList(it.extractList()) }
-        ?: value.inline_table()?.let { MutableTomlValue.InlineMap(it.extractInlineTable()) }
-        ?: error("unreachable")
+        ?: value.inline_table().let { MutableTomlValue.InlineMap(it.extractInlineTable()) }
 
 private fun TomlParser.IntegerContext.extractInteger(): Long {
     val text = text.replace("_", "")
@@ -51,10 +48,9 @@ private fun TomlParser.IntegerContext.extractInteger(): Long {
 }
 
 private fun TomlParser.Floating_pointContext.extractDouble(): Double =
-    FLOAT()?.text?.replace("_", "")?.toDouble()
-        ?: INF()?.text?.parseInfinity()
-        ?: NAN()?.let { Double.NaN }
-        ?: error("unreachable")
+    FLOAT()?.let { it.text.replace("_", "").toDouble() }
+        ?: INF()?.let { text.parseInfinity() }
+        ?: NAN().let { Double.NaN }
 
 private fun String.parseInfinity(): Double = when (first()) {
     '-' -> Double.NEGATIVE_INFINITY
@@ -65,11 +61,10 @@ private fun TomlParser.Bool_Context.extractBool(): Boolean =
     BOOLEAN().text.toBooleanStrict()
 
 private fun TomlParser.Date_timeContext.extractDateTime(): TomlValue.Primitive = try {
-    OFFSET_DATE_TIME()?.text?.let { TomlValue.OffsetDateTime(OffsetDateTime.parse(it.replace(' ', 'T'))) }
-        ?: LOCAL_DATE_TIME()?.text?.let { TomlValue.LocalDateTime(LocalDateTime.parse(it.replace(' ', 'T'))) }
-        ?: LOCAL_DATE()?.text?.let { TomlValue.LocalDate(LocalDate.parse(it)) }
-        ?: LOCAL_TIME()?.text?.let { TomlValue.LocalTime(LocalTime.parse(it)) }
-        ?: error("unreachable")
+    OFFSET_DATE_TIME()?.let { TomlValue.OffsetDateTime(OffsetDateTime.parse(it.text.replace(' ', 'T'))) }
+        ?: LOCAL_DATE_TIME()?.let { TomlValue.LocalDateTime(LocalDateTime.parse(it.text.replace(' ', 'T'))) }
+        ?: LOCAL_DATE()?.let { TomlValue.LocalDate(LocalDate.parse(it.text)) }
+        ?: LOCAL_TIME().let { TomlValue.LocalTime(LocalTime.parse(it.text)) }
 } catch (e: DateTimeParseException) {
     throw TomlException("date/time '$text' has invalid format", start.line, e)
 }
@@ -98,8 +93,7 @@ private fun TomlParser.StringContext.extractString(): String =
     BASIC_STRING()?.text?.stripQuotes(1)?.convertEscapeCodes()
         ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.convertEscapeCodes()
         ?: LITERAL_STRING()?.text?.stripQuotes(1)
-        ?: ML_LITERAL_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()
-        ?: error("unreachable")
+        ?: ML_LITERAL_STRING().text.stripQuotes(3).trimFirstNewline()
 
 private fun String.stripQuotes(quoteSize: Int): String =
     substring(quoteSize, length - quoteSize)
@@ -112,21 +106,18 @@ private fun String.trimFirstNewline(): String = when {
 
 private fun TomlParser.KeyContext.extractKey(): List<String> =
     simple_key()?.extractSimpleKey()
-        ?: dotted_key()?.extractDottedKey()
-        ?: error("unreachable")
+        ?: dotted_key().extractDottedKey()
 
 private fun TomlParser.Dotted_keyContext.extractDottedKey(): List<String> =
     simple_key().flatMap { it.extractSimpleKey() }
 
 private fun TomlParser.Simple_keyContext.extractSimpleKey(): List<String> =
     quoted_key()?.extractQuotedKey()
-        ?: unquoted_key()?.extractUnquotedKey()
-        ?: error("unreachable")
+        ?: unquoted_key().extractUnquotedKey()
 
 private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
     BASIC_STRING()?.let { listOf(it.text.stripQuotes(1).convertEscapeCodes()) }
-        ?: LITERAL_STRING()?.let { listOf(it.text.stripQuotes(1)) }
-        ?: error("unreachable")
+        ?: LITERAL_STRING().let { listOf(it.text.stripQuotes(1)) }
 
 /**
  * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
@@ -156,4 +147,4 @@ private fun replaceEscapeMatch(match: MatchResult): String = when (match.value[1
     else -> error("unreachable")
 }
 
-val escapeRegex = Regex("\\\\([\\\\\"bnfrt]|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))")
+private val escapeRegex = Regex("\\\\([\\\\\"bnfrt]|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))")

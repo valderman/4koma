@@ -22,6 +22,20 @@ class FloatTests : RandomTest {
     }
 
     @Test
+    fun `can parse nan`() {
+        listOf("nan", "+nan", "-nan").assertAll {
+            assertParsesTo(TomlValue.Double(Double.NaN), it)
+        }
+    }
+
+    @Test
+    fun `can parse infinity`() {
+        assertParsesTo(TomlValue.Double(Double.POSITIVE_INFINITY), "inf")
+        assertParsesTo(TomlValue.Double(Double.POSITIVE_INFINITY), "+inf")
+        assertParsesTo(TomlValue.Double(Double.NEGATIVE_INFINITY), "-inf")
+    }
+
+    @Test
     fun `can parse exponent notation`() {
         random.values(100) {
             Pair(
