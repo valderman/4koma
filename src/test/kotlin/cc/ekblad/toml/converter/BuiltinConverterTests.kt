@@ -82,6 +82,17 @@ class BuiltinConverterTests : StringTest {
     }
 
     @Test
+    fun `can convert lists with elements that need conversion`() {
+        assertEquals(
+            listOf(1, 2),
+            TomlValue.List(
+                TomlValue.Integer(1),
+                TomlValue.Integer(2),
+            ).convert()
+        )
+    }
+
+    @Test
     fun `can convert nested lists`() {
         assertEquals(
             listOf(listOf("asd", "fgh"), emptyList(), listOf("jkl")),

@@ -43,7 +43,7 @@ class FloatTests : RandomTest {
         random.values(100) {
             Pair(
                 nextInt(-1000, 1000),
-                nextInt(-10, 11)
+                nextInt(-5, 5)
             )
         }.assertAll { (nom, exp) ->
             val expected = nom * 10.0.pow(exp)
@@ -57,7 +57,7 @@ class FloatTests : RandomTest {
         random.values(100) {
             Pair(
                 nextDouble(-1000.0, 1000.0),
-                nextInt(-10, 11)
+                nextInt(-5, 5)
             )
         }.assertAll { (nom, exp) ->
             val expected = nom * 10.0.pow(exp)

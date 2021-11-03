@@ -10,12 +10,16 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.SortedMap
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.typeOf
 
+@OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T : Any> TomlValue.convert(): T =
-    convert(T::class)
+    convert(typeOf<T>())
 
-fun <T : Any> TomlValue.convert(target: KClass<T>): T = when (this) {
+fun <T : Any> TomlValue.convert(target: KType): T = when (this) {
     is TomlValue.List -> toList(target)
     is TomlValue.Map -> toObject(target)
     is TomlValue.Bool -> toBoolean(target)
@@ -28,26 +32,26 @@ fun <T : Any> TomlValue.convert(target: KClass<T>): T = when (this) {
     is TomlValue.OffsetDateTime -> toOffsetDateTime(target)
 }
 
-private fun <T : Any> TomlValue.List.toList(target: KClass<T>): T =
-    when (target) {
-        List::class -> convertList(value) as T
-        Collection::class -> convertList(value) as T
-        Iterable::class -> convertList(value).asIterable() as T
-        MutableList::class -> convertList(value).toMutableList() as T
-        Array::class -> convertList(value).toTypedArray() as T
-        Any::class -> convertList(value) as T
+private fun <T : Any> TomlValue.List.toList(target: KType): T =
+    when (target.classifier) {
+        List::class -> convertList(value, target.arguments.single().type!!) as T
+        Collection::class -> convertList(value, target.arguments.single().type!!) as T
+        Iterable::class -> convertList(value, target.arguments.single().type!!).asIterable() as T
+        MutableList::class -> convertList(value, target.arguments.single().type!!).toMutableList() as T
+        Array::class -> convertList(value, target.arguments.single().type!!).toTypedArray() as T
+        Any::class -> convertList(value, target.arguments.single().type!!) as T
         else -> throw TomlException.ConversionError(this, target)
     }
 
-private fun convertList(value: List<TomlValue>): List<Any> =
-    value.map { it.convert(Any::class) }
+private fun convertList(value: List<TomlValue>, elementType: KType): List<Any> =
+    value.map { it.convert(elementType) }
 
-private fun <T : Any> TomlValue.Map.toObject(target: KClass<T>): T = when {
-    target == Map::class -> toMap() as T
-    target == MutableMap::class -> toMap().toMutableMap() as T
-    target == SortedMap::class -> toMap().toSortedMap() as T
-    target == Any::class -> toMap() as T
-    target.isData -> toDataClass(target)
+private fun <T : Any> TomlValue.Map.toObject(target: KType): T = when {
+    target.classifier == Map::class -> toMap(target.arguments[1].type!!) as T
+    target.classifier == MutableMap::class -> toMap(target.arguments[1].type!!).toMutableMap() as T
+    target.classifier == SortedMap::class -> toMap(target.arguments[1].type!!).toSortedMap() as T
+    target.classifier == Any::class -> toMap(Any::class.createType()) as T
+    (target.classifier as KClass<*>).isData -> toDataClass(target)
     else -> throw TomlException.ConversionError(
         "objects can only be converted into maps or data classes",
         this,
@@ -55,31 +59,31 @@ private fun <T : Any> TomlValue.Map.toObject(target: KClass<T>): T = when {
     )
 }
 
-private fun TomlValue.Map.toMap(): Map<String, Any> =
-    properties.mapValues { it.value.convert(Any::class) }
+private fun TomlValue.Map.toMap(elementType: KType): Map<String, Any> =
+    properties.mapValues { it.value.convert(elementType) }
 
-private fun <T : Any> TomlValue.Map.toDataClass(target: KClass<T>): T {
-    val constructor = target.primaryConstructor!!
+private fun <T : Any> TomlValue.Map.toDataClass(target: KType): T {
+    val kClass = target.classifier as KClass<*>
+    val constructor = kClass.primaryConstructor!!
     val parameters = constructor.parameters.map {
         val parameterValue = properties[it.name]
         if (!it.type.isMarkedNullable && parameterValue == null) {
             throw TomlException.ConversionError("no value found for non-nullable parameter '${it.name}'", this, target)
         }
-        val kClass = it.type.classifier as KClass<*>
-        parameterValue?.convert(kClass)
+        parameterValue?.convert<Any>(it.type)
     }.toTypedArray()
-    return constructor.call(*parameters)
+    return constructor.call(*parameters) as T
 }
 
-private fun <T : Any> TomlValue.Bool.toBoolean(target: KClass<T>): T =
-    when (target) {
+private fun <T : Any> TomlValue.Bool.toBoolean(target: KType): T =
+    when (target.classifier) {
         Boolean::class -> value
         Any::class -> value
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.Double.toDouble(target: KClass<T>): T =
-    when (target) {
+private fun <T : Any> TomlValue.Double.toDouble(target: KType): T =
+    when (target.classifier) {
         Double::class -> value
         Float::class -> value.toFloat()
         BigDecimal::class -> value.toBigDecimal()
@@ -87,8 +91,8 @@ private fun <T : Any> TomlValue.Double.toDouble(target: KClass<T>): T =
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.Integer.toInteger(target: KClass<T>): T =
-    when (target) {
+private fun <T : Any> TomlValue.Integer.toInteger(target: KType): T =
+    when (target.classifier) {
         Long::class -> value
         Int::class -> value.toInt()
         Double::class -> value.toDouble()
@@ -99,36 +103,36 @@ private fun <T : Any> TomlValue.Integer.toInteger(target: KClass<T>): T =
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.String.toString(target: KClass<T>): T  =
-    when (target) {
+private fun <T : Any> TomlValue.String.toString(target: KType): T =
+    when (target.classifier) {
         String::class -> value
         Any::class -> value
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.LocalDate.toLocalDate(target: KClass<T>): T  =
-    when (target) {
+private fun <T : Any> TomlValue.LocalDate.toLocalDate(target: KType): T =
+    when (target.classifier) {
         LocalDate::class -> value
         Any::class -> value
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.LocalTime.toLocalTime(target: KClass<T>): T =
-    when (target) {
+private fun <T : Any> TomlValue.LocalTime.toLocalTime(target: KType): T =
+    when (target.classifier) {
         LocalTime::class -> value
         Any::class -> value
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.LocalDateTime.toLocalDateTime(target: KClass<T>): T  =
-    when (target) {
+private fun <T : Any> TomlValue.LocalDateTime.toLocalDateTime(target: KType): T =
+    when (target.classifier) {
         LocalDateTime::class -> value
         Any::class -> value
         else -> throw TomlException.ConversionError(this, target)
     } as T
 
-private fun <T : Any> TomlValue.OffsetDateTime.toOffsetDateTime(target: KClass<T>): T =
-    when (target) {
+private fun <T : Any> TomlValue.OffsetDateTime.toOffsetDateTime(target: KType): T =
+    when (target.classifier) {
         OffsetDateTime::class -> value
         Any::class -> value
         else -> throw TomlException.ConversionError(this, target)
