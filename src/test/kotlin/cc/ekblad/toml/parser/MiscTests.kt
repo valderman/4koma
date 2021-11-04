@@ -2,7 +2,6 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.UnitTest
 import kotlin.test.Test
 
 class MiscTests : StringTest {

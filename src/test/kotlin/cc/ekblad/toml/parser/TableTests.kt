@@ -166,7 +166,7 @@ class TableTests : UnitTest {
                     [foo.bar]
                 """.trimIndent()
             )
-            
+
             assertDocumentParseError(
                 """
                     [foo]

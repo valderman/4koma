@@ -176,6 +176,13 @@ class TableArrayTests : UnitTest {
     }
 
     @Test
+    fun `throws on whitespace between double brackets`() {
+        assertDocumentParseError("[ [foo]]")
+        assertDocumentParseError("[[foo] ]")
+        assertDocumentParseError("[ [foo] ]")
+    }
+
+    @Test
     fun `throws on extending non-table array`() {
         assertDocumentParseError(
             """

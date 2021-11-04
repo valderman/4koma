@@ -1,13 +1,13 @@
 package cc.ekblad.toml
 
 import TomlParser
+import org.antlr.v4.runtime.ParserRuleContext
 import java.lang.NumberFormatException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
-import org.antlr.v4.runtime.ParserRuleContext
 
 internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
     ctx.expression().forEach { extractExpression(it) }
@@ -21,7 +21,20 @@ private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
 
 private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
     ctx.standard_table()?.let { defineTable(ctx.start.line, it.key().extractKey()) }
-        ?: ctx.array_table().let { addTableArrayEntry(ctx.start.line, it.key().extractKey()) }
+        ?: ctx.array_table().let {
+            // Spec demands a parse error if there is space between the opening or closing brackets of a table array
+            // header, but we can't get the lexer/parser to reject that for us.
+            val keyLength = it.key().stop.stopIndex - it.key().start.charPositionInLine
+            val headerLength = it.stop.stopIndex - it.start.charPositionInLine
+            val doubleBracketChars = headerLength - keyLength
+            if (doubleBracketChars > 4) {
+                throw TomlException.ParseError(
+                    "whitespace between table array-defining double brackets is illegal",
+                    ctx.start.line
+                )
+            }
+            addTableArrayEntry(ctx.start.line, it.key().extractKey())
+        }
 }
 
 private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =

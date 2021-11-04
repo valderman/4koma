@@ -2,8 +2,8 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlValue
-import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class StringTests : StringTest {
     @Test
@@ -64,7 +64,7 @@ class StringTests : StringTest {
         assertParsesTo(TomlValue.String("\\t"), "'''\\t'''")
         assertParsesTo(TomlValue.String("\\uffff"), "'''\\uffff'''")
     }
-    
+
     @Test
     fun `can parse tricky multiline quotes`() {
         val toml = """

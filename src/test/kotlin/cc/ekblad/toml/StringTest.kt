@@ -16,7 +16,7 @@ interface StringTest : RandomTest {
 
     val alphabet: String
         get() = "abcdefghijklmnopqrstuvwxyzåäöABCDEFGHIJKLMNOPQRSTUBWXYZÅÄÖ \t!#¤%&/()=.,[]{};:<>|ひらがなカタカナ漢字火事"
-    
+
     val asciiControlChars: List<Char>
         get() = listOf(
             '\u0000'..'\u0008',
