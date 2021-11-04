@@ -63,6 +63,33 @@ class TableTests : UnitTest {
     }
 
     @Test
+    fun `can define supertable after subtable`() {
+        val expr = """
+            [foo.bar]
+            [foo]
+        """.trimIndent()
+
+        val expected = TomlValue.Map(
+            "foo" to TomlValue.Map(
+                "bar" to TomlValue.Map()
+            )
+        )
+
+        assertEquals(expected, TomlValue.from(expr))
+    }
+
+    @Test
+    fun `can't redefine supertable just because it's after subtable declaration`() {
+        assertDocumentParseError(
+            """
+            [foo.bar]
+            [foo]
+            [foo]
+            """.trimIndent()
+        )
+    }
+
+    @Test
     fun `can parse subtables with plain keys`() {
         val expr = """
             top = '''

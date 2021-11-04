@@ -1,74 +1,89 @@
 package cc.ekblad.toml
 
 internal class TomlBuilder private constructor() {
-    fun set(line: Int, fragments: List<String>, value: MutableTomlValue) {
-        require(fragments.isNotEmpty())
-        val oldContext = tableContext
-        defineTableInCurrentContext(line, fragments.dropLast(1), true)
-        val previousValue = tableContext.putIfAbsent(fragments.last(), value)
-        if (previousValue != null) {
-            val path = fragments.joinToString(".")
-            throw TomlException.ParseError("overwriting previously defined value at '$path' is not allowed", line)
+    sealed interface Context {
+        companion object {
+            fun new(): Context = ContextImpl(mutableMapOf())
         }
-        tableContext = oldContext
+
+        /**
+         * Explicitly define a key in the current context. An explicitly defined key may never be explicitly assigned
+         * to again. However, if the value is a (non-inline) table or array, it may be extended with additional
+         * properties or additional elements respectively.
+         */
+        fun set(line: Int, key: String, value: MutableTomlValue) {
+            val previousValue = (this as ContextImpl).properties.putIfAbsent(key, value)
+            if (previousValue != null && !canOverwrite(previousValue, value)) {
+                throw TomlException.ParseError("overwriting previously defined value at '$key' is not allowed", line)
+            }
+            // If this was previously an implicitly defined table, it's now explicitly defined.
+            if (previousValue is MutableTomlValue.Map) {
+                previousValue.redefinable = false
+            }
+        }
+
+        private fun canOverwrite(oldValue: MutableTomlValue, newValue: MutableTomlValue): Boolean =
+            oldValue is MutableTomlValue.Map && newValue is MutableTomlValue.Map && oldValue.redefinable
+
+        fun asMap(): MutableTomlValue.Map =
+            MutableTomlValue.Map((this as ContextImpl).properties, false)
+
+        /**
+         * Returns the subcontext at the given key, if any. Returns null if the context has no such key, or if the
+         * key does not refer to a context.
+         */
+        fun subcontext(key: String): Context? =
+            ((this as ContextImpl).properties[key] as? MutableTomlValue.Map)?.let { ContextImpl(it.value) }
     }
 
-    fun addTableArrayEntry(line: Int, fragments: List<String>) {
+    @JvmInline
+    private value class ContextImpl(val properties: MutableMap<String, MutableTomlValue>) : Context
+
+    fun resetContext() {
         tableContext = topLevelTable
-        defineTableInCurrentContext(line, fragments.dropLast(1), true)
-        val list = tableContext.compute(fragments.last()) { _, previousValue ->
+    }
+
+    fun setContext(ctx: Context) {
+        tableContext = ctx as ContextImpl
+    }
+
+    fun Context.addTableArrayEntry(line: Int, key: String) {
+        val list = (this as ContextImpl).properties.compute(key) { _, previousValue ->
             val list = (previousValue as? MutableTomlValue.List) ?: MutableTomlValue.List(mutableListOf())
             if (previousValue != null && previousValue !is MutableTomlValue.List) {
-                val path = fragments.joinToString(".")
-                throw TomlException.ParseError("tried to append to non-list '$path'", line)
+                throw TomlException.ParseError("tried to append to non-list '$key'", line)
             }
-            list.value.add(MutableTomlValue.Map(mutableMapOf()))
+            list.value.add(MutableTomlValue.Map(mutableMapOf(), false))
             list
         }
         check(list is MutableTomlValue.List)
-        tableContext = list.value.last().value
-    }
-
-    fun defineTable(line: Int, fragments: List<String>) {
-        tableContext = topLevelTable
-        defineTableInCurrentContext(line, fragments, false)
+        tableContext = ContextImpl(list.value.last().value)
     }
 
     /**
-     * Tables may be redeclared if they're defined as prefix of a dotted key.
+     * Define a hierarchy of tables (i.e. foo.bar.baz), either explicitly or implicitly.
+     * If explicitly, table in the hierarchy may be explicitly redefined using \[\[table]] syntax.
      */
-    private tailrec fun defineTableInCurrentContext(
-        line: Int,
-        fragments: List<String>,
-        allowTableRedeclaration: Boolean
-    ) {
-        if (fragments.isNotEmpty()) {
-            val head = fragments.first()
-            if (!allowTableRedeclaration && fragments.size == 1 && head in tableContext) {
-                throw TomlException.ParseError("table '$head' already declared", line)
+    fun defineTable(line: Int, fragments: List<String>, implicit: Boolean): Context =
+        fragments.fold(tableContext.properties) { context, fragment ->
+            when (val newContext = context.getOrPut(fragment) { MutableTomlValue.Map(mutableMapOf(), implicit) }) {
+                is MutableTomlValue.Map -> newContext.value
+                is MutableTomlValue.List -> newContext.value.last().value
+                is MutableTomlValue.InlineMap -> throw TomlException.ParseError(
+                    "extending inline table '$fragment' is not allowed",
+                    line
+                )
+                else -> throw TomlException.ParseError(
+                    "tried to extend non-table '$fragment'",
+                    line
+                )
             }
+        }.let(::ContextImpl)
 
-            val newContext = when (
-                val ctx = tableContext.getOrPut(head) {
-                    MutableTomlValue.Map(mutableMapOf())
-                }
-            ) {
-                is MutableTomlValue.Map -> ctx
-                is MutableTomlValue.List -> ctx.value.last()
-                is MutableTomlValue.InlineMap ->
-                    throw TomlException.ParseError("extending inline table '$head' is not allowed", line)
-                else ->
-                    throw TomlException.ParseError("tried to extend non-table '$head'", line)
-            }
-            tableContext = newContext.value
-            defineTableInCurrentContext(line, fragments.drop(1), allowTableRedeclaration)
-        }
-    }
+    private val topLevelTable: ContextImpl = Context.new() as ContextImpl
+    private var tableContext: ContextImpl = topLevelTable
 
-    private val topLevelTable: MutableMap<String, MutableTomlValue> = mutableMapOf()
-    private var tableContext: MutableMap<String, MutableTomlValue> = topLevelTable
-
-    fun build(): TomlValue.Map = TomlValue.Map(topLevelTable.mapValues { it.value.freeze() })
+    fun build(): TomlValue.Map = TomlValue.Map(topLevelTable.properties.mapValues { it.value.freeze() })
 
     companion object {
         fun create(): TomlBuilder = TomlBuilder()
@@ -76,8 +91,8 @@ internal class TomlBuilder private constructor() {
 }
 
 internal sealed class MutableTomlValue {
-    data class Map(val value: MutableMap<String, MutableTomlValue>) : MutableTomlValue()
-    data class List(val value: MutableList<MutableTomlValue.Map>) : MutableTomlValue()
+    data class Map(val value: MutableMap<String, MutableTomlValue>, var redefinable: Boolean) : MutableTomlValue()
+    data class List(val value: MutableList<Map>) : MutableTomlValue()
     data class Primitive(val value: TomlValue.Primitive) : MutableTomlValue()
 
     // Inline maps and lists are self-contained and thus immutable

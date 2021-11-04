@@ -14,27 +14,44 @@ internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
 }
 
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
-    ctx.key_value()?.let { set(ctx.start.line, it.key().extractKey(), extractValue(it.value())) }
-        ?: ctx.table()?.let { extractTable(it) }
+    ctx.key_value()?.let { extractKeyValue(it) }
+        ?: ctx.table()?.standard_table()?.let { extractTable(it) }
+        ?: ctx.table()?.array_table()?.let { extractArrayTable(it) }
         ?: ctx.comment().text.throwOnBadChar(ctx, '\r', '\n')
 }
 
-private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
-    ctx.standard_table()?.let { defineTable(ctx.start.line, it.key().extractKey()) }
-        ?: ctx.array_table().let {
-            // Spec demands a parse error if there is space between the opening or closing brackets of a table array
-            // header, but we can't get the lexer/parser to reject that for us.
-            val keyLength = it.key().stop.stopIndex - it.key().start.charPositionInLine
-            val headerLength = it.stop.stopIndex - it.start.charPositionInLine
-            val doubleBracketChars = headerLength - keyLength
-            if (doubleBracketChars > 4) {
-                throw TomlException.ParseError(
-                    "whitespace between table array-defining double brackets is illegal",
-                    ctx.start.line
-                )
-            }
-            addTableArrayEntry(ctx.start.line, it.key().extractKey())
-        }
+private fun TomlBuilder.extractKeyValue(ctx: TomlParser.Key_valueContext) {
+    val keyFragments = ctx.key().extractKey()
+    val tableContext = defineTable(ctx.start.line, keyFragments.dropLast(1), false)
+    tableContext.set(ctx.start.line, keyFragments.last(), extractValue(ctx.value()))
+}
+
+private fun TomlBuilder.extractTable(ctx: TomlParser.Standard_tableContext) {
+    val keyFragments = ctx.key().extractKey()
+    val key = keyFragments.last()
+    resetContext()
+    val tableContext = defineTable(ctx.start.line, keyFragments.dropLast(1), true)
+    val newTableContext = tableContext.subcontext(key) ?: TomlBuilder.Context.new()
+    tableContext.set(ctx.start.line, key, newTableContext.asMap())
+    setContext(newTableContext)
+}
+
+private fun TomlBuilder.extractArrayTable(ctx: TomlParser.Array_tableContext) {
+    // Spec demands a parse error if there is space between the opening or closing brackets of a table array
+    // header, but we can't get the lexer/parser to reject that for us.
+    val keyLength = ctx.key().stop.stopIndex - ctx.key().start.charPositionInLine
+    val headerLength = ctx.stop.stopIndex - ctx.start.charPositionInLine
+    val doubleBracketChars = headerLength - keyLength
+    if (doubleBracketChars > 4) {
+        throw TomlException.ParseError(
+            "whitespace between table array-defining double brackets is illegal",
+            ctx.start.line
+        )
+    }
+    val keyFragments = ctx.key().extractKey()
+    resetContext()
+    val tableContext = defineTable(ctx.start.line, keyFragments.dropLast(1), true)
+    tableContext.addTableArrayEntry(ctx.start.line, keyFragments.last())
 }
 
 private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
@@ -97,8 +114,9 @@ private fun TomlParser.Inline_tableContext.extractInlineTable(): TomlValue.Map =
     TomlBuilder.create().apply {
         var ctx = inline_table_keyvals().inline_table_keyvals_non_empty()
         while (ctx != null) {
-            val key = ctx.key().extractKey()
-            set(ctx.start.line, key, extractValue(ctx.value()))
+            val keyFragments = ctx.key().extractKey()
+            val tableContext = defineTable(ctx.start.line, keyFragments.dropLast(1), false)
+            tableContext.set(ctx.start.line, keyFragments.last(), extractValue(ctx.value()))
             ctx = ctx.inline_table_keyvals_non_empty()
         }
     }.build()
