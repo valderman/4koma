@@ -147,19 +147,26 @@ class TableTests : UnitTest {
 
             assertDocumentParseError(
                 """
+                    foo.bar = 1
                     [foo]
-                    bar = 'hello'
-                    [foo.bar]
                 """.trimIndent()
             )
 
             assertDocumentParseError(
                 """
-                    [foo.bar]
+                    foo.bar.baz = 1
                     [foo]
                 """.trimIndent()
             )
 
+            assertDocumentParseError(
+                """
+                    [foo]
+                    bar = 'hello'
+                    [foo.bar]
+                """.trimIndent()
+            )
+            
             assertDocumentParseError(
                 """
                     [foo]

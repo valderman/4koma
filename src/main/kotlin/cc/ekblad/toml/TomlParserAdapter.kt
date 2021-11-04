@@ -7,6 +7,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeParseException
+import org.antlr.v4.runtime.ParserRuleContext
 
 internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
     ctx.expression().forEach { extractExpression(it) }
@@ -15,7 +16,7 @@ internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
     ctx.key_value()?.let { set(ctx.start.line, it.key().extractKey(), extractValue(it.value())) }
         ?: ctx.table()?.let { extractTable(it) }
-        ?: ctx.comment()
+        ?: ctx.comment().text.throwOnBadChar(ctx, '\r', '\n')
 }
 
 private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
@@ -90,10 +91,22 @@ private fun TomlParser.Inline_tableContext.extractInlineTable(): TomlValue.Map =
     }.build()
 
 private fun TomlParser.StringContext.extractString(): String =
-    BASIC_STRING()?.text?.stripQuotes(1)?.convertEscapeCodes()
-        ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.convertEscapeCodes()
-        ?: LITERAL_STRING()?.text?.stripQuotes(1)
-        ?: ML_LITERAL_STRING().text.stripQuotes(3).trimFirstNewline()
+    BASIC_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this)?.convertEscapeCodes()
+        ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.throwOnBadChar(this)?.convertEscapeCodes()
+        ?: LITERAL_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this, '\r', '\n')
+        ?: ML_LITERAL_STRING().text.stripQuotes(3).trimFirstNewline().throwOnBadChar(this)
+
+private fun String.throwOnBadChar(ctx: ParserRuleContext, vararg extraBadChars: Char): String {
+    val encounteredInvalidChars = (invalidChars + extraBadChars.toList()).filter { it in this }
+    if (encounteredInvalidChars.isNotEmpty()) {
+        val badChars = encounteredInvalidChars.joinToString(", ") { it.code.toString() }
+        throw TomlException.ParseError(
+            "disallowed character(s) encountered: $badChars",
+            ctx.start.line
+        )
+    }
+    return this
+}
 
 private fun String.stripQuotes(quoteSize: Int): String =
     substring(quoteSize, length - quoteSize)
@@ -116,8 +129,8 @@ private fun TomlParser.Simple_keyContext.extractSimpleKey(): List<String> =
         ?: unquoted_key().extractUnquotedKey()
 
 private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
-    BASIC_STRING()?.let { listOf(it.text.stripQuotes(1).convertEscapeCodes()) }
-        ?: LITERAL_STRING().let { listOf(it.text.stripQuotes(1)) }
+    BASIC_STRING()?.let { listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n').convertEscapeCodes()) }
+        ?: LITERAL_STRING().let { listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n')) }
 
 /**
  * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
@@ -148,3 +161,10 @@ private fun replaceEscapeMatch(match: MatchResult): String = when (match.value[1
 }
 
 private val escapeRegex = Regex("\\\\([\\\\\"bnfrt]|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))")
+
+private val invalidChars = listOf(
+    '\u0000'..'\u0008',
+    '\u000B'..'\u000C',
+    '\u000E'..'\u001F',
+    listOf('\u007F', '�'),
+).flatten()

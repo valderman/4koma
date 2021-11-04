@@ -90,6 +90,15 @@ class KeyTests : StringTest {
     }
 
     @Test
+    fun `throws on key containing ASCII control char`() {
+        asciiControlChars.assertAll {
+            assertDocumentParseError("x${it}x = true")
+            assertDocumentParseError("'x${it}x' = true")
+            assertDocumentParseError("\"x${it}x\" = true")
+        }
+    }
+
+    @Test
     fun `throws on key containing plus sign`() {
         assertDocumentParseError("+12 = 12")
     }

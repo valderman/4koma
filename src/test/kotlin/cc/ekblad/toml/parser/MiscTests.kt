@@ -1,10 +1,11 @@
 package cc.ekblad.toml.parser
 
+import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
 import kotlin.test.Test
 
-class MiscTests : UnitTest {
+class MiscTests : StringTest {
     @Test
     fun `can parse trailing whitespace`() {
         assertParsesTo(TomlValue.Bool(true), "true    ")
@@ -26,6 +27,13 @@ class MiscTests : UnitTest {
     @Test
     fun `throws on unspecified value`() {
         assertDocumentParseError("foo =")
+    }
+
+    @Test
+    fun `throws on comment containing ASCII control char`() {
+        asciiControlChars.assertAll {
+            assertDocumentParseError("# Bad comment: $it (${it.code})")
+        }
     }
 
     @Test

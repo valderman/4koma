@@ -34,12 +34,12 @@ fun <T : Any> TomlValue.convert(target: KType): T = when (this) {
 
 private fun <T : Any> TomlValue.List.toList(target: KType): T =
     when (target.classifier) {
-        List::class -> convertList(value, target.arguments.single().type!!) as T
-        Collection::class -> convertList(value, target.arguments.single().type!!) as T
-        Iterable::class -> convertList(value, target.arguments.single().type!!).asIterable() as T
-        MutableList::class -> convertList(value, target.arguments.single().type!!).toMutableList() as T
-        Array::class -> convertList(value, target.arguments.single().type!!).toTypedArray() as T
-        Any::class -> convertList(value, target.arguments.single().type!!) as T
+        List::class -> convertList(elements, target.arguments.single().type!!) as T
+        Collection::class -> convertList(elements, target.arguments.single().type!!) as T
+        Iterable::class -> convertList(elements, target.arguments.single().type!!).asIterable() as T
+        MutableList::class -> convertList(elements, target.arguments.single().type!!).toMutableList() as T
+        Array::class -> convertList(elements, target.arguments.single().type!!).toTypedArray() as T
+        Any::class -> convertList(elements, target.arguments.single().type!!) as T
         else -> throw TomlException.ConversionError(this, target)
     }
 

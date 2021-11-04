@@ -87,7 +87,7 @@ class FloatTests : RandomTest {
     }
 
     private fun assertParsesWithin(expected: Double, valueToParse: String) {
-        val value = ((TomlValue.from("test = $valueToParse") as TomlValue.Map).properties["test"] as TomlValue.Double).value
+        val value = (TomlValue.from("test = $valueToParse").properties["test"] as TomlValue.Double).value
         assertTrue(abs(value - expected) < 0.0001)
     }
 }

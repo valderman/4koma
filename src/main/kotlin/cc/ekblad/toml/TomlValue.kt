@@ -23,21 +23,21 @@ sealed class TomlValue {
     data class Map(val properties: kotlin.collections.Map<kotlin.String, TomlValue>) : TomlValue() {
         constructor(vararg entries: Pair<kotlin.String, TomlValue>) : this(entries.toMap())
     }
-    data class List(val value: kotlin.collections.List<TomlValue>) : TomlValue() {
+    data class List(val elements: kotlin.collections.List<TomlValue>) : TomlValue() {
         constructor(vararg values: TomlValue) : this(values.toList())
     }
 
     companion object {
-        fun from(string: kotlin.String): TomlValue =
+        fun from(string: kotlin.String): Map =
             from(CharStreams.fromString(string))
 
-        fun from(stream: InputStream): TomlValue =
-            from(CharStreams.fromStream(stream))
+        fun from(stream: InputStream): Map =
+            from(CharStreams.fromStream(stream, Charsets.UTF_8))
 
-        fun from(path: Path): TomlValue =
-            from(CharStreams.fromPath(path))
+        fun from(path: Path): Map =
+            from(CharStreams.fromPath(path, Charsets.UTF_8))
 
-        fun from(charStream: CharStream): TomlValue {
+        fun from(charStream: CharStream): Map {
             val errorListener = TomlErrorListener()
             val lexer = TomlLexer(charStream)
             lexer.removeErrorListeners()

@@ -48,7 +48,9 @@ internal class TomlBuilder private constructor() {
                 throw TomlException.ParseError("table '$head' already declared", line)
             }
 
-            val newContext = when (val ctx = tableContext.getOrPut(head) { MutableTomlValue.Map(mutableMapOf()) }) {
+            val newContext = when (val ctx = tableContext.getOrPut(head) {
+                MutableTomlValue.Map(mutableMapOf())
+            }) {
                 is MutableTomlValue.Map -> ctx
                 is MutableTomlValue.List -> ctx.value.last()
                 is MutableTomlValue.InlineMap ->
