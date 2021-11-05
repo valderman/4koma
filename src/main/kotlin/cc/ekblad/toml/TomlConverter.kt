@@ -11,8 +11,10 @@ import java.time.OffsetDateTime
 import java.util.SortedMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.KVisibility
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
+import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
 /**
@@ -87,6 +89,10 @@ private fun <T : Any> TomlValue.Map.toDataClass(target: KType): T {
         }
         parameterValue?.convert<Any>(it.type)
     }.toTypedArray()
+
+    if (kClass.visibility == KVisibility.PRIVATE) {
+        constructor.isAccessible = true
+    }
     return constructor.call(*parameters) as T
 }
 

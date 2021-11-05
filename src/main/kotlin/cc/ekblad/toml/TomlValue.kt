@@ -11,7 +11,7 @@ import java.nio.file.Path
 /**
  * Kotlin representation of a TOML value.
  * A full TOML document is always represented as a TomlValue.Map.
- * 
+ *
  * You can either traverse this representation manually, or - more conveniently - convert it to a data class of
  * your choice using [TomlValue.convert].
  */
