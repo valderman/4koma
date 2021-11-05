@@ -4,6 +4,9 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 sealed class TomlException : RuntimeException() {
+    /**
+     * An error occurred while parsing a TOML document.
+     */
     data class ParseError(
         val errorDescription: String,
         val line: Int,
@@ -15,6 +18,9 @@ sealed class TomlException : RuntimeException() {
             "toml parse error, on line $line: $errorDescription"
     }
 
+    /**
+     * An error occurred while converting a TOML value into some other Kotlin type.
+     */
     data class ConversionError(
         val reason: String?,
         val sourceValue: TomlValue,

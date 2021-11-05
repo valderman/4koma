@@ -15,6 +15,21 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.typeOf
 
+/**
+ * Converts the receiver TOML value to the type indicated by @param T.
+ *
+ * TOML types can be converted to Kotlin types as follows:
+ * * List: List, MutableList, Collection, Iterable or Array
+ * * Map: Map, MutableMap, SortedMap, or any data class with fields corresponding to the keys of the TOML document.
+ * * Bool: Boolean
+ * * Double: Double, Float or BigDecimal
+ * * Integer: Int, Long, Float, Double, BigDecimal or BigInteger
+ * * String: String
+ * * LocalDate: LocalDate
+ * * LocalTime: LocalTime
+ * * LocalDateTime: LocalDateTime
+ * * OffsetDateTime: OffsetDateTime
+ */
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T : Any> TomlValue.convert(): T =
     convert(typeOf<T>())

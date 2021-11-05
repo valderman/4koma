@@ -37,8 +37,18 @@ private fun TomlBuilder.extractTable(ctx: TomlParser.Standard_tableContext) {
 }
 
 private fun TomlBuilder.extractArrayTable(ctx: TomlParser.Array_tableContext) {
-    // Spec demands a parse error if there is space between the opening or closing brackets of a table array
-    // header, but we can't get the lexer/parser to reject that for us.
+    throwOnWhitespaceBetweenBrackets(ctx)
+    val keyFragments = ctx.key().extractKey()
+    resetContext()
+    val tableContext = defineTable(ctx.start.line, keyFragments.dropLast(1), true)
+    val newTableContext = tableContext.addTableArrayEntry(ctx.start.line, keyFragments.last())
+    setContext(newTableContext)
+}
+
+/** Spec demands a parse error if there is space between the opening or closing brackets of a table array
+ * header, but we can't get the lexer/parser to reject that for us so we have to do it here instead.
+ */
+private fun throwOnWhitespaceBetweenBrackets(ctx: TomlParser.Array_tableContext) {
     val keyLength = ctx.key().stop.stopIndex - ctx.key().start.charPositionInLine
     val headerLength = ctx.stop.stopIndex - ctx.start.charPositionInLine
     val doubleBracketChars = headerLength - keyLength
@@ -48,10 +58,6 @@ private fun TomlBuilder.extractArrayTable(ctx: TomlParser.Array_tableContext) {
             ctx.start.line
         )
     }
-    val keyFragments = ctx.key().extractKey()
-    resetContext()
-    val tableContext = defineTable(ctx.start.line, keyFragments.dropLast(1), true)
-    tableContext.addTableArrayEntry(ctx.start.line, keyFragments.last())
 }
 
 private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
@@ -127,6 +133,40 @@ private fun TomlParser.StringContext.extractString(): String =
         ?: LITERAL_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this, '\r', '\n')
         ?: ML_LITERAL_STRING().text.stripQuotes(3).trimFirstNewline().throwOnBadChar(this)
 
+private fun TomlParser.KeyContext.extractKey(): List<String> =
+    simple_key()?.extractSimpleKey()
+        ?: dotted_key().extractDottedKey()
+
+private fun TomlParser.Dotted_keyContext.extractDottedKey(): List<String> =
+    simple_key().flatMap { it.extractSimpleKey() }
+
+private fun TomlParser.Simple_keyContext.extractSimpleKey(): List<String> =
+    quoted_key()?.extractQuotedKey()
+        ?: unquoted_key().extractUnquotedKey()
+
+private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
+    BASIC_STRING()?.let {
+        listOf(
+            it.text.stripQuotes(1)
+                .throwOnBadChar(this, '\r', '\n')
+                .convertEscapeCodes(start.line)
+        )
+    } ?: LITERAL_STRING().let {
+        listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n'))
+    }
+
+/**
+ * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
+ * that some "simple" keys may actually be dotted keys, and that the parser lets '+' signs through.
+ */
+private fun TomlParser.Unquoted_keyContext.extractUnquotedKey(): List<String> {
+    val fragments = text.split('.')
+    if (fragments.any { it.contains('+') }) {
+        throw TomlException.ParseError("illegal character '+' encountered in key", start.line)
+    }
+    return fragments
+}
+
 private fun String.throwOnBadChar(ctx: ParserRuleContext, vararg extraBadChars: Char): String {
     val encounteredInvalidChars = (invalidChars + extraBadChars.toList()).filter { it in this }
     if (encounteredInvalidChars.isNotEmpty()) {
@@ -146,38 +186,6 @@ private fun String.trimFirstNewline(): String = when {
     startsWith('\n') -> drop(1)
     startsWith("\r\n") -> drop(2)
     else -> this
-}
-
-private fun TomlParser.KeyContext.extractKey(): List<String> =
-    simple_key()?.extractSimpleKey()
-        ?: dotted_key().extractDottedKey()
-
-private fun TomlParser.Dotted_keyContext.extractDottedKey(): List<String> =
-    simple_key().flatMap { it.extractSimpleKey() }
-
-private fun TomlParser.Simple_keyContext.extractSimpleKey(): List<String> =
-    quoted_key()?.extractQuotedKey()
-        ?: unquoted_key().extractUnquotedKey()
-
-private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
-    BASIC_STRING()?.let {
-        listOf(it.text.stripQuotes(1)
-            .throwOnBadChar(this, '\r', '\n')
-            .convertEscapeCodes(start.line))
-    } ?: LITERAL_STRING().let {
-        listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n'))
-    }
-
-/**
- * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
- * that some "simple" keys may actually be dotted keys, and that the parser lets '+' signs through.
- */
-private fun TomlParser.Unquoted_keyContext.extractUnquotedKey(): List<String> {
-    val fragments = text.split('.')
-    if (fragments.any { it.contains('+') }) {
-        throw TomlException.ParseError("illegal character '+' encountered in key", start.line)
-    }
-    return fragments
 }
 
 private fun String.convertEscapeCodes(line: Int): String =

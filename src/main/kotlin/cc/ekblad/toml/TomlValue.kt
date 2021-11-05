@@ -8,6 +8,13 @@ import org.antlr.v4.runtime.CommonTokenStream
 import java.io.InputStream
 import java.nio.file.Path
 
+/**
+ * Kotlin representation of a TOML value.
+ * A full TOML document is always represented as a TomlValue.Map.
+ * 
+ * You can either traverse this representation manually, or - more conveniently - convert it to a data class of
+ * your choice using [TomlValue.convert].
+ */
 sealed class TomlValue {
     sealed class Primitive : TomlValue()
 
@@ -28,24 +35,35 @@ sealed class TomlValue {
     }
 
     companion object {
+        /**
+         * Parse the given TOML-formatted string into a TOML map.
+         */
         fun from(string: kotlin.String): Map =
             from(CharStreams.fromString(string))
 
+        /**
+         * Parse the given TOML-formatted input stream into a TOML map.
+         */
         fun from(stream: InputStream): Map =
             from(CharStreams.fromStream(stream, Charsets.UTF_8))
 
+        /**
+         * Parse the given TOML-formatted file into a TOML map.
+         */
         fun from(path: Path): Map =
             from(CharStreams.fromPath(path, Charsets.UTF_8))
 
-        fun from(charStream: CharStream): Map {
+        private fun from(charStream: CharStream): Map {
             val errorListener = TomlErrorListener()
             val lexer = TomlLexer(charStream)
             lexer.removeErrorListeners()
             lexer.addErrorListener(errorListener)
+
             val tokenStream = CommonTokenStream(lexer)
             val parser = TomlParser(tokenStream)
             parser.removeErrorListeners()
             parser.addErrorListener(errorListener)
+
             val documentContext = parser.document()
             val builder = TomlBuilder.create()
             builder.extractDocument(documentContext)

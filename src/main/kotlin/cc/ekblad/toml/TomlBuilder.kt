@@ -47,7 +47,11 @@ internal class TomlBuilder private constructor() {
         tableContext = ctx as ContextImpl
     }
 
-    fun Context.addTableArrayEntry(line: Int, key: String) {
+    /**
+     * Add an entry to the table at the given key in the receiver context.
+     * If the table does not already exist, it is created.
+     */
+    fun Context.addTableArrayEntry(line: Int, key: String): Context {
         val list = (this as ContextImpl).properties.compute(key) { _, previousValue ->
             val list = (previousValue as? MutableTomlValue.List) ?: MutableTomlValue.List(mutableListOf())
             if (previousValue != null && previousValue !is MutableTomlValue.List) {
@@ -57,7 +61,7 @@ internal class TomlBuilder private constructor() {
             list
         }
         check(list is MutableTomlValue.List)
-        tableContext = ContextImpl(list.value.last().value)
+        return ContextImpl(list.value.last().value)
     }
 
     /**
