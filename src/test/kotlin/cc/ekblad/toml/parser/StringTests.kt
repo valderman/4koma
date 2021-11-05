@@ -105,12 +105,21 @@ class StringTests : StringTest {
     }
 
     @Test
-    fun `parse error on ASCII control chars chars`() {
+    fun `parse error on ASCII control chars`() {
         asciiControlChars.assertAll {
             assertDocumentParseError("foo = 'bad: $it'")
             assertDocumentParseError("foo = \"bad: $it\"")
             assertDocumentParseError("foo = '''bad: $it'''")
             assertDocumentParseError("foo = \"\"\"bad: $it\"\"\"")
         }
+    }
+
+    @Test
+    fun `parse error on invalid escape code`() {
+        assertDocumentParseError(
+            """
+                invalid-codepoint = "This string contains a non scalar unicode codepoint \uD801"
+            """.trimIndent()
+        )
     }
 }

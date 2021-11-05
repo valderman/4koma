@@ -122,8 +122,8 @@ private fun TomlParser.Inline_tableContext.extractInlineTable(): TomlValue.Map =
     }.build()
 
 private fun TomlParser.StringContext.extractString(): String =
-    BASIC_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this)?.convertEscapeCodes()
-        ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.throwOnBadChar(this)?.convertEscapeCodes()
+    BASIC_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this)?.convertEscapeCodes(start.line)
+        ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.throwOnBadChar(this)?.convertEscapeCodes(start.line)
         ?: LITERAL_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this, '\r', '\n')
         ?: ML_LITERAL_STRING().text.stripQuotes(3).trimFirstNewline().throwOnBadChar(this)
 
@@ -160,8 +160,13 @@ private fun TomlParser.Simple_keyContext.extractSimpleKey(): List<String> =
         ?: unquoted_key().extractUnquotedKey()
 
 private fun TomlParser.Quoted_keyContext.extractQuotedKey(): List<String> =
-    BASIC_STRING()?.let { listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n').convertEscapeCodes()) }
-        ?: LITERAL_STRING().let { listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n')) }
+    BASIC_STRING()?.let {
+        listOf(it.text.stripQuotes(1)
+            .throwOnBadChar(this, '\r', '\n')
+            .convertEscapeCodes(start.line))
+    } ?: LITERAL_STRING().let {
+        listOf(it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n'))
+    }
 
 /**
  * Because of the parser hack required to support keys that can overlap with values, we need to deal with the fact
@@ -175,10 +180,10 @@ private fun TomlParser.Unquoted_keyContext.extractUnquotedKey(): List<String> {
     return fragments
 }
 
-private fun String.convertEscapeCodes(): String =
-    escapeRegex.replace(this, ::replaceEscapeMatch)
+private fun String.convertEscapeCodes(line: Int): String =
+    escapeRegex.replace(this) { replaceEscapeMatch(line, it) }
 
-private fun replaceEscapeMatch(match: MatchResult): String = when (match.value[1]) {
+private fun replaceEscapeMatch(line: Int, match: MatchResult): String = when (match.value[1]) {
     '"' -> "\""
     '\\' -> "\\"
     'b' -> "\b"
@@ -186,9 +191,18 @@ private fun replaceEscapeMatch(match: MatchResult): String = when (match.value[1
     'n' -> "\n"
     'r' -> "\r"
     't' -> "\t"
-    'u' -> String(Character.toChars(match.groupValues[2].toInt(16)))
-    'U' -> String(Character.toChars(match.groupValues[3].toInt(16)))
+    'u' -> String(Character.toChars(match.groupValues[2].toInt(16).throwOnNonScalar(line)))
+    'U' -> String(Character.toChars(match.groupValues[3].toInt(16).throwOnNonScalar(line)))
     else -> error("unreachable")
+}
+
+/**
+ * Unicode surrogate characters are not valid escape codes.
+ */
+private fun Int.throwOnNonScalar(line: Int): Int = apply {
+    if (this in 0xD800..0xDFFF) {
+        throw TomlException.ParseError("surrogate character '$this' is not a valid escape code", line)
+    }
 }
 
 private val escapeRegex = Regex("\\\\([\\\\\"bnfrt]|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))")
