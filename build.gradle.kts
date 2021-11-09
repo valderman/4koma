@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.backend.wasm.lower.excludeDeclarationsFromCodegen
+
 plugins {
     kotlin("jvm") version "1.5.31"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
@@ -12,7 +14,7 @@ val kotlinJvmTarget = 16
 
 repositories {
     mavenCentral()
-    maven{
+    maven {
         url = uri("https://jitpack.io")
     }
 }
@@ -48,6 +50,7 @@ tasks {
         dependsOn("generateGrammarSource")
         kotlinOptions {
             jvmTarget = kotlinJvmTarget.toString()
+            freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
         }
     }
     compileJava { options.release.set(kotlinJvmTarget) }

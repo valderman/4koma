@@ -21,7 +21,7 @@ import kotlin.reflect.typeOf
  * Converts the receiver TOML value to the type indicated by @param T.
  *
  * TOML types can be converted to Kotlin types as follows:
- * * List: List, MutableList, Collection, Iterable or Array
+ * * List: List, MutableList, Collection or Iterable
  * * Map: Map, MutableMap, SortedMap, or any data class with fields corresponding to the keys of the TOML document.
  * * Bool: Boolean
  * * Double: Double, Float or BigDecimal
@@ -49,14 +49,16 @@ fun <T : Any> TomlValue.convert(target: KType): T = when (this) {
     is TomlValue.OffsetDateTime -> toOffsetDateTime(target)
 }
 
+private val anyKType: KType = Any::class.createType()
+private val stringKType: KType = String::class.createType()
+
 private fun <T : Any> TomlValue.List.toList(target: KType): T =
     when (target.classifier) {
-        List::class -> convertList(elements, target.arguments.single().type!!) as T
-        Collection::class -> convertList(elements, target.arguments.single().type!!) as T
-        Iterable::class -> convertList(elements, target.arguments.single().type!!).asIterable() as T
-        MutableList::class -> convertList(elements, target.arguments.single().type!!).toMutableList() as T
-        Array::class -> convertList(elements, target.arguments.single().type!!).toTypedArray() as T
-        Any::class -> convertList(elements, target.arguments.single().type!!) as T
+        // List also covers the MutableList case
+        List::class -> convertList(elements, target.arguments.single().type ?: anyKType) as T
+        Collection::class -> convertList(elements, target.arguments.single().type ?: anyKType) as T
+        Iterable::class -> convertList(elements, target.arguments.single().type ?: anyKType).asIterable() as T
+        Any::class -> convertList(elements, anyKType) as T
         else -> throw TomlException.ConversionError(this, target)
     }
 
@@ -64,9 +66,9 @@ private fun convertList(value: List<TomlValue>, elementType: KType): List<Any> =
     value.map { it.convert(elementType) }
 
 private fun <T : Any> TomlValue.Map.toObject(target: KType): T = when {
-    target.classifier == Map::class -> toMap(target.arguments[1].type!!) as T
-    target.classifier == MutableMap::class -> toMap(target.arguments[1].type!!).toMutableMap() as T
-    target.classifier == SortedMap::class -> toMap(target.arguments[1].type!!).toSortedMap() as T
+    // Map also covers the MutableMap case
+    target.classifier == Map::class -> toMap(target) as T
+    target.classifier == SortedMap::class -> toMap(target).toSortedMap() as T
     target.classifier == Any::class -> toMap(Any::class.createType()) as T
     (target.classifier as KClass<*>).isData -> toDataClass(target)
     else -> throw TomlException.ConversionError(
@@ -76,8 +78,18 @@ private fun <T : Any> TomlValue.Map.toObject(target: KType): T = when {
     )
 }
 
-private fun TomlValue.Map.toMap(elementType: KType): Map<String, Any> =
-    properties.mapValues { it.value.convert(elementType) }
+private fun TomlValue.Map.toMap(targetMapType: KType): Map<String, Any> {
+    if (targetMapType.arguments.firstOrNull()?.type !in setOf(null, anyKType, stringKType)) {
+        throw TomlException.ConversionError(
+            "when converting an object into a map, that map must have keys of type String or Any",
+            this,
+            targetMapType
+
+        )
+    }
+    val elementType = targetMapType.arguments.getOrNull(1)?.type ?: anyKType
+    return properties.mapValues { it.value.convert(elementType) }
+}
 
 private fun <T : Any> TomlValue.Map.toDataClass(target: KType): T {
     val kClass = target.classifier as KClass<*>

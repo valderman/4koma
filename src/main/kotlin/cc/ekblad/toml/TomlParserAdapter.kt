@@ -71,8 +71,8 @@ private fun extractValue(value: TomlParser.ValueContext): MutableTomlValue =
 
 private fun TomlParser.IntegerContext.extractInteger(): Long {
     val text = text.replace("_", "")
-    try {
-        return when {
+    return try {
+        when {
             DEC_INT() != null -> text.toLong(10)
             HEX_INT() != null -> text.substring(2).toLong(16)
             BIN_INT() != null -> text.substring(2).toLong(2)

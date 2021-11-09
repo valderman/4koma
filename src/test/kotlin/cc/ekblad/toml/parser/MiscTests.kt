@@ -2,10 +2,35 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlValue
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class MiscTests : StringTest {
+    private val test_toml = TomlValue.Map(
+        "section" to TomlValue.Map(
+            "int" to TomlValue.Integer(123),
+            "strings" to TomlValue.List(
+                TomlValue.String("foo"),
+                TomlValue.String("bar"),
+                TomlValue.String("baz")
+            )
+        )
+    )
+
+    @Test
+    fun `can parse from input stream`() {
+        this::class.java.classLoader.getResourceAsStream("test.toml")?.use {
+            assertEquals(test_toml, TomlValue.from(it))
+        } ?: error("couldn't open resource")
+    }
+
+    @Test
+    fun `can parse from path`() {
+        val url = this::class.java.classLoader.getResource("test.toml") ?: error("couldn't find resource")
+        assertEquals(test_toml, TomlValue.from(Path.of(url.toURI())))
+    }
+
     @Test
     fun `can parse trailing whitespace`() {
         assertParsesTo(TomlValue.Bool(true), "true    ")

@@ -1,0 +1,3 @@
+[section]
+int = 123
+strings = ["foo", 'bar', '''baz''']

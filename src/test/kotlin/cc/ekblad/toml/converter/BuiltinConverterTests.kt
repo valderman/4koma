@@ -1,10 +1,19 @@
 package cc.ekblad.toml.converter
 
 import cc.ekblad.toml.StringTest
+import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.convert
+import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.util.SortedMap
+import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -17,6 +26,32 @@ class BuiltinConverterTests : StringTest {
         val mom: Person?,
         val dad: Person?,
     )
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun `throws on conversion to invalid type`() {
+        listOf(
+            typeOf<Int>() to TomlValue.String("hello"),
+            typeOf<String>() to TomlValue.Integer(1),
+            typeOf<String>() to TomlValue.Bool(false),
+            typeOf<String>() to TomlValue.Double(1.0),
+            typeOf<String>() to TomlValue.List(),
+            typeOf<String>() to TomlValue.LocalTime(LocalTime.of(1, 1)),
+            typeOf<String>() to TomlValue.LocalDate(LocalDate.of(2001, 1, 1)),
+            typeOf<String>() to TomlValue.LocalDateTime(LocalDateTime.of(2001, 1, 1, 1, 1)),
+            typeOf<String>() to TomlValue.OffsetDateTime(OffsetDateTime.of(2001, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC)),
+            typeOf<List<String>>() to TomlValue.String("hello"),
+            typeOf<List<String>>() to TomlValue.Map("hello" to TomlValue.String("hello")),
+            typeOf<Map<Int, String>>() to TomlValue.Map("hello" to TomlValue.String("hello")),
+        ).assertAll { (kType, tomlValue) ->
+            assertThrows<TomlException.ConversionError> { tomlValue.convert(kType) }
+        }
+    }
+
+    @Test
+    fun `throws on missing non-nullable key when converting to data class`() {
+        assertThrows<TomlException.ConversionError> { TomlValue.Map().convert<Person>() }
+    }
 
     @Test
     fun `can convert objects to data classes`() {
@@ -45,6 +80,22 @@ class BuiltinConverterTests : StringTest {
     }
 
     @Test
+    fun `can convert objects to local data classes`() {
+        data class Foo(val bar: String)
+        val expected = Foo("hello")
+        val toml = """bar = "hello""""
+        assertEquals(expected, TomlValue.from(toml).convert())
+    }
+
+    @Test
+    fun `can convert objects to public data classes`() {
+        val expected = PublicFoo("hello")
+        val toml = """bar = "hello""""
+        assertEquals(expected, TomlValue.from(toml).convert())
+    }
+    data class PublicFoo(val bar: String)
+
+    @Test
     fun `can convert objects to simple maps`() {
         val expected = mapOf("foo" to 1L, "bar" to 2L)
         val toml = """
@@ -70,15 +121,73 @@ class BuiltinConverterTests : StringTest {
         )
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun `can convert maps to special maps`() {
+        listOf(
+            typeOf<Map<String, String>>() to mapOf("hello" to "hello"),
+            typeOf<MutableMap<String, String>>() to mutableMapOf("hello" to "hello"),
+            typeOf<SortedMap<String, String>>() to sortedMapOf("hello" to "hello")
+        ).assertAll { (kType, it) ->
+            assertEquals(
+                it,
+                TomlValue.Map("hello" to TomlValue.String("hello")).convert(kType)
+            )
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `can convert lists`() {
-        assertEquals(
-            listOf(1L, 2L),
-            TomlValue.List(
-                TomlValue.Integer(1),
-                TomlValue.Integer(2),
-            ).convert()
-        )
+        listOf(
+            typeOf<Any>() to listOf(1L, 2L),
+            typeOf<List<Long>>() to listOf(1L, 2L),
+            typeOf<MutableList<Int>>() to mutableListOf(1, 2),
+            typeOf<Collection<Double>>() to listOf(1.0, 2.0),
+            typeOf<Iterable<BigInteger>>() to listOf(BigInteger.valueOf(1), BigInteger.valueOf(2)).asIterable()
+        ).assertAll { (kType, it) ->
+            assertEquals(
+                it,
+                TomlValue.List(
+                    TomlValue.Integer(1),
+                    TomlValue.Integer(2),
+                ).convert(kType)
+            )
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun `can convert lists to type-erased generics`() {
+        listOf(
+            typeOf<List<*>>() to listOf(1L, 2L),
+            typeOf<MutableList<*>>() to mutableListOf(1L, 2L),
+            typeOf<Collection<*>>() to listOf(1L, 2L),
+            typeOf<Iterable<*>>() to listOf(1L, 2L).asIterable()
+        ).assertAll { (kType, it) ->
+            assertEquals(
+                it,
+                TomlValue.List(
+                    TomlValue.Integer(1),
+                    TomlValue.Integer(2),
+                ).convert(kType)
+            )
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun `can convert maps to type-erased generics`() {
+        listOf(
+            typeOf<Map<*, *>>() to mapOf("hello" to "hello"),
+            typeOf<MutableMap<*, *>>() to mutableMapOf("hello" to "hello"),
+            typeOf<SortedMap<*, *>>() to sortedMapOf("hello" to "hello")
+        ).assertAll { (kType, it) ->
+            assertEquals(
+                it,
+                TomlValue.Map("hello" to TomlValue.String("hello")).convert(kType)
+            )
+        }
     }
 
     @Test
@@ -107,6 +216,37 @@ class BuiltinConverterTests : StringTest {
                 ),
             ).convert()
         )
+    }
+
+    @Test
+    fun `all types convert to the correct defaults when converting to Any`() {
+        listOf(
+            TomlValue.Bool(true) to true,
+            TomlValue.Integer(1) to 1L,
+            TomlValue.Double(1.0) to 1.0,
+            TomlValue.String("hello") to "hello",
+            TomlValue.LocalTime(LocalTime.of(10, 10)) to LocalTime.of(10, 10),
+            TomlValue.LocalDate(LocalDate.of(2011, 11, 11)) to LocalDate.of(2011, 11, 11),
+            TomlValue.LocalDateTime(
+                LocalDateTime.of(
+                    LocalDate.of(2011, 11, 11),
+                    LocalTime.of(11, 11)
+                )
+            ) to LocalDateTime.of(LocalDate.of(2011, 11, 11), LocalTime.of(11, 11)),
+            TomlValue.OffsetDateTime(
+                OffsetDateTime.of(
+                    LocalDateTime.of(
+                        LocalDate.of(2011, 11, 11),
+                        LocalTime.of(11, 11)
+                    ),
+                    ZoneOffset.UTC
+                )
+            ) to OffsetDateTime.of(LocalDateTime.of(LocalDate.of(2011, 11, 11), LocalTime.of(11, 11)), ZoneOffset.UTC),
+            TomlValue.List(TomlValue.Bool(true)) to listOf(true),
+            TomlValue.Map("hello" to TomlValue.String("hello")) to mapOf("hello" to "hello"),
+        ).assertAll { (toml, kotlin) ->
+            assertEquals(toml.convert(), kotlin)
+        }
     }
 
     @Test
