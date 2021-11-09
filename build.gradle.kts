@@ -1,8 +1,7 @@
-
-
 plugins {
     kotlin("jvm") version "1.5.31"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
+    `maven-publish`
     antlr
     jacoco
 }
@@ -13,6 +12,20 @@ val kotlinJvmTarget = 16
 
 repositories {
     mavenCentral()
+    maven{
+        url = uri("https://jitpack.io")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "cc.ekblad"
+            artifactId = "4koma"
+            version = "0.1"
+            from(components["kotlin"])
+        }
+    }
 }
 
 dependencies {

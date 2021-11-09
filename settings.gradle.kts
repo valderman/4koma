@@ -1,1 +1,1 @@
-rootProject.name = "koml"
+rootProject.name = "4koma"
