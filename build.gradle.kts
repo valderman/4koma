@@ -28,6 +28,7 @@ tasks {
         dependsOn("generateGrammarSource")
         kotlinOptions {
             jvmTarget = kotlinJvmTarget.toString()
+            freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
         }
     }
     compileTestKotlin {
