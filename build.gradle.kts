@@ -21,11 +21,22 @@ repositories {
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        create<MavenPublication>("4koma") {
             groupId = "cc.ekblad"
             artifactId = "4koma"
             version = "0.1"
             from(components["kotlin"])
+            pom {
+                name.set("4koma")
+                description.set("Simple, standards-compliant TOML parser")
+                url.set("https://github.com/valderman/4koma")
+                licenses {
+                    license {
+                        name.set("MIT")
+                        url.set("https://github.com/valderman/4koma/blob/main/LICENSE")
+                    }
+                }
+            }
         }
     }
 }
