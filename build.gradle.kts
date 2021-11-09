@@ -14,9 +14,6 @@ val kotlinJvmTarget = 16
 
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://jitpack.io")
-    }
 }
 
 publishing {
