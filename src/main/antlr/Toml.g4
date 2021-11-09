@@ -1,5 +1,7 @@
 grammar Toml;
 
+@header {package cc.ekblad.toml.parser;}
+
 /*
  * Parser Rules
  */

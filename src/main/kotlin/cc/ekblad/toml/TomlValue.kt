@@ -1,7 +1,7 @@
 package cc.ekblad.toml
 
-import TomlLexer
-import TomlParser
+import cc.ekblad.toml.parser.TomlLexer
+import cc.ekblad.toml.parser.TomlParser
 import org.antlr.v4.runtime.CharStream
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream

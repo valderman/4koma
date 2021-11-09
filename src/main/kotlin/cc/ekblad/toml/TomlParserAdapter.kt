@@ -1,6 +1,6 @@
 package cc.ekblad.toml
 
-import TomlParser
+import cc.ekblad.toml.parser.TomlParser
 import org.antlr.v4.runtime.ParserRuleContext
 import java.lang.NumberFormatException
 import java.time.LocalDate

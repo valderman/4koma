@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.backend.wasm.lower.excludeDeclarationsFromCodegen
+import java.nio.file.Paths
 
 plugins {
     kotlin("jvm") version "1.5.31"
@@ -39,6 +39,12 @@ dependencies {
 }
 
 tasks {
+    generateGrammarSource {
+        outputDirectory = Paths.get(
+            "build", "generated-src", "antlr", "main", "cc", "ekblad", "toml", "parser"
+        ).toFile()
+    }
+
     compileKotlin {
         dependsOn("generateGrammarSource")
         kotlinOptions {
@@ -69,6 +75,9 @@ tasks {
 
     jacocoTestReport {
         dependsOn(test)
+
+        // Exclude generated code from coverage report
+        classDirectories.setFrom(files(classDirectories.files.filter { !it.path.contains("build/classes/java") }))
     }
 
     jacocoTestCoverageVerification {
