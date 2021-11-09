@@ -51,6 +51,11 @@ tasks {
         outputDirectory = Paths.get(
             "build", "generated-src", "antlr", "main", "cc", "ekblad", "toml", "parser"
         ).toFile()
+        mustRunAfter("runKtlintCheckOverMainSourceSet")
+    }
+
+    generateTestGrammarSource {
+        mustRunAfter("runKtlintCheckOverTestSourceSet")
     }
 
     compileKotlin {
@@ -61,7 +66,7 @@ tasks {
         }
     }
     compileTestKotlin {
-        dependsOn("generateGrammarSource")
+        dependsOn("generateTestGrammarSource")
         kotlinOptions {
             jvmTarget = kotlinJvmTarget.toString()
             freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
