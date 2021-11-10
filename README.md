@@ -1,6 +1,6 @@
 # 4koma
 [![GitHub license](https://img.shields.io/github/license/valderman/4koma)](https://github.com/valderman/4koma/blob/main/LICENSE)
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/valderman/4koma/build-and-test/main)
+![Build Status](https://github.com/valderman/4koma/workflows/build-and-test/badge.svg)
 
 A small, stand-alone, easy to use TOML 1.0 parser library for Kotlin.
 
