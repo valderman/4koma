@@ -15,6 +15,7 @@ import java.time.ZoneOffset
 import java.util.SortedMap
 import kotlin.reflect.typeOf
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -85,6 +86,18 @@ class BuiltinConverterTests : StringTest {
         val expected = Foo("hello")
         val toml = """bar = "hello""""
         assertEquals(expected, TomlValue.from(toml).convert())
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    @Test
+    fun `conversion error contains target type and the value that couldn't be converted`() {
+        data class Foo(val bar: String)
+        val toml = "bar = 123"
+        val exception = assertThrows<TomlException.ConversionError> { TomlValue.from(toml).convert<Foo>() }
+        assertEquals(TomlValue.Integer(123), exception.sourceValue)
+        assertEquals(typeOf<String>(), exception.targetType)
+        assertContains(exception.message, TomlValue.Integer(123).toString())
+        assertContains(exception.message, "String")
     }
 
     @Test

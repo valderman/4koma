@@ -1,9 +1,12 @@
 package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.StringTest
+import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
+import org.junit.jupiter.api.assertThrows
 import java.nio.file.Path
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class MiscTests : StringTest {
@@ -117,6 +120,24 @@ class MiscTests : StringTest {
                 HELLO I AM GARBAGE
             """.trimIndent()
         )
+    }
+
+    @Test
+    fun `parse error contains correct line number`() {
+        val exception = assertThrows<TomlException.ParseError> {
+            TomlValue.from(
+                """
+                    [foo]
+                    bar = 123
+                    
+                    [[asdf]]
+                    bagu
+                    fgs = "hello"
+                """.trimIndent()
+            )
+        }
+        assertEquals(5, exception.line)
+        assertContains(exception.message, "line 5")
     }
 
     @Test
