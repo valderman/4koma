@@ -33,6 +33,13 @@ publishing {
                         url.set("https://github.com/valderman/4koma/blob/main/LICENSE")
                     }
                 }
+                developers {
+                    developer {
+                        id.set("valderman")
+                        name.set("Anton Ekblad")
+                        email.set("anton@ekblad.cc")
+                    }
+                }
             }
         }
     }
