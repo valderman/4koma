@@ -57,13 +57,13 @@ fun main() {
     val mapConfig = tomlDocument.convert<Map<String, Any>>()
 
     // ...or access properties directly
-    val maxLoginTries = tomlDocument["settings", "maxLoginTries"])
+    val maxLoginTries = tomlDocument["settings", "maxLoginTries"]
 
     // ...or just grab a part of the document and convert it to some convenient data class
     val settings = tomlDocument.get<Config.Settings>("settings")
     val users = tomlDocument.get<List<User>>("user")
 
     // You can also access properties on objects inside lists
-    val userNames = tomlDocument["user", "name"]) // <- returns listOf("Alice", "Bob")
+    val userNames = tomlDocument["user", "name"] // <- returns listOf("Alice", "Bob")
 }
 ```
