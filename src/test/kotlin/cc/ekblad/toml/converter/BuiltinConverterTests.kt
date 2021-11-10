@@ -109,6 +109,22 @@ class BuiltinConverterTests : StringTest {
     }
 
     @Test
+    fun `can convert objects to data classes with TomlValues`() {
+        data class Foo(val bars: List<TomlValue>)
+        val expected = Foo(listOf(TomlValue.String("hello"), TomlValue.Integer(123)))
+        val toml = """bars = ["hello", 123]"""
+        assertEquals(expected, TomlValue.from(toml).convert())
+    }
+
+    @Test
+    fun `can't use convert to cast from one type of TomlValue to another`() {
+        val toml = """bar = "hello""""
+        assertThrows<TomlException.ConversionError> {
+            TomlValue.from(toml).convert<Map<String, TomlValue.Integer>>()
+        }
+    }
+
+    @Test
     fun `can convert objects to nested maps`() {
         val expected = mapOf("foo" to 1L, "bar" to mapOf("baz" to "hello"))
         val toml = """

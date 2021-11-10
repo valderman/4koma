@@ -36,7 +36,12 @@ import kotlin.reflect.typeOf
 inline fun <reified T : Any> TomlValue.convert(): T =
     convert(typeOf<T>())
 
-fun <T : Any> TomlValue.convert(target: KType): T = when (this) {
+fun <T : Any> TomlValue.convert(target: KType): T = when (target.classifier) {
+    TomlValue::class -> this as T
+    else -> toNonTomlValue(target)
+}
+
+private fun <T : Any> TomlValue.toNonTomlValue(target: KType): T = when (this) {
     is TomlValue.List -> toList(target)
     is TomlValue.Map -> toObject(target)
     is TomlValue.Bool -> toBoolean(target)
@@ -84,7 +89,6 @@ private fun TomlValue.Map.toMap(targetMapType: KType): Map<String, Any> {
             "when converting an object into a map, that map must have keys of type String or Any",
             this,
             targetMapType
-
         )
     }
     val elementType = targetMapType.arguments.getOrNull(1)?.type ?: anyKType
