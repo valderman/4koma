@@ -11,7 +11,6 @@ plugins {
 group = "cc.ekblad"
 version = "0.1"
 val kotlinJvmTarget = "1.8"
-val kotlinJavaRelease = 8
 
 repositories {
     mavenCentral()
@@ -80,8 +79,6 @@ tasks {
             freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
         }
     }
-    compileJava { options.release.set(kotlinJavaRelease) }
-    compileTestJava { options.release.set(kotlinJavaRelease) }
 
     test {
         useJUnitPlatform()
