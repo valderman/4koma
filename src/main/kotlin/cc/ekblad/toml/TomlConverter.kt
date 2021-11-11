@@ -18,20 +18,23 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
 /**
- * Converts the receiver TOML value to the type indicated by type parameter T.
+ * Converts the receiver TOML value to the type indicated by type parameter `T`.
+ * If the value can't be converted into the target type, a [TomlException.ConversionError] is thrown.
+ *
+ * <br>
  *
  * TOML types can be converted to Kotlin types as follows:
- * * List: List, MutableList, Collection or Iterable
- * * Map: Map, MutableMap, SortedMap, or any class with primary constructor fields corresponding
+ * * List: [List], [MutableList], [Collection] or [Iterable]
+ * * Map: [Map], [MutableMap], [SortedMap], or any class with primary constructor fields corresponding
  *     to the keys of the TOML document.
- * * Bool: Boolean
- * * Double: Double, Float or BigDecimal
- * * Integer: Int, Long, Float, Double, BigDecimal or BigInteger
- * * String: String
- * * LocalDate: LocalDate
- * * LocalTime: LocalTime
- * * LocalDateTime: LocalDateTime
- * * OffsetDateTime: OffsetDateTime
+ * * Bool: [Boolean]
+ * * Double: [Double], [Float] or [BigDecimal]
+ * * Integer: [Int], [Long], [Float], [Double], [BigDecimal] or [BigInteger]
+ * * String: [String]
+ * * LocalDate: [LocalDate]
+ * * LocalTime: [LocalTime]
+ * * LocalDateTime: [LocalDateTime]
+ * * OffsetDateTime: [OffsetDateTime]
  */
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T : Any> TomlValue.convert(): T =

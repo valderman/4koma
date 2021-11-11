@@ -4,14 +4,15 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
- * <p>
  * Look up the value(s) at the given path in the receiver TOML structure, then convert them to the type given by
- * the type parameter T. If conversion is not possible, a [TomlException.ConversionError] is thrown.
- * If there is no value at the given path, null is returned.
- * </p>
+ * the type parameter `T`. If conversion is not possible, a [TomlException.ConversionError] is thrown.
+ * If there is no value at the given path, `null` is returned.
  *
- * <p>
+ * <br>
+ *
  * As an example, given the following TOML:
+ *
+ * <br>
  *
  * ```
  * [[ user ]]
@@ -23,22 +24,18 @@ import kotlin.reflect.typeOf
  * passwords = ["correct horse battery staple"]
  * ```
  *
- * `tomlDocument.get<List<String>>("user", "name")` will return `listOf("Alice", "Bob")`.
- * </p>
+ * <br>
  *
- * <p>
+ * A call to `tomlDocument.get<List<String>>("user", "name")` will return `listOf("Alice", "Bob")`.
+ *
+ * <br>
+ *
  * Nested lists of values may be flattened, if necessary to make conversion possible.
  * For instance, while
  * `tomlDocument.get<List<List<String>>>("user", "passwords")` will return
  * `listOf(listOf("password123", "Bob"), listOf("correct horse battery staple"))`,
  * `tomlDocument.get<List<String>>("user", "passwords")` will automatically flatten the list to fit the given
  * type parameter, and return `listOf("password123", "qwerty", "correct horse battery staple")`.
- * </p>
- *
- * <p>
- * If no type parameter is given, [kotlin.Any] is assumed and returned values are converted to their closest Kotlin
- * counterparts.
- * </p>
  */
 @OptIn(ExperimentalStdlibApi::class)
 inline operator fun <reified T : Any> TomlValue.get(vararg path: String): T? =

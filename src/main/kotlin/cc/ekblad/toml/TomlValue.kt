@@ -10,10 +10,13 @@ import java.nio.file.Path
 
 /**
  * Kotlin representation of a TOML value.
- * A full TOML document is always represented as a TomlValue.Map.
+ * A full TOML document is always represented as a [TomlValue.Map].
  *
  * You can either traverse this representation manually, access individual properties using [TomlValue.get], or
  * convert the whole thing to a data class of your choice using [TomlValue.convert].
+ *
+ * [TomlValue.from] can be used to obtain a `TomlValue` from an input TOML document in the form of a [String],
+ * [Path], or [InputStream].
  */
 sealed class TomlValue {
     sealed class Primitive : TomlValue()
@@ -37,18 +40,24 @@ sealed class TomlValue {
     companion object {
         /**
          * Parse the given TOML-formatted string into a TOML map.
+         *
+         * If the string does not contain a valid TOML document, a [TomlException.ParseError] is thrown.
          */
         fun from(string: kotlin.String): Map =
             from(CharStreams.fromString(string))
 
         /**
          * Parse the given TOML-formatted input stream into a TOML map.
+         *
+         * If the stream does not contain a valid TOML document, a [TomlException.ParseError] is thrown.
          */
         fun from(stream: InputStream): Map =
             from(CharStreams.fromStream(stream, Charsets.UTF_8))
 
         /**
          * Parse the given TOML-formatted file into a TOML map.
+         *
+         * If the indicated file does not contain a valid TOML document, a [TomlException.ParseError] is thrown.
          */
         fun from(path: Path): Map =
             from(CharStreams.fromPath(path, Charsets.UTF_8))
