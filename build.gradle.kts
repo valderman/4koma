@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "cc.ekblad"
-version = "0.1"
+version = "0.2.0"
 val kotlinJvmTarget = "1.8"
 
 repositories {
@@ -23,7 +23,7 @@ publishing {
         create<MavenPublication>("4koma") {
             groupId = "cc.ekblad"
             artifactId = "4koma"
-            version = "0.1"
+            version = project.version.toString()
             from(components["kotlin"])
             pom {
                 name.set("4koma")
