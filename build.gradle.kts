@@ -1,7 +1,9 @@
 import java.nio.file.Paths
 
 plugins {
-    kotlin("jvm") version "1.5.31"
+    val kotlinVersion = "1.5.31"
+    kotlin("jvm") version kotlinVersion
+    id("org.jetbrains.dokka") version kotlinVersion
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     `maven-publish`
     antlr
@@ -45,12 +47,21 @@ publishing {
     }
 }
 
-dependencies {
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("reflect"))
-    antlr("org.antlr:antlr4:4.9.2")
+val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
 
-    testImplementation(kotlin("test"))
+val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
+    dependsOn(dokkaHtml)
+    archiveClassifier.set("javadoc")
+    from(dokkaHtml.outputDirectory)
+}
+
+dependencies {
+    val kotlinVersion = "1.5.31"
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
+    antlr("org.antlr:antlr4:4.9.3")
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
 }
 
 tasks {
@@ -83,6 +94,10 @@ tasks {
     test {
         useJUnitPlatform()
         finalizedBy(jacocoTestReport)
+    }
+
+    build {
+        dependsOn("javadocJar")
     }
 
     check {
