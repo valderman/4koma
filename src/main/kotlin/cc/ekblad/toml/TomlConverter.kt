@@ -18,11 +18,12 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
 /**
- * Converts the receiver TOML value to the type indicated by @param T.
+ * Converts the receiver TOML value to the type indicated by type parameter T.
  *
  * TOML types can be converted to Kotlin types as follows:
  * * List: List, MutableList, Collection or Iterable
- * * Map: Map, MutableMap, SortedMap, or any data class with fields corresponding to the keys of the TOML document.
+ * * Map: Map, MutableMap, SortedMap, or any class with primary constructor fields corresponding
+ *     to the keys of the TOML document.
  * * Bool: Boolean
  * * Double: Double, Float or BigDecimal
  * * Integer: Int, Long, Float, Double, BigDecimal or BigInteger

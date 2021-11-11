@@ -4,14 +4,16 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
+ * <p>
  * Look up the value(s) at the given path in the receiver TOML structure, then convert them to the type given by
- * @param T . If conversion is not possible, a [TomlException.ConversionError] is thrown.
+ * the type parameter T. If conversion is not possible, a [TomlException.ConversionError] is thrown.
  * If there is no value at the given path, null is returned.
+ * </p>
  *
+ * <p>
  * As an example, given the following TOML:
  *
- * <pre>
- * {@code
+ * ```
  * [[ user ]]
  * name = "Alice"
  * passwords = ["password123", "qwerty"]
@@ -19,20 +21,24 @@ import kotlin.reflect.typeOf
  * [[ user ]]
  * name = "Bob"
  * passwords = ["correct horse battery staple"]
- * }
- * </pre>
+ * ```
  *
- * {@code tomlDocument.get<List<String>>("user", "name")} will return {@code listOf("Alice", "Bob")}.
+ * `tomlDocument.get<List<String>>("user", "name")` will return `listOf("Alice", "Bob")`.
+ * </p>
  *
+ * <p>
  * Nested lists of values may be flattened, if necessary to make conversion possible.
  * For instance, while
- * {@code tomlDocument.get<List<List<String>>>("user", "passwords")} will return
- * {@code listOf(listOf("password123", "Bob"), listOf("correct horse battery staple"))},
- * {@code tomlDocument.get<List<String>>("user", "passwords")} will automatically flatten the list to fit the given
- * type parameter, and return {@code listOf("password123", "qwerty", "correct horse battery staple")}.
+ * `tomlDocument.get<List<List<String>>>("user", "passwords")` will return
+ * `listOf(listOf("password123", "Bob"), listOf("correct horse battery staple"))`,
+ * `tomlDocument.get<List<String>>("user", "passwords")` will automatically flatten the list to fit the given
+ * type parameter, and return `listOf("password123", "qwerty", "correct horse battery staple")`.
+ * </p>
  *
- * If no type parameter is given, [Any] is assumed and returned values are converted to their closest Kotlin
+ * <p>
+ * If no type parameter is given, [kotlin.Any] is assumed and returned values are converted to their closest Kotlin
  * counterparts.
+ * </p>
  */
 @OptIn(ExperimentalStdlibApi::class)
 inline operator fun <reified T : Any> TomlValue.get(vararg path: String): T? =

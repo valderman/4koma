@@ -12,8 +12,8 @@ import java.nio.file.Path
  * Kotlin representation of a TOML value.
  * A full TOML document is always represented as a TomlValue.Map.
  *
- * You can either traverse this representation manually, or - more conveniently - convert it to a data class of
- * your choice using [TomlValue.convert].
+ * You can either traverse this representation manually, access individual properties using [TomlValue.get], or
+ * convert the whole thing to a data class of your choice using [TomlValue.convert].
  */
 sealed class TomlValue {
     sealed class Primitive : TomlValue()
