@@ -3,9 +3,19 @@
 ![Build Status](https://github.com/valderman/4koma/workflows/CI/badge.svg)
 ![Coverage](.github/badges/jacoco.svg)
 [![License](https://img.shields.io/github/license/valderman/4koma)](https://github.com/valderman/4koma/blob/main/LICENSE)
+<span style="float: left; height: 150px; margin-right: 1em;">![Coverage](logo.png)</span>
 
 
-A small, stand-alone, easy to use TOML 1.0 parser library for Kotlin.
+A small, stand-alone, easy to use TOML parser library for Kotlin.
+
+4koma supports an array of convenient features, such as full TOML 1.0 compliance,
+type-safe conversions of configurations into arbitrary data classes using Kotlin generics,
+and easy access to individual properties for when you don't need the entire document.
+
+4koma follows the UNIX philosophy, in that it tries to do one thing (i.e. TOML processing for Kotlin projects),
+and do it well.
+If you need support for multiple configuration formats, or are using a JVM language other than Kotlin,
+some of the projects listed in the [Alternatives](#alternatives) section might serve you better.
 
 
 ## Usage
@@ -75,7 +85,7 @@ fun main() {
 }
 ```
 
-## Alternatives
+## <span id="alternatives">Alternatives</span>
 
 Why should you use 4koma? Maybe you shouldn't! When it comes to TOML libraries there are several to choose from.
 This table compares 4koma with a number of alternatives that (a) can parse TOML, (b) can be reasonably easily used in
