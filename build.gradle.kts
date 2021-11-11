@@ -18,6 +18,14 @@ repositories {
     mavenCentral()
 }
 
+val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
+
+val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
+    dependsOn(dokkaHtml)
+    archiveClassifier.set("javadoc")
+    from(dokkaHtml.outputDirectory)
+}
+
 publishing {
     publications {
         create<MavenPublication>("4koma") {
@@ -25,6 +33,8 @@ publishing {
             artifactId = "4koma"
             version = project.version.toString()
             from(components["kotlin"])
+            artifact(javadocJar)
+            artifact(tasks.kotlinSourcesJar)
             pom {
                 name.set("4koma")
                 description.set("Simple, standards-compliant TOML parser")
@@ -45,14 +55,6 @@ publishing {
             }
         }
     }
-}
-
-val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
-
-val javadocJar: TaskProvider<Jar> by tasks.registering(Jar::class) {
-    dependsOn(dokkaHtml)
-    archiveClassifier.set("javadoc")
-    from(dokkaHtml.outputDirectory)
 }
 
 dependencies {
