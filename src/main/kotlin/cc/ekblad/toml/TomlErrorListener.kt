@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.atn.ATNConfigSet
 import org.antlr.v4.runtime.dfa.DFA
 import java.util.BitSet
 
-class TomlErrorListener : ANTLRErrorListener {
+internal class TomlErrorListener : ANTLRErrorListener {
     override fun syntaxError(
         recognizer: Recognizer<*, *>,
         offendingSymbol: Any?,
