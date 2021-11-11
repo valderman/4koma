@@ -74,3 +74,43 @@ fun main() {
     val userNames = tomlDocument["user", "name"] // <- returns listOf("Alice", "Bob")
 }
 ```
+
+## Alternatives
+
+Why should you use 4koma? Maybe you shouldn't! When it comes to TOML libraries there are several to choose from.
+This table compares 4koma with a number of alternatives that (a) can parse TOML, (b) can be reasonably easily used in
+a Kotlin/JVM project, and (c) have seen at least one new commit in the last four years.
+
+If you'd like your library to be on your list, or it's already there and you believe it's being misrepresented,
+please open a pull request to rectify the situation.
+
+| Feature | 4koma | [KToml](https://github.com/akuleshov7/ktoml) | [konf](https://github.com/uchuhimo/konf) | [konfy](https://github.com/TanVD/konfy) | [toml4j](https://github.com/mwanji/toml4j) | [tomlj](https://github.com/tomlj/tomlj) | [jtoml](https://github.com/agrison/jtoml) | [Night Config](https://github.com/TheElectronWill/Night-Config) | [Jackson](https://github.com/justdb/jackson-dataformat-toml)
+| -------------------------------- | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: | :--: |
+| TOML 1.0 compliant               |  ✅  |  ❌  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ✅  |  ❌  |
+| TOML 0.4 compliant               |  ✅  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ❌  |  ✅  |  ✅  |
+| Inline tables                    |  ✅  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ❌  |  ✅  |  ✅  |
+| Table arrays                     |  ✅  |  ❌  |  ✅  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |
+| Date/time literals               |  ✅  |  ❌  |  ✅  |  ❌  |  ❌  |  ✅  |  ✅  |  ✅  |  ✅  |
+| Easy property access¹            |  ✅  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  |
+| Conversion to Kotlin types       |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
+| ...without extra boilerplate²    |  ✅  |  ❌  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
+| ...without modification to type  |  ✅  |  ❌  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
+| Type-safe generic conversion³    |  ✅  |  ❔  |  ✅  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |
+| Kotlin multiplatform             |  ❌  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |
+| Serialization                    |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
+| Small and lean⁴                  |  ✅  |  ✅  |  ❌  |  ❌  |  ✅  |  ✅  |  ✅  |  ❌  |  ❌  |
+| Everything but the kitchen sink⁵ |  ❌  |  ❌  |  ✅  |  ✅  |  ❌  |  ❌  |  ❌  |  ✅  |  ✅  |
+
+(¹) Individual properties can be accessed by means of `parsedConfig.get("foo.bar")` or similar,
+without requiring the entire document to be converted into some model type.
+
+(²) The library does not require annotations or other modifications to existing code in order to support conversion
+to complex model types.
+
+(³) The library does not rely on type-erased JVM generics for conversion to complex model types.
+
+(⁴) The library focuses on reading/writing/processing TOML and does not contain any "unnecessary" features
+unrelated to that scope.
+
+(⁵) The library aims to provide a comprehensive configuration platform, with support for multiple configuration file
+formats and all sorts of associated bells and whistles.
