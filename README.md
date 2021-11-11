@@ -1,4 +1,5 @@
 # 4koma
+![JitPack](https://img.shields.io/jitpack/v/github/valderman/4koma?color=blue)
 ![Build Status](https://github.com/valderman/4koma/workflows/build-and-test/badge.svg)
 ![Coverage](.github/badges/jacoco.svg)
 [![License](https://img.shields.io/github/license/valderman/4koma)](https://github.com/valderman/4koma/blob/main/LICENSE)
