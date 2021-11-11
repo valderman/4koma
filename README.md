@@ -3,7 +3,7 @@
 ![Build Status](https://github.com/valderman/4koma/workflows/CI/badge.svg)
 ![Coverage](.github/badges/jacoco.svg)
 [![License](https://img.shields.io/github/license/valderman/4koma)](https://github.com/valderman/4koma/blob/main/LICENSE)
-<span style="float: left; height: 150px; margin-right: 1em;">![Coverage](logo.png)</span>
+<img align="left" width="100" src="logo.png" style="margin-right: 1em">
 
 
 A small, stand-alone, easy to use TOML parser library for Kotlin.
