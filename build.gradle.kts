@@ -97,6 +97,9 @@ tasks {
     jacocoTestReport {
         dependsOn(test)
 
+        // CSV report for coverage badge
+        reports.csv.required.set(true)
+
         // Exclude generated code from coverage report
         classDirectories.setFrom(files(classDirectories.files.filter { !it.path.contains("build/classes/java") }))
     }
