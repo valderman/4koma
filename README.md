@@ -14,13 +14,13 @@ A small, stand-alone, easy to use TOML 1.0 parser library for Kotlin.
 For `build.gradle.kts`:
 ```kotlin
 repositories {
-  maven{
+  maven {
     url = uri("https://jitpack.io")
   }
 }
 
 dependencies {
-    implementation("cc.ekblad:4koma:0.1")
+    implementation("cc.ekblad:4koma:0.1.0")
 }
 ```
 
