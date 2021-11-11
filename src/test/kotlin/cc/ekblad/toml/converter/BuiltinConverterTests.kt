@@ -88,6 +88,14 @@ class BuiltinConverterTests : StringTest {
         assertEquals(expected, TomlValue.from(toml).convert())
     }
 
+    @Test
+    fun `can convert objects to non-data classes`() {
+        class Foo(val bar: String)
+        val expected = Foo("hello")
+        val toml = """bar = "hello""""
+        assertEquals(expected.bar, TomlValue.from(toml).convert<Foo>().bar)
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `conversion error contains target type and the value that couldn't be converted`() {

@@ -75,7 +75,7 @@ private fun <T : Any> TomlValue.Map.toObject(target: KType): T = when {
     target.classifier == Map::class -> toMap(target) as T
     target.classifier == SortedMap::class -> toMap(target).toSortedMap() as T
     target.classifier == Any::class -> toMap(Any::class.createType()) as T
-    (target.classifier as KClass<*>).isData -> toDataClass(target)
+    (target.classifier as KClass<*>).primaryConstructor != null -> toDataClass(target)
     else -> throw TomlException.ConversionError(
         "objects can only be converted into maps or data classes",
         this,
