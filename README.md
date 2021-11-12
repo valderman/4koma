@@ -26,9 +26,9 @@ Getting started with 4koma is super easy.
 For `build.gradle.kts`:
 ```kotlin
 repositories {
-  maven {
-    url = uri("https://jitpack.io")
-  }
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 dependencies {
