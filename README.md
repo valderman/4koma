@@ -1,4 +1,5 @@
 # 4koma
+[![Docs](https://img.shields.io/badge/docs-latest-informational)](https://img.shields.io/badge/docs-latest-informational)
 [![Release](https://jitpack.io/v/cc.ekblad/4koma.svg)](https://jitpack.io/#cc.ekblad/4koma)
 ![Build Status](https://github.com/valderman/4koma/workflows/CI/badge.svg)
 ![Coverage](.github/badges/jacoco.svg)
@@ -19,6 +20,7 @@ some of the projects listed in the [Alternatives](#alternatives) section might s
 
 
 ## Usage
+Getting started with 4koma is super easy.
 
 ### 1. Add a dependency on 4koma
 For `build.gradle.kts`:
@@ -84,6 +86,7 @@ fun main() {
     val userNames = tomlDocument["user", "name"] // <- returns listOf("Alice", "Bob")
 }
 ```
+For more detailed information, see the [API documentation](https://jitpack.io/cc/ekblad/4koma/latest/javadoc/).
 
 ## <span id="alternatives">Alternatives</span>
 
