@@ -17,55 +17,54 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
-class TomlConverter private constructor(private val decoders: Map<KType, List<TomlConverter.(TomlValue) -> Any?>>) {
+class TomlDecoder private constructor(private val decoders: Map<KType, List<TomlDecoder.(TomlValue) -> Any?>>) {
 
     /**
-     * Thrown by a TOML decoder to indicate that it can't convert the given TOML into its target type and that
-     * the next decoder for the target type should be given a chance.
+     * Thrown by a TOML decoder function to indicate that it can't decode the given TOML into its target type and that
+     * the next decoder function for the target type should be given a chance.
      */
     internal object Pass : Throwable()
 
     /**
-     * Called by a custom decoder to indicate that it can't convert the given TOML into its target type and that
-     * the next decoder for the target type should be given a chance instead.
+     * Called by a decoder function to indicate that it can't decode the given TOML into its target type and that
+     * the next decoder function for the target type should be given a chance instead.
      */
     fun pass(): Nothing = throw Pass
 
     /**
-     * Extend a TOML converter with zero or more additional custom decoders.
-     * A custom decoder is just a function from a [TomlValue] to some target type, associated with
+     * Extend a TOML decoder with zero or more additional custom decoder functions.
+     * A custom decoder function is a function from a [TomlValue] to some target type, associated with
      * a [KType] representing that target type.
      *
-     * When a TOML value is decoded to some target type, the converter will look for all converters associated with
-     * that type. All decoders matching that type are then tried in the order they were registered with the converter,
-     * from newest to oldest.
-     * I.e. for some converter `C = TomlConverter.default.with(T to A).with(T to B)`,
-     * `B` will always be tried before `A` when trying to convert values of type `T`.
+     * When a TOML value is decoded to some target type, the decoder will look for all decoder functions associated with
+     * that type. All decoder functions matching that type are then tried in the order
+     * they were registered with the decoder, from newest to oldest.
+     * I.e. for some decoder `D = TomlDecoder.default.with(T to A).with(T to B)`,
+     * `B` will always be tried before `A` when trying to decode values of type `T`.
      *
-     * A decoder can signal that they are unable to convert their given input by calling [pass].
-     * When this happens, the converter will go on to try the next relevant decoder, if any.
+     * A decoder function can signal that they are unable to decode their given input by calling [pass].
+     * When this happens, the decoder will go on to try the next relevant decoder, if any.
      *
-     * As an example, to convert a TOML document allowing integers to be converted into Kotlin strings:
+     * As an example, to decode a TOML document allowing integers to be decoded into Kotlin strings:
      *
      * <br>
      *
      * ```
-     * val myConverter = TomlConverter.default.with(
+     * val myDecoder = TomlDecoder.default.with(
      *     typeOf<String>() to {
      *         (it as? TomlValue.Integer)?.let { it.value.toString() } ?: pass()
      *     }
      * )
-     * val tomlDocument = TomlValue.from(Path.of("path", "to", "file.toml"))
-     * println(myConverter.convert(tomlDocument))
+     * val result = TomlValue.from(Path.of("path", "to", "file.toml")).decode(myDecoder)
      * ```
      *
      * <br>
      *
      */
-    fun with(vararg newDecoders: Pair<KType, TomlConverter.(TomlValue) -> Any?>): TomlConverter {
-        val mutableDecoders = mutableMapOf<KType, MutableList<TomlConverter.(TomlValue) -> Any?>>()
+    fun with(vararg decoderFunctions: Pair<KType, TomlDecoder.(TomlValue) -> Any?>): TomlDecoder {
+        val mutableDecoders = mutableMapOf<KType, MutableList<TomlDecoder.(TomlValue) -> Any?>>()
         decoders.mapValuesTo(mutableDecoders) { it.value.toMutableList() }
-        newDecoders.forEach { (type, newDecoder) ->
+        decoderFunctions.forEach { (type, newDecoder) ->
             mutableDecoders.compute(type) { _, value ->
                 if (value == null) {
                     mutableListOf(newDecoder)
@@ -75,25 +74,25 @@ class TomlConverter private constructor(private val decoders: Map<KType, List<To
                 }
             }
         }
-        return TomlConverter(mutableDecoders)
+        return TomlDecoder(mutableDecoders)
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     /**
-     * Extend the target TOML converter with a single custom decoder,
+     * Extend the receiver TOML decoder with a single custom decoder function,
      * without having to manually specify its target type.
      *
-     * A decoder registered this way may specify a more specific argument type than [TomlValue]. If it does,
-     * the decoder will only try to handle inputs of that specific type, automatically passing the input to the next
-     * decoder in line if the input is of any other type.
+     * A decoder function registered this way may specify a more specific argument type than [TomlValue]. If it does,
+     * the function will only try to handle inputs of that specific type, automatically passing the input to the next
+     * decoder function in line if the input is of any other type.
      *
      * If you care about the performance of this operation, the explicitly typed overload of this function is
-     * significantly faster when registering several decoders at the same time.
+     * significantly faster when registering several decoder functions at the same time.
      */
-    inline fun <reified T : TomlValue, reified R> with(crossinline decoder: TomlConverter.(T) -> R): TomlConverter =
+    inline fun <reified T : TomlValue, reified R> with(crossinline decoderFunction: TomlDecoder.(T) -> R): TomlDecoder =
         with(
             typeOf<R>() to { value ->
-                (value as? T)?.let { decoder(it) } ?: pass()
+                (value as? T)?.let { decoderFunction(it) } ?: pass()
             }
         )
 
@@ -112,31 +111,30 @@ class TomlConverter private constructor(private val decoders: Map<KType, List<To
 
     companion object {
         /**
-         * The default TOML converter. Handles conversion to basic Kotlin types such as Int, List, etc.
-         * See [TomlValue.convert] for an exhaustive list of supported target types.
+         * The default TOML decoder. Handles decoding to basic Kotlin types such as Int, List, etc.
+         * See [TomlValue.decode] for an exhaustive list of supported target types.
          *
-         * To support custom conversions, such as remapping attribute names or massaging data into some preferred format
-         * as part of the conversion process, extend this converter with new decoders using [with] and use the
-         * [TomlConverter.convert], [TomlConverter.get], etc. extension functions
-         * instead of their [TomlValue] counterparts.
+         * To support custom decoders, such as remapping attribute names or massaging data into some preferred format
+         * as part of the decoding process, extend this decoder with new decoder functions using [with] and pass the
+         * result to the [TomlValue.decode], [TomlValue.get], etc. functions.
          */
         @OptIn(ExperimentalStdlibApi::class)
-        val default: TomlConverter = TomlConverter(emptyMap()).with(
-            tomlValueConverter<TomlValue>(),
-            tomlValueConverter<TomlValue.String>(),
-            tomlValueConverter<TomlValue.Integer>(),
-            tomlValueConverter<TomlValue.Double>(),
-            tomlValueConverter<TomlValue.Bool>(),
-            tomlValueConverter<TomlValue.OffsetDateTime>(),
-            tomlValueConverter<TomlValue.LocalDateTime>(),
-            tomlValueConverter<TomlValue.LocalDate>(),
-            tomlValueConverter<TomlValue.LocalTime>(),
-            tomlValueConverter<TomlValue.Map>(),
-            tomlValueConverter<TomlValue.List>(),
+        val default: TomlDecoder = TomlDecoder(emptyMap()).with(
+            tomlValueDecoderFunction<TomlValue>(),
+            tomlValueDecoderFunction<TomlValue.String>(),
+            tomlValueDecoderFunction<TomlValue.Integer>(),
+            tomlValueDecoderFunction<TomlValue.Double>(),
+            tomlValueDecoderFunction<TomlValue.Bool>(),
+            tomlValueDecoderFunction<TomlValue.OffsetDateTime>(),
+            tomlValueDecoderFunction<TomlValue.LocalDateTime>(),
+            tomlValueDecoderFunction<TomlValue.LocalDate>(),
+            tomlValueDecoderFunction<TomlValue.LocalTime>(),
+            tomlValueDecoderFunction<TomlValue.Map>(),
+            tomlValueDecoderFunction<TomlValue.List>(),
         )
 
         @OptIn(ExperimentalStdlibApi::class)
-        private inline fun <reified T> tomlValueConverter(): Pair<KType, TomlConverter.(TomlValue) -> Any?> {
+        private inline fun <reified T> tomlValueDecoderFunction(): Pair<KType, TomlDecoder.(TomlValue) -> Any?> {
             val type = typeOf<T>()
             return type to {
                 if (it !is T) {
@@ -149,12 +147,12 @@ class TomlConverter private constructor(private val decoders: Map<KType, List<To
 }
 
 /**
- * Converts the receiver TOML value to the type indicated by type parameter `T` using the default TOML converter.
- * If the value can't be converted into the target type, a [TomlException.ConversionError] is thrown.
+ * Decodes the receiver TOML value to the type indicated by type parameter `T` using the default TOML decoder.
+ * If the value can't be decoded into the target type, a [TomlException.DecodingError] is thrown.
  *
  * <br>
  *
- * TOML types can be converted to Kotlin types as follows:
+ * TOML types can be decoded to Kotlin types as follows:
  * * List: [List], [MutableList], [Collection] or [Iterable]
  * * Map: [Map], [MutableMap], [SortedMap], or any class with primary constructor fields corresponding
  *     to the keys of the TOML document.
@@ -167,27 +165,27 @@ class TomlConverter private constructor(private val decoders: Map<KType, List<To
  * * LocalDateTime: [LocalDateTime]
  * * OffsetDateTime: [OffsetDateTime]
  *
- * Additionally, any subclass of [TomlValue] can always be converted into itself.
+ * Additionally, any subclass of [TomlValue] can always be decoded into itself.
  */
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T : Any> TomlValue.convert(): T =
-    convert(typeOf<T>())
+inline fun <reified T : Any> TomlValue.decode(): T =
+    decode(typeOf<T>())
 
-fun <T : Any> TomlValue.convert(type: KType): T =
-    convert(TomlConverter.default, type)
+fun <T : Any> TomlValue.decode(type: KType): T =
+    decode(TomlDecoder.default, type)
 
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T : Any> TomlValue.convert(converter: TomlConverter): T =
-    convert(converter, typeOf<T>())
+inline fun <reified T : Any> TomlValue.decode(decoder: TomlDecoder): T =
+    decode(decoder, typeOf<T>())
 
-fun <T : Any> TomlValue.convert(converter: TomlConverter, type: KType): T =
-    converter.convert(this, type)
+fun <T : Any> TomlValue.decode(decoder: TomlDecoder, type: KType): T =
+    decoder.decode(this, type)
 
-private fun <T : Any> TomlConverter.convert(value: TomlValue, target: KType): T {
+private fun <T : Any> TomlDecoder.decode(value: TomlValue, target: KType): T {
     decoderFor(target)?.let { decode ->
         try {
-            return@convert decode(value) as T
-        } catch (e: TomlConverter.Pass) {
+            return@decode decode(value) as T
+        } catch (e: TomlDecoder.Pass) {
             /* no-op */
         }
     }
@@ -208,57 +206,57 @@ private fun <T : Any> TomlConverter.convert(value: TomlValue, target: KType): T 
 private val anyKType: KType = Any::class.createType()
 private val stringKType: KType = String::class.createType()
 
-private fun <T : Any> TomlConverter.toList(value: TomlValue.List, target: KType): T =
+private fun <T : Any> TomlDecoder.toList(value: TomlValue.List, target: KType): T =
     when (target.classifier) {
         // List also covers the MutableList case
-        List::class -> convertList(value.elements, target.arguments.single().type ?: anyKType) as T
-        Collection::class -> convertList(value.elements, target.arguments.single().type ?: anyKType) as T
-        Iterable::class -> convertList(value.elements, target.arguments.single().type ?: anyKType).asIterable() as T
-        Any::class -> convertList(value.elements, anyKType) as T
-        else -> throw TomlException.ConversionError(value, target)
+        List::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
+        Collection::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
+        Iterable::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType).asIterable() as T
+        Any::class -> decodeList(value.elements, anyKType) as T
+        else -> throw TomlException.DecodingError(value, target)
     }
 
-private fun TomlConverter.convertList(value: List<TomlValue>, elementType: KType): List<Any> =
-    value.map { convert(it, elementType) }
+private fun TomlDecoder.decodeList(value: List<TomlValue>, elementType: KType): List<Any> =
+    value.map { decode(it, elementType) }
 
-private fun <T : Any> TomlConverter.toObject(value: TomlValue.Map, target: KType): T = when {
+private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType): T = when {
     // Map also covers the MutableMap case
     target.classifier == Map::class -> toMap(value, target) as T
     target.classifier == SortedMap::class -> toMap(value, target).toSortedMap() as T
     target.classifier == Any::class -> toMap(value, Any::class.createType()) as T
     (target.classifier as KClass<*>).primaryConstructor != null -> toDataClass(value, target)
-    else -> throw TomlException.ConversionError(
-        "objects can only be converted into maps or data classes",
+    else -> throw TomlException.DecodingError(
+        "objects can only be decoded into maps or data classes",
         value,
         target
     )
 }
 
-private fun TomlConverter.toMap(value: TomlValue.Map, targetMapType: KType): Map<String, Any> {
+private fun TomlDecoder.toMap(value: TomlValue.Map, targetMapType: KType): Map<String, Any> {
     if (targetMapType.arguments.firstOrNull()?.type !in setOf(null, anyKType, stringKType)) {
-        throw TomlException.ConversionError(
-            "when converting an object into a map, that map must have keys of type String or Any",
+        throw TomlException.DecodingError(
+            "when decoding an object into a map, that map must have keys of type String or Any",
             value,
             targetMapType
         )
     }
     val elementType = targetMapType.arguments.getOrNull(1)?.type ?: anyKType
-    return value.properties.mapValues { convert(it.value, elementType) }
+    return value.properties.mapValues { decode(it.value, elementType) }
 }
 
-private fun <T : Any> TomlConverter.toDataClass(value: TomlValue.Map, target: KType): T {
+private fun <T : Any> TomlDecoder.toDataClass(value: TomlValue.Map, target: KType): T {
     val kClass = target.classifier as KClass<*>
     val constructor = kClass.primaryConstructor!!
     val parameters = constructor.parameters.map {
         val parameterValue = value.properties[it.name]
         if (!it.type.isMarkedNullable && parameterValue == null) {
-            throw TomlException.ConversionError(
+            throw TomlException.DecodingError(
                 "no value found for non-nullable parameter '${it.name}'",
                 value,
                 target
             )
         }
-        parameterValue?.let { value -> convert<Any>(value, it.type) }
+        parameterValue?.let { value -> decode<Any>(value, it.type) }
     }.toTypedArray()
 
     if (kClass.visibility == KVisibility.PRIVATE) {
@@ -271,7 +269,7 @@ private fun <T : Any> toBoolean(value: TomlValue.Bool, target: KType): T =
     when (target.classifier) {
         Boolean::class -> value.value
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toDouble(value: TomlValue.Double, target: KType): T =
@@ -280,7 +278,7 @@ private fun <T : Any> toDouble(value: TomlValue.Double, target: KType): T =
         Float::class -> value.value.toFloat()
         BigDecimal::class -> value.value.toBigDecimal()
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toInteger(value: TomlValue.Integer, target: KType): T =
@@ -292,40 +290,40 @@ private fun <T : Any> toInteger(value: TomlValue.Integer, target: KType): T =
         BigInteger::class -> value.value.toBigInteger()
         BigDecimal::class -> value.value.toBigDecimal()
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toString(value: TomlValue.String, target: KType): T =
     when (target.classifier) {
         String::class -> value.value
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toLocalDate(value: TomlValue.LocalDate, target: KType): T =
     when (target.classifier) {
         LocalDate::class -> value.value
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toLocalTime(value: TomlValue.LocalTime, target: KType): T =
     when (target.classifier) {
         LocalTime::class -> value.value
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toLocalDateTime(value: TomlValue.LocalDateTime, target: KType): T =
     when (target.classifier) {
         LocalDateTime::class -> value.value
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T
 
 private fun <T : Any> toOffsetDateTime(value: TomlValue.OffsetDateTime, target: KType): T =
     when (target.classifier) {
         OffsetDateTime::class -> value.value
         Any::class -> value.value
-        else -> throw TomlException.ConversionError(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     } as T

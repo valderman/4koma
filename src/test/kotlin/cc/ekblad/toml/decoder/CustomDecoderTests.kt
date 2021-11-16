@@ -1,30 +1,30 @@
-package cc.ekblad.toml.converter
+package cc.ekblad.toml.decoder
 
-import cc.ekblad.toml.TomlConverter
+import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.convert
+import cc.ekblad.toml.decode
 import org.junit.jupiter.api.assertThrows
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalStdlibApi::class)
-class CustomConverterTests {
+class CustomDecoderTests {
     @Test
-    fun `can use single custom converter`() {
-        val converter = TomlConverter.default.with { it: TomlValue.List -> it.elements.size }
+    fun `can use single custom decoder function`() {
+        val decoder = TomlDecoder.default.with { it: TomlValue.List -> it.elements.size }
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
-        assertEquals(2, toml.convert(converter))
-        assertEquals(123, TomlValue.Integer(123).convert(converter))
+        assertEquals(2, toml.decode(decoder))
+        assertEquals(123, TomlValue.Integer(123).decode(decoder))
     }
 
     @Test
-    fun `can use multiple custom converters`() {
+    fun `can use multiple custom decoder functions`() {
         data class Foo(val value: Int)
         data class Bar(val value: String)
         data class Baz(val a: Foo, val b: Bar)
-        val converter = TomlConverter.default.with(
+        val decoder = TomlDecoder.default.with(
             typeOf<Foo>() to {
                 (it as? TomlValue.Integer)?.let {
                     Foo(it.value.toInt())
@@ -40,49 +40,49 @@ class CustomConverterTests {
             "a" to TomlValue.Integer(123),
             "b" to TomlValue.Integer(456),
         )
-        assertEquals(Baz(Foo(123), Bar("456")), toml.convert(converter))
+        assertEquals(Baz(Foo(123), Bar("456")), toml.decode(decoder))
     }
 
     @Test
-    fun `converters are searched in the correct order`() {
-        val goodConverter = TomlConverter.default
+    fun `decoder functions are searched in the correct order`() {
+        val goodDecoder = TomlDecoder.default
             .with<TomlValue.List, Int> { error("should never get here") }
             .with { it: TomlValue.List -> it.elements.size }
 
-        val badConverter = TomlConverter.default
+        val badDecoder = TomlDecoder.default
             .with { it: TomlValue.List -> it.elements.size }
             .with<TomlValue.List, Int> { error("boom!") }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
-        assertEquals(2, toml.convert(goodConverter))
-        assertThrows<IllegalStateException> { toml.convert<Int>(badConverter) }
+        assertEquals(2, toml.decode(goodDecoder))
+        assertThrows<IllegalStateException> { toml.decode<Int>(badDecoder) }
     }
 
     @Test
-    fun `can use UnsupportedConversion to pass the ball to the next decoder`() {
-        val converter = TomlConverter.default
+    fun `can use pass to pass the ball to the next decoder`() {
+        val decoder = TomlDecoder.default
             .with<TomlValue.List, Int> { pass() }
             .with { it: TomlValue.List -> it.elements.size }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
-        assertEquals(2, toml.convert(converter))
+        assertEquals(2, toml.decode(decoder))
     }
 
     @Test
-    fun `throws ConversionError if all decoders throw unsupported and no default conversion exists`() {
-        val converter = TomlConverter.default
+    fun `throws DecodingError if all decoders throw unsupported and no default decoder exists`() {
+        val decoder = TomlDecoder.default
             .with<TomlValue.List, Int> { pass() }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
-        assertThrows<TomlException.ConversionError> { toml.convert<Int>(converter) }
+        assertThrows<TomlException.DecodingError> { toml.decode<Int>(decoder) }
     }
 
     @Test
-    fun `default conversion is used if all decoders pass`() {
-        val converter = TomlConverter.default
+    fun `default decoder is used if all decoders pass`() {
+        val decoder = TomlDecoder.default
             .with<TomlValue.Integer, Int> { pass() }
 
         val toml = TomlValue.Integer(123)
-        assertEquals(123, toml.convert(converter))
+        assertEquals(123, toml.decode(decoder))
     }
 }

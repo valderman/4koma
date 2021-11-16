@@ -1,4 +1,4 @@
-package cc.ekblad.toml.converter
+package cc.ekblad.toml.decoder
 
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
@@ -9,13 +9,13 @@ import kotlin.test.assertEquals
 
 class TraversalTests {
     @Test
-    fun `can get simple value with natural conversion`() {
+    fun `can get simple value with decode to Ant`() {
         val toml = TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.Integer(123)))
         assertEquals(123L, toml.get<Any>("foo", "bar"))
     }
 
     @Test
-    fun `can get simple value with non-natural conversion`() {
+    fun `can get simple value with non-Any decoding`() {
         val toml = TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.Integer(123)))
         assertEquals(123.0, toml.get("foo", "bar"))
     }
@@ -54,13 +54,13 @@ class TraversalTests {
     }
 
     @Test
-    fun `trying to get a list with ill-typed elements yields a conversion error`() {
+    fun `trying to get a list with ill-typed elements yields a decoding error`() {
         val toml = TomlValue.Map(
             "foo" to TomlValue.Map(
                 "bar" to TomlValue.List(TomlValue.String("baz"), TomlValue.Integer(1))
             )
         )
-        assertThrows<TomlException.ConversionError> { toml.get<List<Int>>("foo", "bar") }
+        assertThrows<TomlException.DecodingError> { toml.get<List<Int>>("foo", "bar") }
     }
 
     @Test

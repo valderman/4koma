@@ -10,7 +10,7 @@
 A small, stand-alone, easy to use TOML parser library for Kotlin.
 
 4koma supports an array of convenient features, such as full TOML 1.0 compliance,
-type-safe conversions of configurations into arbitrary data classes using Kotlin generics,
+type-safe decoding of configurations into arbitrary data classes using Kotlin generics,
 and easy access to individual properties for when you don't need the entire document.
 
 4koma follows the UNIX philosophy, in that it tries to do one thing (i.e. TOML processing for Kotlin projects),
@@ -53,7 +53,7 @@ password = "correct horse battery staple"
 ### 3. Write some code
 ```kotlin
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.convert
+import cc.ekblad.toml.decode
 import cc.ekblad.toml.get
 import java.nio.file.Path
 
@@ -69,16 +69,16 @@ fun main() {
     // Parse a TOML document from a string, stream, or file
     val tomlDocument = TomlValue.from(Path.of("test.toml"))
 
-    // Convert it to your config type
-    val config = tomlDocument.convert<Config>()
+    // Decode it to your config type
+    val config = tomlDocument.decode<Config>()
 
-    // If you're lazy, just convert it to a map
-    val mapConfig = tomlDocument.convert<Map<String, Any>>()
+    // If you're lazy, just decode it to a map
+    val mapConfig = tomlDocument.decode<Map<String, Any>>()
 
     // ...or access properties directly
     val maxLoginTries = tomlDocument["settings", "maxLoginTries"]
 
-    // ...or just grab a part of the document and convert it to some convenient data class
+    // ...or just grab a part of the document and decode it to some convenient data class
     val settings = tomlDocument.get<Config.Settings>("settings")
     val users = tomlDocument.get<List<User>>("user")
 
@@ -105,10 +105,10 @@ please open a pull request to rectify the situation.
 | Table arrays                     |  ✅  |  ❌  |  ✅  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |
 | Date/time literals               |  ✅  |  ❌  |  ✅  |  ❌  |  ❌  |  ✅  |  ✅  |  ✅  |  ✅  |
 | Easy property access¹            |  ✅  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  |
-| Conversion to Kotlin types       |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
+| Decodes to Kotlin types          |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
 | ...without extra boilerplate²    |  ✅  |  ❌  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
 | ...without modification to type  |  ✅  |  ❌  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
-| Type-safe generic conversion³    |  ✅  |  ❔  |  ✅  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |
+| Type-safe generic decoding³      |  ✅  |  ❔  |  ✅  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |
 | Kotlin multiplatform             |  ❌  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |  ❌  |
 | Serialization                    |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |  ✅  |
 | Online API docs                  |  ✅  |  ❌  |  ❌  |  ❌  |  ❌  |  ✅  |  ❌  |  ✅  |  ✅  |
@@ -116,12 +116,12 @@ please open a pull request to rectify the situation.
 | Everything but the kitchen sink⁵ |  ❌  |  ❌  |  ✅  |  ✅  |  ❌  |  ❌  |  ❌  |  ✅  |  ✅  |
 
 (¹) Individual properties can be accessed by means of `parsedConfig.get("foo.bar")` or similar,
-without requiring the entire document to be converted into some model type.
+without requiring the entire document to be decoded into some model type.
 
-(²) The library does not require annotations or other modifications to existing code in order to support conversion
+(²) The library does not require annotations or other modifications to existing code in order to support decoding
 to complex model types.
 
-(³) The library does not rely on type-erased JVM generics for conversion to complex model types.
+(³) The library does not rely on type-erased JVM generics for decoding to complex model types.
 
 (⁴) The library focuses on reading/writing/processing TOML and does not contain any "unnecessary" features
 unrelated to that scope.

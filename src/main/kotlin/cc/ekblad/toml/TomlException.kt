@@ -19,9 +19,9 @@ sealed class TomlException : RuntimeException() {
     }
 
     /**
-     * An error occurred while converting a TOML value into some other Kotlin type.
+     * An error occurred while decoding a TOML value into some other Kotlin type.
      */
-    data class ConversionError(
+    data class DecodingError(
         val reason: String?,
         val sourceValue: TomlValue,
         val targetType: KType,
@@ -33,7 +33,7 @@ sealed class TomlException : RuntimeException() {
             this(null, sourceValue, targetType, null)
 
         override val message: String =
-            "toml conversion error: unable to convert toml value '$sourceValue' " +
+            "toml decoding error: unable to decode toml value '$sourceValue' " +
                 "to type '${(targetType.classifier as KClass<*>).simpleName}'" +
                 (reason?.let { ": $it" } ?: "")
     }

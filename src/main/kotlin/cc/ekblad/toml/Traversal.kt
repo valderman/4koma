@@ -4,8 +4,8 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
- * Look up the value(s) at the given path in the receiver TOML structure, then convert them to the type given by
- * the type parameter `T`. If conversion is not possible, a [TomlException.ConversionError] is thrown.
+ * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
+ * the type parameter `T`. If decoding is not possible, a [TomlException.DecodingError] is thrown.
  * If there is no value at the given path, `null` is returned.
  *
  * <br>
@@ -30,7 +30,7 @@ import kotlin.reflect.typeOf
  *
  * <br>
  *
- * Nested lists of values may be flattened, if necessary to make conversion possible.
+ * Nested lists of values may be flattened, if necessary to make decoding into the desired type possible.
  * For instance, while
  * `tomlDocument.get<List<List<String>>>("user", "passwords")` will return
  * `listOf(listOf("password123", "Bob"), listOf("correct horse battery staple"))`,
@@ -42,14 +42,14 @@ inline operator fun <reified T : Any> TomlValue.get(vararg path: String): T? =
     get(typeOf<T>(), path.toList())
 
 fun <T> TomlValue.get(targetType: KType, path: List<String>): T? =
-    get(TomlConverter.default, targetType, path)
+    get(TomlDecoder.default, targetType, path)
 
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T : Any> TomlValue.get(converter: TomlConverter, vararg path: String): T? =
-    get(converter, typeOf<T>(), path.toList())
+inline fun <reified T : Any> TomlValue.get(decoder: TomlDecoder, vararg path: String): T? =
+    get(decoder, typeOf<T>(), path.toList())
 
-fun <T> TomlValue.get(converter: TomlConverter, targetType: KType, path: List<String>): T? =
-    get(path)?.flatten(targetType)?.convert(converter, targetType)
+fun <T> TomlValue.get(decoder: TomlDecoder, targetType: KType, path: List<String>): T? =
+    get(path)?.flatten(targetType)?.decode(decoder, targetType)
 
 @Suppress("NON_TAIL_RECURSIVE_CALL")
 private tailrec fun TomlValue.get(path: List<String>): TomlValue? = when {
