@@ -132,17 +132,17 @@ class TomlDecoder private constructor(private val decoders: Map<KType, List<Toml
             tomlValueDecoderFunction<TomlValue.Map>(),
             tomlValueDecoderFunction<TomlValue.List>(),
         )
+    }
+}
 
-        @OptIn(ExperimentalStdlibApi::class)
-        private inline fun <reified T> tomlValueDecoderFunction(): Pair<KType, TomlDecoder.(TomlValue) -> Any?> {
-            val type = typeOf<T>()
-            return type to {
-                if (it !is T) {
-                    throw Pass
-                }
-                it
-            }
+@OptIn(ExperimentalStdlibApi::class)
+private inline fun <reified T> tomlValueDecoderFunction(): Pair<KType, TomlDecoder.(TomlValue) -> Any?> {
+    val type = typeOf<T>()
+    return type to {
+        if (it !is T) {
+            pass()
         }
+        it
     }
 }
 
