@@ -3,11 +3,11 @@ package cc.ekblad.toml.parser
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
-import org.junit.jupiter.api.assertThrows
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class MiscTests : StringTest {
     private val test_toml = TomlValue.Map(
@@ -124,7 +124,7 @@ class MiscTests : StringTest {
 
     @Test
     fun `parse error contains correct line number`() {
-        val exception = assertThrows<TomlException.ParseError> {
+        val exception = assertFailsWith<TomlException.ParseError> {
             TomlValue.from(
                 """
                     [foo]

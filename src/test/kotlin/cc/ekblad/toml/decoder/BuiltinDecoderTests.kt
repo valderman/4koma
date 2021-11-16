@@ -4,7 +4,6 @@ import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.decode
-import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -17,6 +16,7 @@ import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class BuiltinDecoderTests : StringTest {
@@ -45,13 +45,13 @@ class BuiltinDecoderTests : StringTest {
             typeOf<List<String>>() to TomlValue.Map("hello" to TomlValue.String("hello")),
             typeOf<Map<Int, String>>() to TomlValue.Map("hello" to TomlValue.String("hello")),
         ).assertAll { (kType, tomlValue) ->
-            assertThrows<TomlException.DecodingError> { tomlValue.decode(kType) }
+            assertFailsWith<TomlException.DecodingError> { tomlValue.decode(kType) }
         }
     }
 
     @Test
     fun `throws on missing non-nullable key when decoding to data class`() {
-        assertThrows<TomlException.DecodingError> { TomlValue.Map().decode<Person>() }
+        assertFailsWith<TomlException.DecodingError> { TomlValue.Map().decode<Person>() }
     }
 
     @Test
@@ -101,7 +101,7 @@ class BuiltinDecoderTests : StringTest {
     fun `decoding error contains target type and the value that couldn't be decoded`() {
         data class Foo(val bar: String)
         val toml = "bar = 123"
-        val exception = assertThrows<TomlException.DecodingError> { TomlValue.from(toml).decode<Foo>() }
+        val exception = assertFailsWith<TomlException.DecodingError> { TomlValue.from(toml).decode<Foo>() }
         assertEquals(TomlValue.Integer(123), exception.sourceValue)
         assertEquals(typeOf<String>(), exception.targetType)
         assertContains(exception.message, TomlValue.Integer(123).toString())
@@ -146,7 +146,7 @@ class BuiltinDecoderTests : StringTest {
     @Test
     fun `can't use decode to cast from one type of TomlValue to another`() {
         val toml = """bar = "hello""""
-        assertThrows<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError> {
             TomlValue.from(toml).decode<Map<String, TomlValue.Integer>>()
         }
     }

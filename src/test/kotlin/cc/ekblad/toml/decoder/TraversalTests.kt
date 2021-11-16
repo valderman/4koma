@@ -3,9 +3,9 @@ package cc.ekblad.toml.decoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.get
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TraversalTests {
     @Test
@@ -60,7 +60,7 @@ class TraversalTests {
                 "bar" to TomlValue.List(TomlValue.String("baz"), TomlValue.Integer(1))
             )
         )
-        assertThrows<TomlException.DecodingError> { toml.get<List<Int>>("foo", "bar") }
+        assertFailsWith<TomlException.DecodingError> { toml.get<List<Int>>("foo", "bar") }
     }
 
     @Test

@@ -2,7 +2,6 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
-import org.junit.jupiter.api.Nested
 import java.time.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -161,77 +160,74 @@ class TableTests : UnitTest {
         assertEquals(expected, TomlValue.from(expr))
     }
 
-    @Nested
-    inner class MalformedInput {
-        @Test
-        fun `throws on redeclared table`() {
-            assertDocumentParseError(
-                """
-                    [foo]
-                    [foo]
-                """.trimIndent()
-            )
+    @Test
+    fun `throws on redeclared table`() {
+        assertDocumentParseError(
+            """
+                [foo]
+                [foo]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    foo.bar = 1
-                    [foo]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                foo.bar = 1
+                [foo]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    foo.bar.baz = 1
-                    [foo]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                foo.bar.baz = 1
+                [foo]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    [foo]
-                    bar = 'hello'
-                    [foo.bar]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                [foo]
+                bar = 'hello'
+                [foo.bar]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    [foo]
-                    [bar]
-                    baz = false
-                    [foo]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                [foo]
+                [bar]
+                baz = false
+                [foo]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    foo.bar = 1
-                    [foo]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                foo.bar = 1
+                [foo]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    [fruit]
-                    apple.color = "red"
-                    
-                    [fruit.apple]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                [fruit]
+                apple.color = "red"
+                
+                [fruit.apple]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    foo = {}
-                    [foo]
-                """.trimIndent()
-            )
+        assertDocumentParseError(
+            """
+                foo = {}
+                [foo]
+            """.trimIndent()
+        )
 
-            assertDocumentParseError(
-                """
-                    foo = 123
-                    [foo.bar]
-                """.trimIndent()
-            )
-        }
+        assertDocumentParseError(
+            """
+                foo = 123
+                [foo.bar]
+            """.trimIndent()
+        )
     }
 }

@@ -2,7 +2,7 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlValue
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class StringTests : StringTest {

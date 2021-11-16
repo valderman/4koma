@@ -4,10 +4,10 @@ import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.decode
-import org.junit.jupiter.api.assertThrows
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -56,7 +56,7 @@ class CustomDecoderTests {
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
         assertEquals(2, toml.decode(goodDecoder))
-        assertThrows<IllegalStateException> { toml.decode<Int>(badDecoder) }
+        assertFailsWith<IllegalStateException> { toml.decode<Int>(badDecoder) }
     }
 
     @Test
@@ -75,7 +75,7 @@ class CustomDecoderTests {
             .with<TomlValue.List, Int> { pass() }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
-        assertThrows<TomlException.DecodingError> { toml.decode<Int>(decoder) }
+        assertFailsWith<TomlException.DecodingError> { toml.decode<Int>(decoder) }
     }
 
     @Test

@@ -2,9 +2,8 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.RandomTest
 import cc.ekblad.toml.TomlValue
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
 import java.time.format.DateTimeFormatter
+import kotlin.test.Test
 
 class DateTimeTests : RandomTest {
     @Test
@@ -43,8 +42,7 @@ class DateTimeTests : RandomTest {
         }
     }
 
-    @Nested
-    inner class MalformedInput {
+    class MalformedInput : RandomTest {
         private val badLocalTimes = listOf(
             "-02:00:00", "02:-00:00", "24:00:00", "20:69:00", "2:00:00",
             "02:2:00", "02:0:00", "12.11.00", "12:21"

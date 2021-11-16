@@ -1,9 +1,9 @@
 package cc.ekblad.toml
 
 import org.junit.jupiter.api.Assertions.assertAll
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.function.Executable
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 interface UnitTest {
     fun <T> Collection<T>.assertAll(assertion: (T) -> Unit) {
@@ -21,13 +21,13 @@ interface UnitTest {
     }
 
     fun assertValueParseError(badValue: String) {
-        assertThrows<TomlException.ParseError>("parser accepted '$badValue'") {
+        assertFailsWith<TomlException.ParseError>("parser accepted '$badValue'") {
             TomlValue.from("foo = $badValue")
         }
     }
 
     fun assertDocumentParseError(badDocument: String) {
-        assertThrows<TomlException.ParseError>("parser accepted bad document:\n$badDocument\n") {
+        assertFailsWith<TomlException.ParseError>("parser accepted bad document:\n$badDocument\n") {
             TomlValue.from(badDocument)
         }
     }
