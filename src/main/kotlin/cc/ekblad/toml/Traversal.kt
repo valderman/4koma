@@ -42,9 +42,17 @@ inline operator fun <reified T : Any> TomlValue.get(vararg path: String): T? =
     get(typeOf<T>(), path.toList())
 
 fun <T> TomlValue.get(targetType: KType, path: List<String>): T? =
-    get(path)?.flatten(targetType)?.convert(targetType)
+    get(TomlConverter.default, targetType, path)
 
-private fun TomlValue.get(path: List<String>): TomlValue? = when {
+@OptIn(ExperimentalStdlibApi::class)
+inline fun <reified T : Any> TomlValue.get(converter: TomlConverter, vararg path: String): T? =
+    get(converter, typeOf<T>(), path.toList())
+
+fun <T> TomlValue.get(converter: TomlConverter, targetType: KType, path: List<String>): T? =
+    get(path)?.flatten(targetType)?.convert(converter, targetType)
+
+@Suppress("NON_TAIL_RECURSIVE_CALL")
+private tailrec fun TomlValue.get(path: List<String>): TomlValue? = when {
     path.isEmpty() -> this
     this is TomlValue.Map -> properties[path.first()]?.get(path.drop(1))
     this is TomlValue.List -> TomlValue.List(elements.mapNotNull { it.get(path) })

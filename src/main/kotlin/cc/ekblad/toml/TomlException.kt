@@ -27,7 +27,7 @@ sealed class TomlException : RuntimeException() {
         val targetType: KType,
         override val cause: Throwable?
     ) : TomlException() {
-        constructor(reason: String?, sourceValue: TomlValue, targetType: KType) :
+        constructor(reason: String, sourceValue: TomlValue, targetType: KType) :
             this(reason, sourceValue, targetType, null)
         constructor(sourceValue: TomlValue, targetType: KType) :
             this(null, sourceValue, targetType, null)

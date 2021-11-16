@@ -138,6 +138,12 @@ class BuiltinConverterTests : StringTest {
     }
 
     @Test
+    fun `can convert TomlValues`() {
+        assertEquals(TomlValue.Integer(123), TomlValue.Integer(123).convert())
+        assertEquals(TomlValue.String("123"), TomlValue.String("123").convert())
+    }
+
+    @Test
     fun `can't use convert to cast from one type of TomlValue to another`() {
         val toml = """bar = "hello""""
         assertThrows<TomlException.ConversionError> {

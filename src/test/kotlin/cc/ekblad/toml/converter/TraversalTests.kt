@@ -7,7 +7,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class TraversalTest {
+class TraversalTests {
     @Test
     fun `can get simple value with natural conversion`() {
         val toml = TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.Integer(123)))
