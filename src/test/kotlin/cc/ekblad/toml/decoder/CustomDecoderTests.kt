@@ -8,6 +8,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 @OptIn(ExperimentalStdlibApi::class)
 class CustomDecoderTests {
@@ -78,11 +79,21 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `default decoder is used if all decoders pass`() {
+    fun `default decoder is used if all decoder functions pass`() {
         val decoder = TomlDecoder.default
             .with<TomlValue.Integer, Int> { pass() }
 
         val toml = TomlValue.Integer(123)
         assertEquals(123, toml.decode(decoder))
+    }
+
+    @Test
+    fun `creating an extended decoder does not affect the default decoder in any way`() {
+        val nonDefaultDecoder = TomlDecoder.default
+            .with<TomlValue.Integer, Int> { error("we never get here") }
+
+        val toml = TomlValue.Integer(123)
+        assertEquals(123, toml.decode())
+        assertNotEquals(nonDefaultDecoder, TomlDecoder.default)
     }
 }
