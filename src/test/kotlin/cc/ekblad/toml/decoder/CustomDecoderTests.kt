@@ -26,12 +26,12 @@ class CustomDecoderTests {
         data class Bar(val value: String)
         data class Baz(val a: Foo, val b: Bar)
         val decoder = TomlDecoder.default.with(
-            typeOf<Foo>() to {
+            Foo::class to { _, it ->
                 (it as? TomlValue.Integer)?.let {
                     Foo(it.value.toInt())
                 }
             },
-            typeOf<Bar>() to {
+            Bar::class to { _, it ->
                 (it as? TomlValue.Integer)?.let {
                     Bar(it.value.toString())
                 }
@@ -47,12 +47,12 @@ class CustomDecoderTests {
     @Test
     fun `decoder functions are searched in the correct order`() {
         val goodDecoder = TomlDecoder.default
-            .with<TomlValue.List, Int> { error("should never get here") }
+            .with<TomlValue.List, Int> { _, _ -> error("should never get here") }
             .with { it: TomlValue.List -> it.elements.size }
 
         val badDecoder = TomlDecoder.default
             .with { it: TomlValue.List -> it.elements.size }
-            .with<TomlValue.List, Int> { error("boom!") }
+            .with<TomlValue.List, Int> { _, _ -> error("boom!") }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
         assertEquals(2, toml.decode(goodDecoder))
@@ -62,7 +62,7 @@ class CustomDecoderTests {
     @Test
     fun `can use pass to pass the ball to the next decoder`() {
         val decoder = TomlDecoder.default
-            .with<TomlValue.List, Int> { pass() }
+            .with<TomlValue.List, Int> { _, _ -> pass() }
             .with { it: TomlValue.List -> it.elements.size }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
@@ -72,7 +72,7 @@ class CustomDecoderTests {
     @Test
     fun `throws DecodingError if all decoders throw unsupported and no default decoder exists`() {
         val decoder = TomlDecoder.default
-            .with<TomlValue.List, Int> { pass() }
+            .with<TomlValue.List, Int> { _, _ -> pass() }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
         assertFailsWith<TomlException.DecodingError> { toml.decode<Int>(decoder) }
@@ -81,7 +81,7 @@ class CustomDecoderTests {
     @Test
     fun `default decoder is used if all decoder functions pass`() {
         val decoder = TomlDecoder.default
-            .with<TomlValue.Integer, Int> { pass() }
+            .with<TomlValue.Integer, Int> { _, _ -> pass() }
 
         val toml = TomlValue.Integer(123)
         assertEquals(123, toml.decode(decoder))
@@ -90,7 +90,7 @@ class CustomDecoderTests {
     @Test
     fun `creating an extended decoder does not affect the default decoder in any way`() {
         val nonDefaultDecoder = TomlDecoder.default
-            .with<TomlValue.Integer, Int> { error("we never get here") }
+            .with<TomlValue.Integer, Int> { _, _ -> error("we never get here") }
 
         val toml = TomlValue.Integer(123)
         assertEquals(123, toml.decode())

@@ -17,7 +17,9 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
-class TomlDecoder private constructor(private val decoders: Map<KType, List<TomlDecoder.(TomlValue) -> Any?>>) {
+class TomlDecoder private constructor(
+    private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>
+) {
 
     /**
      * Thrown by a TOML decoder function to indicate that it can't decode the given TOML into its target type and that
@@ -33,8 +35,8 @@ class TomlDecoder private constructor(private val decoders: Map<KType, List<Toml
 
     /**
      * Extend a TOML decoder with zero or more additional custom decoder functions.
-     * A custom decoder function is a function from a [TomlValue] to some target type, associated with
-     * a [KType] representing that target type.
+     * A custom decoder function is a function from a [TomlValue] and a [KType] representing that a target type
+     * to that target type. Custom decoder functions are associated with a [KClass] representing that target type.
      *
      * When a TOML value is decoded to some target type, the decoder will look for all decoder functions associated with
      * that type. All decoder functions matching that type are then tried in the order
@@ -51,8 +53,44 @@ class TomlDecoder private constructor(private val decoders: Map<KType, List<Toml
      *
      * ```
      * val myDecoder = TomlDecoder.default.with(
-     *     typeOf<String>() to {
-     *         (it as? TomlValue.Integer)?.let { it.value.toString() } ?: pass()
+     *     String::class to { _, tomlValue ->
+     *         (tomlValue as? TomlValue.Integer)?.let { tomlValue.value.toString() } ?: pass()
+     *     }
+     * )
+     * val result = TomlValue.from(Path.of("path", "to", "file.toml")).decode(myDecoder)
+     * ```
+     *
+     * <br>
+     *
+     * Binding decoder functions to a KClass rather than a KType, while allowing the decoder function to access that
+     * KType, allows for more fine-grained control over deserialization. Let's say, for instance, that you have a custom
+     * data structure, generic in its elements, that you want to decode TOML values into.
+     * 
+     * If a decoder function was bound to a KType, you would need to register one decoder function for
+     * MyDataStructure<Int>, one for MyDataStructure<String>, etc. - a lot of unnecessary boilerplate.
+     * 
+     * If a decoder function was bound to a KClass and did not have access to the corresponding KType, you would have
+     * no way of knowing the type of the elements of the data structure. You would instead be forced to rely on
+     * the default decoding of TOML values - [TomlValue.Integer] into [Long], [TomlValue.Map] into [Map],
+     * and so on - an unacceptable loss of functionality.
+     * 
+     * A decoder function with access to the target type's KType, bound to the target type's KClass gets the best of
+     * both worlds. As an example, here is how you would create a custom decoder function for the generic data structure
+     * used in the above paragraphs.
+     *
+     * <br>
+     *
+     * ```
+     * val myDecoder = TomlDecoder.default.with(
+     *     MyDataStructure::class to { kType, tomlValue ->
+     *         (tomlValue as? TomlValue.List)?.let {
+     *             val myDataStructure = MyDataStructure<Any>()
+     *             tomlValue.forEach {
+     *                 it.convert(this, kType.arguments.single().type!!)
+     *                 myDataStructure.add(convertedElement)
+     *             }
+     *             myDataStructure
+ *             } ?: pass()
      *     }
      * )
      * val result = TomlValue.from(Path.of("path", "to", "file.toml")).decode(myDecoder)
@@ -61,8 +99,10 @@ class TomlDecoder private constructor(private val decoders: Map<KType, List<Toml
      * <br>
      *
      */
-    fun with(vararg decoderFunctions: Pair<KType, TomlDecoder.(TomlValue) -> Any?>): TomlDecoder {
-        val mutableDecoders = mutableMapOf<KType, MutableList<TomlDecoder.(TomlValue) -> Any?>>()
+    fun with(
+        vararg decoderFunctions: Pair<KClass<*>, TomlDecoder.(targetType: KType, tomlValue: TomlValue) -> Any?>
+    ): TomlDecoder {
+        val mutableDecoders = mutableMapOf<KClass<*>, MutableList<TomlDecoder.(KType, TomlValue) -> Any?>>()
         decoders.mapValuesTo(mutableDecoders) { it.value.toMutableList() }
         decoderFunctions.forEach { (type, newDecoder) ->
             mutableDecoders.compute(type) { _, value ->
@@ -89,25 +129,37 @@ class TomlDecoder private constructor(private val decoders: Map<KType, List<Toml
      * If you care about the performance of this operation, the explicitly typed overload of this function is
      * significantly faster when registering several decoder functions at the same time.
      */
-    inline fun <reified T : TomlValue, reified R> with(crossinline decoderFunction: TomlDecoder.(T) -> R): TomlDecoder =
+    inline fun <reified T : TomlValue, reified R> with(
+        crossinline decoderFunction: TomlDecoder.(tomlValue: T) -> R
+    ): TomlDecoder =
         with(
-            typeOf<R>() to { value ->
+            R::class to { _, value ->
                 (value as? T)?.let { decoderFunction(it) } ?: pass()
             }
         )
 
-    internal fun decoderFor(type: KType): ((TomlValue) -> Any?)? = decoders[type]?.let { decodersForType ->
-        return decoder@{
-            decodersForType.asReversed().forEach { decode ->
-                try {
-                    return@decoder this.decode(it)
-                } catch (e: Pass) {
-                    /* no-op */
-                }
+    inline fun <reified T : TomlValue, reified R> with(
+        crossinline decoderFunction: TomlDecoder.(targetType: KType, tomlValue: T) -> R
+    ): TomlDecoder =
+        with(
+            R::class to { kType, value ->
+                (value as? T)?.let { decoderFunction(kType, it) } ?: pass()
             }
-            throw Pass
+        )
+
+    internal fun <T : Any> decoderFor(type: KClass<T>): ((KType, TomlValue) -> T)? =
+        decoders[type]?.let { decodersForType ->
+            return decoder@{ type, value ->
+                decodersForType.asReversed().forEach { decode ->
+                    try {
+                        return@decoder (this.decode(type, value) as T)
+                    } catch (e: Pass) {
+                        /* no-op */
+                    }
+                }
+                throw Pass
+            }
         }
-    }
 
     companion object {
         /**
@@ -136,15 +188,13 @@ class TomlDecoder private constructor(private val decoders: Map<KType, List<Toml
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-private inline fun <reified T> tomlValueDecoderFunction(): Pair<KType, TomlDecoder.(TomlValue) -> Any?> {
-    val type = typeOf<T>()
-    return type to {
+private inline fun <reified T> tomlValueDecoderFunction(): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> Any?> =
+    T::class to { _, it ->
         if (it !is T) {
             pass()
         }
         it
     }
-}
 
 /**
  * Decodes the receiver TOML value to the type indicated by type parameter `T` using the default TOML decoder.
@@ -182,9 +232,9 @@ fun <T : Any> TomlValue.decode(decoder: TomlDecoder, type: KType): T =
     decoder.decode(this, type)
 
 private fun <T : Any> TomlDecoder.decode(value: TomlValue, target: KType): T {
-    decoderFor(target)?.let { decode ->
+    decoderFor(target.classifier!! as KClass<T>)?.let { decode ->
         try {
-            return@decode decode(value) as T
+            return@decode decode(target, value) as T
         } catch (e: TomlDecoder.Pass) {
             /* no-op */
         }
