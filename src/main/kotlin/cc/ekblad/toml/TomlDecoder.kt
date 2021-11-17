@@ -132,7 +132,7 @@ class TomlDecoder private constructor(
         crossinline decoderFunction: TomlDecoder.(tomlValue: T) -> R
     ): TomlDecoder =
         with(
-            R::class to { _, value ->
+            R::class to @Generated { _, value ->
                 (value as? T)?.let { decoderFunction(it) } ?: pass()
             }
         )
@@ -141,7 +141,7 @@ class TomlDecoder private constructor(
         crossinline decoderFunction: TomlDecoder.(targetType: KType, tomlValue: T) -> R
     ): TomlDecoder =
         with(
-            R::class to { kType, value ->
+            R::class to @Generated { kType, value ->
                 (value as? T)?.let { decoderFunction(kType, it) } ?: pass()
             }
         )
@@ -215,7 +215,7 @@ class TomlDecoder private constructor(
 }
 
 private inline fun <reified T> tomlValueDecoderFunction(): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> Any?> =
-    T::class to { _, it ->
+    T::class to @Generated { _, it ->
         if (it !is T) {
             pass()
         }
@@ -225,7 +225,7 @@ private inline fun <reified T> tomlValueDecoderFunction(): Pair<KClass<*>, TomlD
 private inline fun <reified T : TomlValue, reified R> defaultDecoderFunction(
     crossinline decode: (T) -> R
 ): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> R> =
-    R::class to { _, it ->
+    R::class to @Generated { _, it ->
         if (it !is T) {
             pass()
         }

@@ -37,6 +37,7 @@ internal class TomlBuilder private constructor() {
     }
 
     @JvmInline
+    @Generated
     private value class ContextImpl(val properties: MutableMap<String, MutableTomlValue>) : Context
 
     fun resetContext() {
