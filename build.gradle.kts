@@ -1,9 +1,8 @@
 import java.nio.file.Paths
 
 plugins {
-    val kotlinVersion = "1.5.31"
-    kotlin("jvm") version kotlinVersion
-    id("org.jetbrains.dokka") version kotlinVersion
+    kotlin("jvm") version "1.6.0"
+    id("org.jetbrains.dokka") version "1.5.31"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
     `maven-publish`
     antlr
@@ -58,12 +57,12 @@ publishing {
 }
 
 dependencies {
-    val kotlinVersion = "1.5.31"
+    val kotlinVersion = "1.6.0"
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     antlr("org.antlr:antlr4:4.9.3")
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test:1.5.31")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
 }
 
 tasks {
