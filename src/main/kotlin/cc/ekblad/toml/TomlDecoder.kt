@@ -65,15 +65,15 @@ class TomlDecoder private constructor(
      * Binding decoder functions to a KClass rather than a KType, while allowing the decoder function to access that
      * KType, allows for more fine-grained control over deserialization. Let's say, for instance, that you have a custom
      * data structure, generic in its elements, that you want to decode TOML values into.
-     * 
+     *
      * If a decoder function was bound to a KType, you would need to register one decoder function for
      * MyDataStructure<Int>, one for MyDataStructure<String>, etc. - a lot of unnecessary boilerplate.
-     * 
+     *
      * If a decoder function was bound to a KClass and did not have access to the corresponding KType, you would have
      * no way of knowing the type of the elements of the data structure. You would instead be forced to rely on
      * the default decoding of TOML values - [TomlValue.Integer] into [Long], [TomlValue.Map] into [Map],
      * and so on - an unacceptable loss of functionality.
-     * 
+     *
      * A decoder function with access to the target type's KType, bound to the target type's KClass gets the best of
      * both worlds. As an example, here is how you would create a custom decoder function for the generic data structure
      * used in the above paragraphs.
@@ -90,7 +90,7 @@ class TomlDecoder private constructor(
      *                 myDataStructure.add(convertedElement)
      *             }
      *             myDataStructure
- *             } ?: pass()
+     *             } ?: pass()
      *     }
      * )
      * val result = TomlValue.from(Path.of("path", "to", "file.toml")).decode(myDecoder)
@@ -117,7 +117,6 @@ class TomlDecoder private constructor(
         return TomlDecoder(mutableDecoders)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     /**
      * Extend the receiver TOML decoder with a single custom decoder function,
      * without having to manually specify its target type.
@@ -170,7 +169,6 @@ class TomlDecoder private constructor(
          * as part of the decoding process, extend this decoder with new decoder functions using [with] and pass the
          * result to the [TomlValue.decode], [TomlValue.get], etc. functions.
          */
-        @OptIn(ExperimentalStdlibApi::class)
         val default: TomlDecoder = TomlDecoder(emptyMap()).with(
             tomlValueDecoderFunction<TomlValue>(),
             tomlValueDecoderFunction<TomlValue.String>(),
@@ -183,17 +181,55 @@ class TomlDecoder private constructor(
             tomlValueDecoderFunction<TomlValue.LocalTime>(),
             tomlValueDecoderFunction<TomlValue.Map>(),
             tomlValueDecoderFunction<TomlValue.List>(),
+            defaultDecoderFunction { it: TomlValue.Integer -> it.value },
+            defaultDecoderFunction { it: TomlValue.Integer -> it.value.toInt() },
+            defaultDecoderFunction { it: TomlValue.Integer -> it.value.toBigInteger() },
+            defaultDecoderFunction { it: TomlValue.Integer -> it.value.toFloat() },
+            defaultDecoderFunction { it: TomlValue.Integer -> it.value.toDouble() },
+            defaultDecoderFunction { it: TomlValue.Integer -> it.value.toBigDecimal() },
+            defaultDecoderFunction { it: TomlValue.Double -> it.value },
+            defaultDecoderFunction { it: TomlValue.Double -> it.value.toFloat() },
+            defaultDecoderFunction { it: TomlValue.Double -> it.value.toBigDecimal() },
+            defaultDecoderFunction { it: TomlValue.Bool -> it.value },
+            defaultDecoderFunction { it: TomlValue.OffsetDateTime -> it.value },
+            defaultDecoderFunction { it: TomlValue.LocalDateTime -> it.value },
+            defaultDecoderFunction { it: TomlValue.LocalDate -> it.value },
+            defaultDecoderFunction { it: TomlValue.LocalTime -> it.value },
+            defaultDecoderFunction { it: TomlValue.String -> it.value },
+            Any::class to { _, it ->
+                when (it) {
+                    is TomlValue.Bool -> it.value
+                    is TomlValue.Double -> it.value
+                    is TomlValue.Integer -> it.value
+                    is TomlValue.String -> it.value
+                    is TomlValue.LocalDate -> it.value
+                    is TomlValue.LocalTime -> it.value
+                    is TomlValue.LocalDateTime -> it.value
+                    is TomlValue.OffsetDateTime -> it.value
+                    is TomlValue.List,
+                    is TomlValue.Map -> pass()
+                }
+            }
         )
     }
 }
 
-@OptIn(ExperimentalStdlibApi::class)
 private inline fun <reified T> tomlValueDecoderFunction(): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> Any?> =
     T::class to { _, it ->
         if (it !is T) {
             pass()
         }
         it
+    }
+
+private inline fun <reified T : TomlValue, reified R> defaultDecoderFunction(
+    crossinline decode: (T) -> R
+): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> R> =
+    R::class to { _, it ->
+        if (it !is T) {
+            pass()
+        }
+        decode(it)
     }
 
 /**
@@ -234,7 +270,7 @@ fun <T : Any> TomlValue.decode(decoder: TomlDecoder, type: KType): T =
 private fun <T : Any> TomlDecoder.decode(value: TomlValue, target: KType): T {
     decoderFor(target.classifier!! as KClass<T>)?.let { decode ->
         try {
-            return@decode decode(target, value) as T
+            return@decode decode(target, value)
         } catch (e: TomlDecoder.Pass) {
             /* no-op */
         }
@@ -242,14 +278,7 @@ private fun <T : Any> TomlDecoder.decode(value: TomlValue, target: KType): T {
     return when (value) {
         is TomlValue.List -> toList(value, target)
         is TomlValue.Map -> toObject(value, target)
-        is TomlValue.Bool -> toBoolean(value, target)
-        is TomlValue.Double -> toDouble(value, target)
-        is TomlValue.Integer -> toInteger(value, target)
-        is TomlValue.String -> toString(value, target)
-        is TomlValue.LocalDate -> toLocalDate(value, target)
-        is TomlValue.LocalTime -> toLocalTime(value, target)
-        is TomlValue.LocalDateTime -> toLocalDateTime(value, target)
-        is TomlValue.OffsetDateTime -> toOffsetDateTime(value, target)
+        else -> throw TomlException.DecodingError(value, target)
     }
 }
 
@@ -276,7 +305,8 @@ private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType):
     target.classifier == Any::class -> toMap(value, Any::class.createType()) as T
     (target.classifier as KClass<*>).primaryConstructor != null -> toDataClass(value, target)
     else -> throw TomlException.DecodingError(
-        "objects can only be decoded into maps or data classes",
+        "objects can only be decoded into maps, data classes, " +
+            "or types for which a custom decoder function has been registered",
         value,
         target
     )
@@ -314,66 +344,3 @@ private fun <T : Any> TomlDecoder.toDataClass(value: TomlValue.Map, target: KTyp
     }
     return constructor.call(*parameters) as T
 }
-
-private fun <T : Any> toBoolean(value: TomlValue.Bool, target: KType): T =
-    when (target.classifier) {
-        Boolean::class -> value.value
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toDouble(value: TomlValue.Double, target: KType): T =
-    when (target.classifier) {
-        Double::class -> value.value
-        Float::class -> value.value.toFloat()
-        BigDecimal::class -> value.value.toBigDecimal()
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toInteger(value: TomlValue.Integer, target: KType): T =
-    when (target.classifier) {
-        Long::class -> value.value
-        Int::class -> value.value.toInt()
-        Double::class -> value.value.toDouble()
-        Float::class -> value.value.toFloat()
-        BigInteger::class -> value.value.toBigInteger()
-        BigDecimal::class -> value.value.toBigDecimal()
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toString(value: TomlValue.String, target: KType): T =
-    when (target.classifier) {
-        String::class -> value.value
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toLocalDate(value: TomlValue.LocalDate, target: KType): T =
-    when (target.classifier) {
-        LocalDate::class -> value.value
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toLocalTime(value: TomlValue.LocalTime, target: KType): T =
-    when (target.classifier) {
-        LocalTime::class -> value.value
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toLocalDateTime(value: TomlValue.LocalDateTime, target: KType): T =
-    when (target.classifier) {
-        LocalDateTime::class -> value.value
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
-
-private fun <T : Any> toOffsetDateTime(value: TomlValue.OffsetDateTime, target: KType): T =
-    when (target.classifier) {
-        OffsetDateTime::class -> value.value
-        Any::class -> value.value
-        else -> throw TomlException.DecodingError(value, target)
-    } as T
