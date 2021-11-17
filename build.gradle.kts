@@ -1,4 +1,5 @@
 import java.nio.file.Paths
+import kotlin.collections.listOf
 
 plugins {
     kotlin("jvm") version "1.6.0"
@@ -77,19 +78,26 @@ tasks {
         mustRunAfter("runKtlintCheckOverTestSourceSet")
     }
 
-    compileKotlin {
-        dependsOn("generateGrammarSource")
-        kotlinOptions {
-            jvmTarget = kotlinJvmTarget
-            freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
+    listOf(compileJava, compileTestJava).map { task ->
+        task {
+            sourceCompatibility = kotlinJvmTarget
+            targetCompatibility = kotlinJvmTarget
         }
     }
-    compileTestKotlin {
-        dependsOn("generateTestGrammarSource")
-        kotlinOptions {
-            jvmTarget = kotlinJvmTarget
-            freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
+
+    listOf(compileKotlin, compileTestKotlin).map { task ->
+        val generateGrammarSourceInfix = if (task === compileTestKotlin) "Test" else ""
+        task {
+            dependsOn("generate${generateGrammarSourceInfix}GrammarSource")
+            kotlinOptions {
+                jvmTarget = kotlinJvmTarget
+                freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
+            }
         }
+    }
+
+    kotlinSourcesJar {
+        dependsOn("generateGrammarSource")
     }
 
     test {
