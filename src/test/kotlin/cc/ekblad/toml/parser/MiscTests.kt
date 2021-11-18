@@ -3,11 +3,13 @@ package cc.ekblad.toml.parser
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
+import org.antlr.v4.runtime.InputMismatchException
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 class MiscTests : StringTest {
     private val test_toml = TomlValue.Map(
@@ -123,7 +125,7 @@ class MiscTests : StringTest {
     }
 
     @Test
-    fun `parse error contains correct line number`() {
+    fun `parse error contains correct line number, cause and description`() {
         val exception = assertFailsWith<TomlException.ParseError> {
             TomlValue.from(
                 """
@@ -138,6 +140,9 @@ class MiscTests : StringTest {
         }
         assertEquals(5, exception.line)
         assertContains(exception.message, "line 5")
+        assertContains(exception.message, exception.errorDescription)
+        assertContains(exception.errorDescription, "mismatched input")
+        assertIs<InputMismatchException>(exception.cause)
     }
 
     @Test

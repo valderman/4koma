@@ -54,6 +54,19 @@ class TraversalTests {
     }
 
     @Test
+    fun `can't get list as non-list`() {
+        val toml = TomlValue.Map(
+            "foo" to TomlValue.List(
+                TomlValue.List(
+                    TomlValue.String("baz"),
+                    TomlValue.String("quux")
+                )
+            )
+        )
+        assertFailsWith<TomlException.DecodingError> { toml.get<String>("foo") }
+    }
+
+    @Test
     fun `trying to get a list with ill-typed elements yields a decoding error`() {
         val toml = TomlValue.Map(
             "foo" to TomlValue.Map(

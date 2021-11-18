@@ -1,7 +1,7 @@
 package cc.ekblad.toml
 
-import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.javaType
 
 sealed class TomlException : RuntimeException() {
     /**
@@ -32,9 +32,12 @@ sealed class TomlException : RuntimeException() {
         constructor(sourceValue: TomlValue, targetType: KType) :
             this(null, sourceValue, targetType, null)
 
-        override val message: String =
-            "toml decoding error: unable to decode toml value '$sourceValue' " +
-                "to type '${(targetType.classifier as KClass<*>).simpleName}'" +
-                (reason?.let { ": $it" } ?: "")
+        @OptIn(ExperimentalStdlibApi::class)
+        override val message: String
+            get() {
+                val reasonSuffix = if (reason != null) ": $reason" else ""
+                val type = targetType.javaType.typeName
+                return "toml decoding error: unable to decode toml value '$sourceValue' to type '$type'$reasonSuffix"
+            }
     }
 }

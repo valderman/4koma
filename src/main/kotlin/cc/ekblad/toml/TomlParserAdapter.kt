@@ -15,9 +15,13 @@ internal fun TomlBuilder.extractDocument(ctx: TomlParser.DocumentContext) {
 
 private fun TomlBuilder.extractExpression(ctx: TomlParser.ExpressionContext) {
     ctx.key_value()?.let { extractKeyValue(it) }
-        ?: ctx.table()?.standard_table()?.let { extractTable(it) }
-        ?: ctx.table()?.array_table()?.let { extractArrayTable(it) }
+        ?: ctx.table()?.let { extractTable(it) }
         ?: ctx.comment().text.throwOnBadChar(ctx, '\r', '\n')
+}
+
+private fun TomlBuilder.extractTable(ctx: TomlParser.TableContext) {
+    ctx.standard_table()?.let { extractStandardTable(it) }
+        ?: ctx.array_table().let { extractArrayTable(it) }
 }
 
 private fun TomlBuilder.extractKeyValue(ctx: TomlParser.Key_valueContext) {
@@ -26,7 +30,7 @@ private fun TomlBuilder.extractKeyValue(ctx: TomlParser.Key_valueContext) {
     tableContext.set(ctx.start.line, keyFragments.last(), extractValue(ctx.value()))
 }
 
-private fun TomlBuilder.extractTable(ctx: TomlParser.Standard_tableContext) {
+private fun TomlBuilder.extractStandardTable(ctx: TomlParser.Standard_tableContext) {
     val keyFragments = ctx.key().extractKey()
     val key = keyFragments.last()
     resetContext()
@@ -76,8 +80,7 @@ private fun TomlParser.IntegerContext.extractInteger(): Long {
             DEC_INT() != null -> text.toLong(10)
             HEX_INT() != null -> text.substring(2).toLong(16)
             BIN_INT() != null -> text.substring(2).toLong(2)
-            OCT_INT() != null -> text.substring(2).toLong(8)
-            else -> error("unreachable")
+            else /* OCT_INT() != null */ -> text.substring(2).toLong(8)
         }
     } catch (e: NumberFormatException) {
         throw TomlException.ParseError("integer '$text' is out of range", start.line, e)
@@ -128,9 +131,11 @@ private fun TomlParser.Inline_tableContext.extractInlineTable(): TomlValue.Map =
     }.build()
 
 private fun TomlParser.StringContext.extractString(): String =
-    BASIC_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this)?.convertEscapeCodes(start.line)
-        ?: ML_BASIC_STRING()?.text?.stripQuotes(3)?.trimFirstNewline()?.throwOnBadChar(this)?.convertEscapeCodes(start.line)
-        ?: LITERAL_STRING()?.text?.stripQuotes(1)?.throwOnBadChar(this, '\r', '\n')
+    BASIC_STRING()?.let { it.text.stripQuotes(1).throwOnBadChar(this).convertEscapeCodes(start.line) }
+        ?: ML_BASIC_STRING()?.let {
+            it.text.stripQuotes(3).trimFirstNewline().throwOnBadChar(this).convertEscapeCodes(start.line)
+        }
+        ?: LITERAL_STRING()?.let { it.text.stripQuotes(1).throwOnBadChar(this, '\r', '\n') }
         ?: ML_LITERAL_STRING().text.stripQuotes(3).trimFirstNewline().throwOnBadChar(this)
 
 private fun TomlParser.KeyContext.extractKey(): List<String> =
@@ -200,8 +205,7 @@ private fun replaceEscapeMatch(line: Int, match: MatchResult): String = when (ma
     'r' -> "\r"
     't' -> "\t"
     'u' -> String(Character.toChars(match.groupValues[2].toInt(16).throwOnNonScalar(line)))
-    'U' -> String(Character.toChars(match.groupValues[3].toInt(16).throwOnNonScalar(line)))
-    else -> error("unreachable")
+    else /* 'U' */ -> String(Character.toChars(match.groupValues[3].toInt(16).throwOnNonScalar(line)))
 }
 
 /**

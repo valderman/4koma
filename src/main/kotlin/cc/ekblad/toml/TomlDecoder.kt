@@ -298,18 +298,21 @@ private fun <T : Any> TomlDecoder.toList(value: TomlValue.List, target: KType): 
 private fun TomlDecoder.decodeList(value: List<TomlValue>, elementType: KType): List<Any> =
     value.map { decode(it, elementType) }
 
-private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType): T = when {
-    // Map also covers the MutableMap case
-    target.classifier == Map::class -> toMap(value, target) as T
-    target.classifier == SortedMap::class -> toMap(value, target).toSortedMap() as T
-    target.classifier == Any::class -> toMap(value, Any::class.createType()) as T
-    (target.classifier as KClass<*>).primaryConstructor != null -> toDataClass(value, target)
-    else -> throw TomlException.DecodingError(
-        "objects can only be decoded into maps, data classes, " +
-            "or types for which a custom decoder function has been registered",
-        value,
-        target
-    )
+private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType): T {
+    val kClass = requireNotNull(target.classifier) as KClass<*>
+    return when {
+        // Map also covers the MutableMap case
+        kClass == Map::class -> toMap(value, target) as T
+        kClass == SortedMap::class -> toMap(value, target).toSortedMap() as T
+        kClass == Any::class -> toMap(value, Any::class.createType()) as T
+        kClass.primaryConstructor != null -> toDataClass(value, target, kClass)
+        else -> throw TomlException.DecodingError(
+            "objects can only be decoded into maps, data classes, " +
+                "or types for which a custom decoder function has been registered",
+            value,
+            target
+        )
+    }
 }
 
 private fun TomlDecoder.toMap(value: TomlValue.Map, targetMapType: KType): Map<String, Any> {
@@ -324,8 +327,7 @@ private fun TomlDecoder.toMap(value: TomlValue.Map, targetMapType: KType): Map<S
     return value.properties.mapValues { decode(it.value, elementType) }
 }
 
-private fun <T : Any> TomlDecoder.toDataClass(value: TomlValue.Map, target: KType): T {
-    val kClass = target.classifier as KClass<*>
+private fun <T : Any> TomlDecoder.toDataClass(value: TomlValue.Map, kType: KType, kClass: KClass<*>): T {
     val constructor = kClass.primaryConstructor!!
     val parameters = constructor.parameters.map {
         val parameterValue = value.properties[it.name]
@@ -333,7 +335,7 @@ private fun <T : Any> TomlDecoder.toDataClass(value: TomlValue.Map, target: KTyp
             throw TomlException.DecodingError(
                 "no value found for non-nullable parameter '${it.name}'",
                 value,
-                target
+                kType
             )
         }
         parameterValue?.let { value -> decode<Any>(value, it.type) }

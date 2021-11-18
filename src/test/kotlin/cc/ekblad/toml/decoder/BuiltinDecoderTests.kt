@@ -17,6 +17,8 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BuiltinDecoderTests : StringTest {
@@ -51,7 +53,11 @@ class BuiltinDecoderTests : StringTest {
 
     @Test
     fun `throws on missing non-nullable key when decoding to data class`() {
-        assertFailsWith<TomlException.DecodingError> { TomlValue.Map().decode<Person>() }
+        val error = assertFailsWith<TomlException.DecodingError> { TomlValue.Map().decode<Person>() }
+        assertNotNull(error.reason)
+        assertNull(error.cause)
+        assertContains(error.reason!!, "no value found for non-nullable parameter")
+        assertContains(error.message, error.reason!!)
     }
 
     @Test
