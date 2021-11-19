@@ -52,8 +52,10 @@ password = "correct horse battery staple"
 
 ### 3. Write some code
 ```kotlin
+import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.decode
+import cc.ekblad.toml.withMapping
 import cc.ekblad.toml.get
 import java.nio.file.Path
 
@@ -84,6 +86,26 @@ fun main() {
 
     // You can also access properties on objects inside lists
     val userNames = tomlDocument["user", "name"] // <- returns listOf("Alice", "Bob")
+
+    // Need to remap some names between your config file and your model types?
+    data class RemappedConfig(val users: List<User>) {
+        data class User(val userName: String, val userSecret: String)
+    }
+    val remappingDecoder = TomlDecoder.default
+        .withMapping<RemappedConfig>("user" to "users")
+        .withMapping<RemappedConfig.User>("name" to "userName", "password" to "userSecret")
+    val remappedConfig = tomlDocument.decode<RemappedConfig>(remappingDecoder)
+
+    // You can also use entirely custom decoder functions
+    val censoringDecoder = TomlDecoder.default.with { it: TomlValue.String -> 
+        if (it.value in listOfBadWords) {
+            // We don't allow any swearing in our strings!
+            it.value.map { '*' }.joinToString("")
+        } else {
+            it.value
+        }
+    }
+    val censoredConfig = tomlDocument.decode<Config>(censoringDecoder)
 }
 ```
 For more detailed information, see the [API documentation](https://jitpack.io/cc/ekblad/4koma/latest/javadoc/).
