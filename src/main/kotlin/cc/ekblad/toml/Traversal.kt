@@ -41,13 +41,26 @@ import kotlin.reflect.typeOf
 inline operator fun <reified T : Any> TomlValue.get(vararg path: String): T? =
     get(typeOf<T>(), path.toList())
 
+/**
+ * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
+ * `targetKType`. `targetKType` and `T` should correspond to the same type, or the behavior of `get` is undefined.
+ */
 fun <T> TomlValue.get(targetType: KType, path: List<String>): T? =
     get(TomlDecoder.default, targetType, path)
 
+/**
+ * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
+ * `T` using the given custom TOML decoder.
+ */
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T : Any> TomlValue.get(decoder: TomlDecoder, vararg path: String): T? =
     get(decoder, typeOf<T>(), path.toList())
 
+/**
+ * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
+ * `targetKType` using the given custom TOML decoder.
+ * `targetKType` and `T` should correspond to the same type, or the behavior of `get` is undefined.
+ */
 fun <T> TomlValue.get(decoder: TomlDecoder, targetType: KType, path: List<String>): T? =
     get(path)?.flatten(targetType)?.decode(decoder, targetType)
 

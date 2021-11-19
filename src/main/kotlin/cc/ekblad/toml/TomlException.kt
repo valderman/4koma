@@ -3,6 +3,9 @@ package cc.ekblad.toml
 import kotlin.reflect.KType
 import kotlin.reflect.javaType
 
+/**
+ * Base class of all exceptions that might be thrown during TOML processing.
+ */
 sealed class TomlException : RuntimeException() {
     /**
      * An error occurred while parsing a TOML document.

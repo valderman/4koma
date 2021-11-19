@@ -17,6 +17,11 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
+/**
+ * Describes how TOML values are to be decoded into Kotlin model types.
+ * [decode], [get], etc. all accept an optional `TomlDecoder` to customize their behavior.
+ * If no custom decoder is given, [TomlDecoder.default] is used.
+ */
 class TomlDecoder private constructor(
     private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>
 ) {
@@ -34,7 +39,7 @@ class TomlDecoder private constructor(
     fun pass(): Nothing = throw Pass
 
     /**
-     * Extend a TOML decoder with zero or more additional custom decoder functions.
+     * Returns a copy of the target TOML decoder, extended with zero or more additional custom decoder functions.
      * A custom decoder function is a function from a [TomlValue] and a [KType] representing that a target type
      * to that target type. Custom decoder functions are associated with a [KClass] representing that target type.
      *
@@ -118,7 +123,7 @@ class TomlDecoder private constructor(
     }
 
     /**
-     * Extend the receiver TOML decoder with a single custom decoder function,
+     * Returns a copy of the receiver TOML decoder extended with a single custom decoder function,
      * without having to manually specify its target type.
      *
      * A decoder function registered this way may specify a more specific argument type than [TomlValue]. If it does,
@@ -140,6 +145,11 @@ class TomlDecoder private constructor(
             }
         )
 
+    /**
+     * Returns a copy of the receiver TOML decoder extended with a single custom decoder function,
+     * without having to manually specify its target type. The custom decoder function may make decoding decisions
+     * based on the `KType` corresponding to the decoder target type.
+     */
     inline fun <reified T : TomlValue, reified R> with(
         crossinline decoderFunction: TomlDecoder.(targetType: KType, tomlValue: T) -> R
     ): TomlDecoder =
@@ -221,11 +231,12 @@ class TomlDecoder private constructor(
 }
 
 /**
- * Create a new decoder with a custom property mapping when decoding a TOML table into the type T.
+ * Returns a copy of the receiver TOML decoder, extended with a custom property mapping for the type `T`.
  *
- * Having a custom property mapping from "foo" to "bar" for some type T means that whenever the decoder (a) is decoding
- * a table (b) into a value of type T, any constructor parameter of T with the name "bar" will receive its value
- * from a TOML property with the name "foo".
+ * Having a custom property mapping from `"foo"` to `"bar"` for some type `T` means that whenever the decoder
+ * (a) is decoding a table (b) into a value of type `T`,
+ * any constructor parameter of `T` with the name `"bar"` will receive its value from a TOML property
+ * with the name `"foo"`.
  *
  * As a motivating example, in a TOML document describing a list of users, it is natural to use the singular of "user"
  * to add new users to the list:
@@ -274,6 +285,9 @@ class TomlDecoder private constructor(
 inline fun <reified T : Any> TomlDecoder.withMapping(vararg mapping: Pair<String, String>): TomlDecoder =
     withMapping(T::class, *mapping)
 
+/**
+ * Returns a copy of the receiver TOML decoder, extended with a custom property mapping for the type `T`.
+ */
 fun <T : Any> TomlDecoder.withMapping(kClass: KClass<T>, vararg mapping: Pair<String, String>): TomlDecoder = with(
     kClass to { kType, value ->
         if (value !is TomlValue.Map) {
@@ -326,13 +340,25 @@ private inline fun <reified T : TomlValue, reified R> defaultDecoderFunction(
 inline fun <reified T : Any> TomlValue.decode(): T =
     decode(typeOf<T>())
 
+/**
+ * Decodes the receiver TOML value into a value of the type corresponding to the given `KType`.
+ * `T` and `type` should correspond to the same type, or the behavior of `decode` is undefined.
+ */
 fun <T : Any> TomlValue.decode(type: KType): T =
     decode(TomlDecoder.default, type)
 
+/**
+ * Decodes the receiver TOML value into a value of type `T`, using the given custom decoder.
+ */
 @OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T : Any> TomlValue.decode(decoder: TomlDecoder): T =
     decode(decoder, typeOf<T>())
 
+/**
+ * Decodes the receiver TOML value into a value of the type corresponding to the given `KType`,
+ * using the given custom decoder.
+ * `T` and `type` should correspond to the same type, or the behavior of `decode` is undefined.
+ */
 fun <T : Any> TomlValue.decode(decoder: TomlDecoder, type: KType): T =
     decoder.decode(this, type)
 
