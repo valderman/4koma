@@ -72,6 +72,7 @@ tasks {
             "build", "generated-src", "antlr", "main", "cc", "ekblad", "toml", "parser"
         ).toFile()
         mustRunAfter("runKtlintCheckOverMainSourceSet")
+        mustRunAfter("dokkaHtml")
     }
 
     generateTestGrammarSource {
