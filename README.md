@@ -1,5 +1,5 @@
 # 4koma
-[![Docs](https://img.shields.io/badge/docs-latest-informational)](https://jitpack.io/cc/ekblad/4koma/latest/javadoc/)
+[![Docs](https://img.shields.io/badge/docs-latest-informational)](http://valderman.github.io/4koma/4koma/cc.ekblad.toml/)
 [![Release](https://jitpack.io/v/cc.ekblad/4koma.svg)](https://jitpack.io/#cc.ekblad/4koma)
 ![Build Status](https://github.com/valderman/4koma/workflows/CI/badge.svg)
 ![Coverage](.github/badges/jacoco.svg)
@@ -108,7 +108,7 @@ fun main() {
     val censoredConfig = tomlDocument.decode<Config>(censoringDecoder)
 }
 ```
-For more detailed information, see the [API documentation](https://jitpack.io/cc/ekblad/4koma/latest/javadoc/).
+For more detailed information, see the [API documentation](http://valderman.github.io/4koma/4koma/cc.ekblad.toml/).
 
 ## <span id="alternatives">Alternatives</span>
 
