@@ -133,7 +133,10 @@ class TomlDecoder private constructor(
     ): TomlDecoder =
         with(
             R::class to @Generated { _, value ->
-                (value as? T)?.let { decoderFunction(it) } ?: pass()
+                if (value !is T) {
+                    pass()
+                }
+                decoderFunction(value)
             }
         )
 
@@ -142,7 +145,10 @@ class TomlDecoder private constructor(
     ): TomlDecoder =
         with(
             R::class to @Generated { kType, value ->
-                (value as? T)?.let { decoderFunction(kType, it) } ?: pass()
+                if (value !is T) {
+                    pass()
+                }
+                decoderFunction(kType, value)
             }
         )
 
@@ -207,17 +213,80 @@ class TomlDecoder private constructor(
                     is TomlValue.LocalDateTime -> it.value
                     is TomlValue.OffsetDateTime -> it.value
                     is TomlValue.List,
-                    is TomlValue.Map -> pass()
+                    is TomlValue.Map -> throw Pass
                 }
             }
         )
     }
 }
 
+/**
+ * Create a new decoder with a custom property mapping when decoding a TOML table into the type T.
+ *
+ * Having a custom property mapping from "foo" to "bar" for some type T means that whenever the decoder (a) is decoding
+ * a table (b) into a value of type T, any constructor parameter of T with the name "bar" will receive its value
+ * from a TOML property with the name "foo".
+ *
+ * As a motivating example, in a TOML document describing a list of users, it is natural to use the singular of "user"
+ * to add new users to the list:
+ *
+ * <br>
+ *
+ * ```
+ * [[user]]
+ * name = 'Alice'
+ * password = 'correcthorsebatterystaple'
+ *
+ * [[user]]
+ * name = 'Bob'
+ * password = 'password1'
+ * ```
+ *
+ * <br>
+ *
+ * However, this makes less sense in the corresponding Kotlin type, where you would normally use the plural "users"
+ * as the name for a list of users:
+ *
+ * <br>
+ *
+ * ```
+ * data class User(val name: String, val password: String)
+ * data class UserList(val users: List<User>)
+ * ```
+ *
+ * <br>
+ *
+ * A custom mapping allows us to quickly bridge this gap, without compromising on either our Kotlin naming standards
+ * or our configuration syntax:
+ *
+ * <br>
+ *
+ * ```
+ * val myDecoder = TomlDecoder.default.withMapping<UserList>("user" to "users")
+ * val myUsers = toml.from(Path.of("path", "to", "users.toml")).decode<UserList>(myDecoder)
+ * ```
+ *
+ * <br>
+ *
+ * This also lets us rename fields in our model types while maintaining a stable configuration file syntax by simply
+ * specifying a custom mapping, all without having to add intrusive annotations to model types where they don't belong.
+ */
+inline fun <reified T : Any> TomlDecoder.withMapping(vararg mapping: Pair<String, String>): TomlDecoder =
+    withMapping(T::class, *mapping)
+
+fun <T : Any> TomlDecoder.withMapping(kClass: KClass<T>, vararg mapping: Pair<String, String>): TomlDecoder = with(
+    kClass to { kType, value ->
+        if (value !is TomlValue.Map) {
+            throw TomlDecoder.Pass
+        }
+        toDataClass<T>(value, kType, kClass, mapping.associate { it.second to it.first })
+    }
+)
+
 private inline fun <reified T> tomlValueDecoderFunction(): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> Any?> =
     T::class to @Generated { _, it ->
         if (it !is T) {
-            pass()
+            throw TomlDecoder.Pass
         }
         it
     }
@@ -227,7 +296,7 @@ private inline fun <reified T : TomlValue, reified R> defaultDecoderFunction(
 ): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> R> =
     R::class to @Generated { _, it ->
         if (it !is T) {
-            pass()
+            throw TomlDecoder.Pass
         }
         decode(it)
     }
@@ -305,7 +374,7 @@ private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType):
         kClass == Map::class -> toMap(value, target) as T
         kClass == SortedMap::class -> toMap(value, target).toSortedMap() as T
         kClass == Any::class -> toMap(value, Any::class.createType()) as T
-        kClass.primaryConstructor != null -> toDataClass(value, target, kClass)
+        kClass.primaryConstructor != null -> toDataClass(value, target, kClass, emptyMap())
         else -> throw TomlException.DecodingError(
             "objects can only be decoded into maps, data classes, " +
                 "or types for which a custom decoder function has been registered",
@@ -327,18 +396,24 @@ private fun TomlDecoder.toMap(value: TomlValue.Map, targetMapType: KType): Map<S
     return value.properties.mapValues { decode(it.value, elementType) }
 }
 
-private fun <T : Any> TomlDecoder.toDataClass(value: TomlValue.Map, kType: KType, kClass: KClass<*>): T {
+private fun <T : Any> TomlDecoder.toDataClass(
+    tomlMap: TomlValue.Map,
+    kType: KType,
+    kClass: KClass<*>,
+    tomlNamesByParameterName: Map<String, String>
+): T {
     val constructor = kClass.primaryConstructor!!
-    val parameters = constructor.parameters.map {
-        val parameterValue = value.properties[it.name]
-        if (!it.type.isMarkedNullable && parameterValue == null) {
+    val parameters = constructor.parameters.map { constructorParameter ->
+        val tomlName = tomlNamesByParameterName[constructorParameter.name] ?: constructorParameter.name
+        val parameterValue = tomlMap.properties[tomlName]
+        if (!constructorParameter.type.isMarkedNullable && parameterValue == null) {
             throw TomlException.DecodingError(
-                "no value found for non-nullable parameter '${it.name}'",
-                value,
+                "no value found for non-nullable parameter '${constructorParameter.name}'",
+                tomlMap,
                 kType
             )
         }
-        parameterValue?.let { value -> decode<Any>(value, it.type) }
+        parameterValue?.let { value -> decode<Any>(value, constructorParameter.type) }
     }.toTypedArray()
 
     if (kClass.visibility == KVisibility.PRIVATE) {

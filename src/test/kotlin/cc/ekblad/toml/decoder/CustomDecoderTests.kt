@@ -4,6 +4,7 @@ import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.decode
+import cc.ekblad.toml.withMapping
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -85,6 +86,56 @@ class CustomDecoderTests {
         val toml = TomlValue.Integer(123)
         assertEquals(123, toml.decode(decoder))
     }
+
+    @Test
+    fun `custom mapping does not get in the way of default decoder`() {
+        val decoder = TomlDecoder.default.withMapping<User>("bar" to "baz")
+
+        assertEquals(123, TomlValue.Integer(123).decode(decoder))
+        assertEquals(Config(emptyList()), TomlValue.Map("users" to TomlValue.List()).decode(decoder))
+    }
+
+    @Test
+    fun `custom mapping can be used together with custom decoder function`() {
+        val decoder = TomlDecoder.default
+            .with { it: TomlValue.Integer -> User("Anonymous", it.value.toInt(), null) }
+            .withMapping<User>("bar" to "baz")
+
+        assertEquals(User("Anonymous", 123, null), TomlValue.Integer(123).decode(decoder))
+    }
+
+    @Test
+    fun `custom mapping does not let you convert maps into something else`() {
+        val decoder = TomlDecoder.default.withMapping<User>("bar" to "baz")
+        assertFailsWith<TomlException.DecodingError> { TomlValue.Integer(123).decode<User>(decoder) }
+    }
+
+    @Test
+    fun `can remap toml property names`() {
+        val toml = """
+            [[user]]
+            full_name = 'Bosse Bus'
+            age = 47
+            
+            [[user]]
+            full_name = 'Dolan Duck'
+            age = 107
+        """.trimIndent()
+        val decoder = TomlDecoder.default.withMapping<User>(
+            "full_name" to "fullName",
+            "address" to "homeAddress"
+        ).withMapping<Config>("user" to "users")
+
+        val expected = Config(
+            listOf(
+                User("Bosse Bus", 47, null),
+                User("Dolan Duck", 107, null)
+            )
+        )
+        assertEquals(expected, TomlValue.from(toml).decode(decoder))
+    }
+    data class User(val fullName: String, val age: Int, val homeAddress: String?)
+    data class Config(val users: List<User>)
 
     @Test
     fun `creating an extended decoder does not affect the default decoder in any way`() {
