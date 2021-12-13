@@ -59,7 +59,7 @@ publishing {
 
 dependencies {
     val kotlinVersion = "1.6.0"
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     antlr("org.antlr:antlr4:4.9.3")
 

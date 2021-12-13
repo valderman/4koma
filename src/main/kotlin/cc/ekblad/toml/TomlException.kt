@@ -22,6 +22,11 @@ sealed class TomlException : RuntimeException() {
     }
 
     /**
+     * An error occurred while serializing a TOML value.
+     */
+    data class SerializationError(override val message: String, override val cause: Throwable?) : TomlException()
+
+    /**
      * An error occurred while decoding a TOML value into some other Kotlin type.
      */
     data class DecodingError(

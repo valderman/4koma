@@ -173,7 +173,7 @@ private fun TomlParser.Unquoted_keyContext.extractUnquotedKey(): List<String> {
 }
 
 private fun String.throwOnBadChar(ctx: ParserRuleContext, vararg extraBadChars: Char): String {
-    val encounteredInvalidChars = (invalidChars + extraBadChars.toList()).filter { it in this }
+    val encounteredInvalidChars = (invalidTomlChars + extraBadChars.toList()).filter { it in this }
     if (encounteredInvalidChars.isNotEmpty()) {
         val badChars = encounteredInvalidChars.joinToString(", ") { it.code.toString() }
         throw TomlException.ParseError(
@@ -219,7 +219,7 @@ private fun Int.throwOnNonScalar(line: Int): Int = apply {
 
 private val escapeRegex = Regex("\\\\([\\\\\"bnfrt]|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))")
 
-private val invalidChars = listOf(
+internal val invalidTomlChars = listOf(
     '\u0000'..'\u0008',
     '\u000B'..'\u000C',
     '\u000E'..'\u001F',
