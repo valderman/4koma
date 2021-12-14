@@ -48,4 +48,15 @@ sealed class TomlException : RuntimeException() {
                 return "toml decoding error: unable to decode toml value '$sourceValue' to type '$type'$reasonSuffix"
             }
     }
+
+    /**
+     * An error occurred while encoding a Kotlin value into a TOML value.
+     */
+    data class EncodingError(
+        val sourceValue: Any?,
+        override val cause: Throwable?
+    ) : TomlException() {
+        override val message: String
+            get() = "toml decoding error: unable to encode '$sourceValue' into a toml value"
+    }
 }

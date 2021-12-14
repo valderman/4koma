@@ -40,7 +40,7 @@ class TomlDecoder private constructor(
 
     /**
      * Returns a copy of the target TOML decoder, extended with zero or more additional custom decoder functions.
-     * A custom decoder function is a function from a [TomlValue] and a [KType] representing that a target type
+     * A custom decoder function is a function from a [TomlValue] and a [KType] representing a target type,
      * to that target type. Custom decoder functions are associated with a [KClass] representing that target type.
      *
      * When a TOML value is decoded to some target type, the decoder will look for all decoder functions associated with
