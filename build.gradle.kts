@@ -1,10 +1,13 @@
 import java.nio.file.Paths
 import kotlin.collections.listOf
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.6.0"
-    id("org.jetbrains.dokka") version "1.5.31"
+    kotlin("jvm") version "1.6.10"
+    id("org.jetbrains.dokka") version "1.6.0"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
+    id("com.github.ben-manes.versions") version "0.39.0"
     `maven-publish`
     antlr
     jacoco
@@ -58,7 +61,7 @@ publishing {
 }
 
 dependencies {
-    val kotlinVersion = "1.6.0"
+    val kotlinVersion = "1.6.10"
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     antlr("org.antlr:antlr4:4.9.3")
@@ -66,7 +69,15 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
 }
 
+ktlint {
+    version.set("0.43.2")
+}
+
 tasks {
+    val dependencyUpdateSentinel = register<DependencyUpdateSentinel>("dependencyUpdateSentinel") {
+        dependsOn(dependencyUpdates)
+    }
+
     generateGrammarSource {
         outputDirectory = Paths.get(
             "build", "generated-src", "antlr", "main", "cc", "ekblad", "toml", "parser"
@@ -113,6 +124,7 @@ tasks {
     check {
         dependsOn(test)
         dependsOn(ktlintCheck)
+        dependsOn(dependencyUpdateSentinel)
         dependsOn(jacocoTestCoverageVerification)
     }
 
@@ -141,6 +153,19 @@ tasks {
                 limit {
                     minimum = BigDecimal(0.8)
                 }
+            }
+        }
+    }
+}
+
+abstract class DependencyUpdateSentinel : DefaultTask() {
+    @ExperimentalPathApi
+    @org.gradle.api.tasks.TaskAction
+    fun check() {
+        val updateIndicator = "The following dependencies have later milestone versions:"
+        Paths.get("build", "dependencyUpdates", "report.txt").inputStream().bufferedReader().use { reader ->
+            if (reader.lines().anyMatch { it == updateIndicator }) {
+                throw GradleException("Dependency updates are available.")
             }
         }
     }
