@@ -83,7 +83,7 @@ class TomlEncoder private constructor(
      *
      * See [TomlDecoder.withMapping] for more information about custom mappings.
      */
-    inline fun <reified T : Any> withMapping(vararg mapping: Pair<TomlName, KotlinName>): TomlEncoder =
+    inline fun <reified T : Any> withMapping(vararg mapping: Pair<KotlinName, TomlName>): TomlEncoder =
         withMapping(T::class, *mapping)
 
     /**
@@ -93,8 +93,19 @@ class TomlEncoder private constructor(
      *
      * See [TomlDecoder.withMapping] for more information about custom mappings.
      */
-    fun <T : Any> withMapping(kClass: KClass<T>, vararg mapping: Pair<TomlName, KotlinName>): TomlEncoder {
-        require(kClass.isData)
+    fun <T : Any> withMapping(kClass: KClass<T>, vararg mapping: Pair<KotlinName, TomlName>): TomlEncoder {
+        require(kClass.isData) {
+            "type ${kClass.qualifiedName ?: kClass.simpleName} is not a data class"
+        }
+
+        val propertyNames = kClass.declaredMemberProperties.map { it.name }.toSet()
+        val missingPropertyNames = mapping.filter { it.first !in propertyNames }
+        require(missingPropertyNames.isEmpty()) {
+            val missingProperties = missingPropertyNames.joinToString(", ") { it.first }
+            val className = kClass.qualifiedName ?: kClass.simpleName
+            "the following properties do not exist on type $className: $missingProperties"
+        }
+
         val updatedMappings = mappings.toMutableMap()
         updatedMappings.compute(kClass) { _, previousMapping ->
             (previousMapping ?: emptyMap()) + mapping

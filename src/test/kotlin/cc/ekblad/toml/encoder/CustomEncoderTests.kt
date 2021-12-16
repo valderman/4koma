@@ -5,6 +5,7 @@ import cc.ekblad.toml.UnitTest
 import cc.ekblad.toml.transcoding.TomlEncoder
 import cc.ekblad.toml.transcoding.encode
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
@@ -144,7 +145,7 @@ class CustomEncoderTests : UnitTest {
         TomlEncoder.default.withMapping<Test>("a" to "Y")
         assertEquals(
             TomlValue.Map(
-                "A" to TomlValue.Integer(1),
+                "X" to TomlValue.Integer(1),
                 "b" to TomlValue.Integer(2),
                 "c" to TomlValue.Integer(3),
             ),
@@ -155,8 +156,38 @@ class CustomEncoderTests : UnitTest {
     @Test
     fun `cant register mapping with non-data class`() {
         class Test(val a: Int, val b: Int, val c: Int)
+
         assertFailsWith<IllegalArgumentException> {
             TomlEncoder.default.withMapping<Test>("a" to "A")
+        }.also {
+            assertContains(it.message ?: "", "Test")
+            assertContains(it.message ?: "", "is not a data class")
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            TomlEncoder.default.withMapping<Dummy>("a" to "A")
+        }.also {
+            assertContains(it.message ?: "", "CustomEncoderTests.Dummy")
+            assertContains(it.message ?: "", "is not a data class")
+        }
+    }
+
+    @Test
+    fun `can't add custom mapping for nonexistent property`() {
+        data class Test(val x: Int)
+
+        assertFailsWith<IllegalArgumentException> {
+            TomlEncoder.default.withMapping<Test>("KABOOM" to "x")
+        }.also {
+            assertContains(it.message ?: "", "KABOOM")
+            assertContains(it.message ?: "", "Test")
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            TomlEncoder.default.withMapping<Foo>("KABOOM" to "x")
+        }.also {
+            assertContains(it.message ?: "", "KABOOM")
+            assertContains(it.message ?: "", "CustomEncoderTests.Foo")
         }
     }
 }

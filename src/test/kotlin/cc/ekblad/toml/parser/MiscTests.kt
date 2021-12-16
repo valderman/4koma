@@ -4,6 +4,7 @@ import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.serialization.from
+import cc.ekblad.toml.transcoding.requireKClass
 import org.antlr.v4.runtime.InputMismatchException
 import java.nio.file.Path
 import kotlin.test.Test
@@ -161,5 +162,19 @@ class MiscTests : StringTest {
     @Test
     fun `throws on key containing plus sign`() {
         assertDocumentParseError("+12 = 12")
+    }
+
+    @Test
+    fun `kClass extension property on KType throws on non-KClass`() {
+        assertFailsWith<IllegalArgumentException> {
+            requireKClass(Map::class.typeParameters.first())
+        }
+    }
+
+    @Test
+    fun `kClass extension property on KType throws on null classifier`() {
+        assertFailsWith<IllegalArgumentException> {
+            requireKClass(null)
+        }
     }
 }

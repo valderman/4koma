@@ -15,6 +15,7 @@ import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.SortedMap
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KType
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.createType
@@ -230,7 +231,18 @@ class TomlDecoder private constructor(
      * Mappings are given on the form `"tomlName" to "kotlinName"`.
      */
     fun <T : Any> withMapping(kClass: KClass<T>, vararg mapping: Pair<TomlName, KotlinName>): TomlDecoder {
-        requireNotNull(kClass.primaryConstructor)
+        val constructor = requireNotNull(kClass.primaryConstructor) {
+            "type ${kClass.qualifiedName} does not have a primary constructor"
+        }
+
+        val parameterNames = constructor.parameters.map { it.name }.toSet()
+        val missingParameterNames = mapping.filter { it.second !in parameterNames }
+        require(missingParameterNames.isEmpty()) {
+            val missingParameters = missingParameterNames.joinToString(", ") { it.second }
+            val className = kClass.qualifiedName ?: kClass.simpleName
+            "the following parameters do not exist on constructor for type $className: $missingParameters"
+        }
+
         val updatedMappings = mappings.toMutableMap()
         updatedMappings.compute(kClass) { _, previousMapping ->
             (previousMapping ?: emptyMap()) + mapping.map { it.second to it.first }
@@ -393,7 +405,7 @@ private val anyKType: KType = Any::class.createType()
 private val stringKType: KType = String::class.createType()
 
 private fun <T : Any> TomlDecoder.toList(value: TomlValue.List, target: KType): T =
-    when (target.classifier) {
+    when (requireKClass(target.classifier)) {
         // List also covers the MutableList case
         List::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
         Collection::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
@@ -406,7 +418,7 @@ private fun TomlDecoder.decodeList(value: List<TomlValue>, elementType: KType): 
     value.map { decode(it, elementType) }
 
 private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType): T {
-    val kClass = requireNotNull(target.classifier) as KClass<*>
+    val kClass = requireKClass(target.classifier)
     return when {
         // Map also covers the MutableMap case
         kClass == Map::class -> toMap(value, target) as T
@@ -459,3 +471,8 @@ private fun <T : Any> TomlDecoder.toDataClass(
     }
     return constructor.call(*parameters) as T
 }
+
+internal fun requireKClass(classifier: KClassifier?): KClass<*> =
+    requireNotNull(classifier as? KClass<*>) {
+        "classifier '$classifier' is not a KClass; you can only decode to concrete types"
+    }

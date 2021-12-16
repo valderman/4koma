@@ -6,6 +6,7 @@ import cc.ekblad.toml.serialization.from
 import cc.ekblad.toml.transcoding.TomlDecoder
 import cc.ekblad.toml.transcoding.decode
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
@@ -89,24 +90,24 @@ class CustomDecoderTests {
 
     @Test
     fun `custom mapping does not get in the way of default decoder`() {
-        val decoder = TomlDecoder.default.withMapping<User>("bar" to "baz")
+        val decoder = TomlDecoder.default.withMapping<User>("bar" to "fullName")
 
         assertEquals(123, TomlValue.Integer(123).decode(decoder))
         assertEquals(Config(emptyList()), TomlValue.Map("users" to TomlValue.List()).decode(decoder))
     }
 
     @Test
-    fun `custom mapping can be used together with custom decoder function`() {
+    fun `custom mapping can be used together with custom decoder function if they do not overlap`() {
         val decoder = TomlDecoder.default
             .with { it: TomlValue.Integer -> User("Anonymous", it.value.toInt(), null) }
-            .withMapping<User>("bar" to "baz")
+            .withMapping<User>("bar" to "fullName")
 
         assertEquals(User("Anonymous", 123, null), TomlValue.Integer(123).decode(decoder))
     }
 
     @Test
     fun `custom mapping does not let you convert maps into something else`() {
-        val decoder = TomlDecoder.default.withMapping<User>("bar" to "baz")
+        val decoder = TomlDecoder.default.withMapping<User>("name" to "fullName")
         assertFailsWith<TomlException.DecodingError> { TomlValue.Integer(123).decode<User>(decoder) }
     }
 
@@ -125,23 +126,9 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `later mapping overrides earlier one`() {
-        val decoder = TomlDecoder.default
-            .withMapping<User>("name" to "KABOOM")
-            .withMapping<User>("name" to "fullName")
-        assertEquals(
-            User("Anonymous", 123, null),
-            TomlValue.Map(
-                "name" to TomlValue.String("Anonymous"),
-                "age" to TomlValue.Integer(123)
-            ).decode(decoder)
-        )
-    }
-
-    @Test
     fun `extending a decoder with a new mapping doesn't affect other the parent decoder`() {
         val decoder = TomlDecoder.default.withMapping<User>("name" to "fullName")
-        decoder.withMapping<User>("name" to "KABOOM")
+        decoder.withMapping<User>("name" to "age")
         assertEquals(
             User("Anonymous", 123, null),
             TomlValue.Map(
@@ -152,12 +139,13 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `more than one kotlin property can not map to the same toml name`() {
+    fun `more than one kotlin property can map to the same toml name`() {
         data class Test(val a: Int, val b: Int)
-        val decoder = TomlDecoder.default.withMapping<User>("x" to "a", "x" to "b")
-        assertFailsWith<TomlException.DecodingError> {
-            TomlValue.Map("x" to TomlValue.Integer(42)).decode(decoder)
-        }
+        val decoder = TomlDecoder.default.withMapping<Test>("x" to "a", "x" to "b")
+        assertEquals(
+            Test(42, 42),
+            TomlValue.Map("x" to TomlValue.Integer(42)).decode<Test>(decoder)
+        )
     }
 
     @Test
@@ -174,12 +162,40 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `can't add custom mapping for map or list`() {
+    fun `can't add custom mapping for type without primary constructor`() {
         assertFailsWith<IllegalArgumentException> {
-            TomlDecoder.default.withMapping<Map<*, *>>("name" to "KABOOM")
+            TomlDecoder.default.withMapping<Map<*, *>>("name" to "initialCapacity")
+        }.also {
+            assertContains(it.message ?: "", "does not have a primary constructor")
+            assertContains(it.message ?: "", "Map")
         }
+
         assertFailsWith<IllegalArgumentException> {
-            TomlDecoder.default.withMapping<List<*>>("name" to "KABOOM")
+            TomlDecoder.default.withMapping<List<*>>("name" to "initialCapacity")
+        }.also {
+            assertContains(it.message ?: "", "does not have a primary constructor")
+            assertContains(it.message ?: "", "List")
+        }
+    }
+
+    @Test
+    fun `can't add custom mapping for nonexistent property`() {
+        data class Test(val foo: Int)
+
+        assertFailsWith<IllegalArgumentException> {
+            TomlDecoder.default.withMapping<Test>("name" to "KABOOM")
+        }.also {
+            assertContains(it.message ?: "", "parameters do not exist")
+            assertContains(it.message ?: "", "Test")
+            assertContains(it.message ?: "", "KABOOM")
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            TomlDecoder.default.withMapping<User>("name" to "KABOOM")
+        }.also {
+            assertContains(it.message ?: "", "parameters do not exist")
+            assertContains(it.message ?: "", "CustomDecoderTests.User")
+            assertContains(it.message ?: "", "KABOOM")
         }
     }
 
