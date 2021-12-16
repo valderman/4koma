@@ -17,13 +17,17 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
 
+typealias TomlName = String
+typealias KotlinName = String
+
 /**
  * Describes how TOML values are to be decoded into Kotlin model types.
  * [decode], [get], etc. all accept an optional `TomlDecoder` to customize their behavior.
  * If no custom decoder is given, [TomlDecoder.default] is used.
  */
 class TomlDecoder private constructor(
-    private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>
+    private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>,
+    private val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>
 ) {
 
     /**
@@ -119,7 +123,7 @@ class TomlDecoder private constructor(
                 }
             }
         }
-        return TomlDecoder(mutableDecoders)
+        return TomlDecoder(mutableDecoders, mappings)
     }
 
     /**
@@ -162,6 +166,79 @@ class TomlDecoder private constructor(
             }
         )
 
+    /**
+     * Returns a copy of the receiver TOML decoder, extended with a custom property mapping for the type `T`, where
+     * `T` is any class with a primary constructor.
+     *
+     * Having a custom property mapping from `"tomlName"` to `"kotlinName"` for some type `T` means that
+     * whenever the decoder (a) is decoding a table (b) into a value of type `T`,
+     * any constructor parameter of `T` with the name `"kotlinName"` will receive its value from a TOML property
+     * with the name `"tomlName"`.
+     *
+     * As a motivating example, in a TOML document describing a list of users, it is natural to use the singular
+     * of "user" to add new users to the list:
+     *
+     * <br>
+     *
+     * ```
+     * [[user]]
+     * name = 'Alice'
+     * password = 'correcthorsebatterystaple'
+     *
+     * [[user]]
+     * name = 'Bob'
+     * password = 'password1'
+     * ```
+     *
+     * <br>
+     *
+     * However, this makes less sense in the corresponding Kotlin type, where you would normally use the plural "users"
+     * as the name for a list of users:
+     *
+     * <br>
+     *
+     * ```
+     * data class User(val name: String, val password: String)
+     * data class UserList(val users: List<User>)
+     * ```
+     *
+     * <br>
+     *
+     * A custom mapping allows us to quickly bridge this gap, without compromising on either our Kotlin naming standards
+     * or our configuration syntax:
+     *
+     * <br>
+     *
+     * ```
+     * val myDecoder = TomlDecoder.default.withMapping<UserList>("user" to "users")
+     * val myUsers = toml.from(Path.of("path", "to", "users.toml")).decode<UserList>(myDecoder)
+     * ```
+     *
+     * <br>
+     *
+     * This also lets us rename fields in our model types while maintaining a stable configuration file syntax by simply
+     * specifying a custom mapping, all without having to add intrusive annotations to model types
+     * where they don't belong.
+     */
+    inline fun <reified T : Any> withMapping(vararg mapping: Pair<TomlName, KotlinName>): TomlDecoder =
+        withMapping(T::class, *mapping)
+
+    /**
+     * Returns a copy of the receiver TOML decoder, extended with a custom property mapping for the type `T`.
+     * Mappings are given on the form `"tomlName" to "kotlinName"`.
+     */
+    fun <T : Any> withMapping(kClass: KClass<T>, vararg mapping: Pair<TomlName, KotlinName>): TomlDecoder {
+        requireNotNull(kClass.primaryConstructor)
+        val updatedMappings = mappings.toMutableMap()
+        updatedMappings.compute(kClass) { _, previousMapping ->
+            (previousMapping ?: emptyMap()) + mapping.map { it.second to it.first }
+        }
+        return TomlDecoder(decoders, updatedMappings)
+    }
+
+    internal fun mappingFor(type: KClass<*>): Map<KotlinName, TomlName> =
+        mappings[type] ?: emptyMap()
+
     internal fun <T : Any> decoderFor(type: KClass<T>): ((KType, TomlValue) -> T)? =
         decoders[type]?.let { decodersForType ->
             return decoder@{ type, value ->
@@ -185,7 +262,7 @@ class TomlDecoder private constructor(
          * as part of the decoding process, extend this decoder with new decoder functions using [with] and pass the
          * result to the [TomlValue.decode], [TomlValue.get], etc. functions.
          */
-        val default: TomlDecoder = TomlDecoder(emptyMap()).with(
+        val default: TomlDecoder = TomlDecoder(emptyMap(), emptyMap()).with(
             tomlValueDecoderFunction<TomlValue>(),
             tomlValueDecoderFunction<TomlValue.String>(),
             tomlValueDecoderFunction<TomlValue.Integer>(),
@@ -229,73 +306,6 @@ class TomlDecoder private constructor(
         )
     }
 }
-
-/**
- * Returns a copy of the receiver TOML decoder, extended with a custom property mapping for the type `T`.
- *
- * Having a custom property mapping from `"foo"` to `"bar"` for some type `T` means that whenever the decoder
- * (a) is decoding a table (b) into a value of type `T`,
- * any constructor parameter of `T` with the name `"bar"` will receive its value from a TOML property
- * with the name `"foo"`.
- *
- * As a motivating example, in a TOML document describing a list of users, it is natural to use the singular of "user"
- * to add new users to the list:
- *
- * <br>
- *
- * ```
- * [[user]]
- * name = 'Alice'
- * password = 'correcthorsebatterystaple'
- *
- * [[user]]
- * name = 'Bob'
- * password = 'password1'
- * ```
- *
- * <br>
- *
- * However, this makes less sense in the corresponding Kotlin type, where you would normally use the plural "users"
- * as the name for a list of users:
- *
- * <br>
- *
- * ```
- * data class User(val name: String, val password: String)
- * data class UserList(val users: List<User>)
- * ```
- *
- * <br>
- *
- * A custom mapping allows us to quickly bridge this gap, without compromising on either our Kotlin naming standards
- * or our configuration syntax:
- *
- * <br>
- *
- * ```
- * val myDecoder = TomlDecoder.default.withMapping<UserList>("user" to "users")
- * val myUsers = toml.from(Path.of("path", "to", "users.toml")).decode<UserList>(myDecoder)
- * ```
- *
- * <br>
- *
- * This also lets us rename fields in our model types while maintaining a stable configuration file syntax by simply
- * specifying a custom mapping, all without having to add intrusive annotations to model types where they don't belong.
- */
-inline fun <reified T : Any> TomlDecoder.withMapping(vararg mapping: Pair<String, String>): TomlDecoder =
-    withMapping(T::class, *mapping)
-
-/**
- * Returns a copy of the receiver TOML decoder, extended with a custom property mapping for the type `T`.
- */
-fun <T : Any> TomlDecoder.withMapping(kClass: KClass<T>, vararg mapping: Pair<String, String>): TomlDecoder = with(
-    kClass to { kType, value ->
-        if (value !is TomlValue.Map) {
-            throw TomlDecoder.Pass
-        }
-        toDataClass<T>(value, kType, kClass, mapping.associate { it.second to it.first })
-    }
-)
 
 private inline fun <reified T> tomlValueDecoderFunction(): Pair<KClass<*>, TomlDecoder.(KType, TomlValue) -> Any?> =
     T::class to @Generated { _, it ->
@@ -400,7 +410,7 @@ private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType):
         kClass == Map::class -> toMap(value, target) as T
         kClass == SortedMap::class -> toMap(value, target).toSortedMap() as T
         kClass == Any::class -> toMap(value, Any::class.createType()) as T
-        kClass.primaryConstructor != null -> toDataClass(value, target, kClass, emptyMap())
+        kClass.primaryConstructor != null -> toDataClass(value, target, kClass)
         else -> throw TomlException.DecodingError(
             "objects can only be decoded into maps, data classes, " +
                 "or types for which a custom decoder function has been registered",
@@ -425,10 +435,10 @@ private fun TomlDecoder.toMap(value: TomlValue.Map, targetMapType: KType): Map<S
 private fun <T : Any> TomlDecoder.toDataClass(
     tomlMap: TomlValue.Map,
     kType: KType,
-    kClass: KClass<*>,
-    tomlNamesByParameterName: Map<String, String>
+    kClass: KClass<*>
 ): T {
     val constructor = kClass.primaryConstructor!!
+    val tomlNamesByParameterName = mappingFor(kClass)
     val parameters = constructor.parameters.map { constructorParameter ->
         val tomlName = tomlNamesByParameterName[constructorParameter.name] ?: constructorParameter.name
         val parameterValue = tomlMap.properties[tomlName]

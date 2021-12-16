@@ -4,7 +4,6 @@ import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.decode
-import cc.ekblad.toml.withMapping
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -108,6 +107,57 @@ class CustomDecoderTests {
     fun `custom mapping does not let you convert maps into something else`() {
         val decoder = TomlDecoder.default.withMapping<User>("bar" to "baz")
         assertFailsWith<TomlException.DecodingError> { TomlValue.Integer(123).decode<User>(decoder) }
+    }
+
+    @Test
+    fun `can add multiple mappings for the same type`() {
+        val decoder = TomlDecoder.default
+            .withMapping<User>("name" to "fullName")
+            .withMapping<User>("years" to "age")
+        assertEquals(
+            User("Anonymous", 123, null),
+            TomlValue.Map(
+                "name" to TomlValue.String("Anonymous"),
+                "years" to TomlValue.Integer(123)
+            ).decode(decoder)
+        )
+    }
+
+    @Test
+    fun `later mapping overrides earlier one`() {
+        val decoder = TomlDecoder.default
+            .withMapping<User>("name" to "KABOOM")
+            .withMapping<User>("name" to "fullName")
+        assertEquals(
+            User("Anonymous", 123, null),
+            TomlValue.Map(
+                "name" to TomlValue.String("Anonymous"),
+                "age" to TomlValue.Integer(123)
+            ).decode(decoder)
+        )
+    }
+
+    @Test
+    fun `extending a decoder with a new mapping doesn't affect other the parent decoder`() {
+        val decoder = TomlDecoder.default.withMapping<User>("name" to "fullName")
+        decoder.withMapping<User>("name" to "KABOOM")
+        assertEquals(
+            User("Anonymous", 123, null),
+            TomlValue.Map(
+                "name" to TomlValue.String("Anonymous"),
+                "age" to TomlValue.Integer(123)
+            ).decode(decoder)
+        )
+    }
+
+    @Test
+    fun `can't add custom mapping for map or list`() {
+        assertFailsWith<IllegalArgumentException> {
+            TomlDecoder.default.withMapping<Map<*, *>>("name" to "KABOOM")
+        }
+        assertFailsWith<IllegalArgumentException> {
+            TomlDecoder.default.withMapping<List<*>>("name" to "KABOOM")
+        }
     }
 
     @Test
