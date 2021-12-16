@@ -165,14 +165,14 @@ class MiscTests : StringTest {
     }
 
     @Test
-    fun `kClass extension property on KType throws on non-KClass`() {
+    fun `requireKClass throws on non-KClass`() {
         assertFailsWith<IllegalArgumentException> {
             requireKClass(Map::class.typeParameters.first())
         }
     }
 
     @Test
-    fun `kClass extension property on KType throws on null classifier`() {
+    fun `requireKClass throws on null classifier`() {
         assertFailsWith<IllegalArgumentException> {
             requireKClass(null)
         }

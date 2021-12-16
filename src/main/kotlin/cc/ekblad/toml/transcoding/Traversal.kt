@@ -63,7 +63,7 @@ inline fun <reified T : Any> TomlValue.get(decoder: TomlDecoder, vararg path: St
  * `targetKType` and `T` should correspond to the same type, or the behavior of `get` is undefined.
  */
 fun <T> TomlValue.get(decoder: TomlDecoder, targetType: KType, path: List<String>): T? =
-    get(path)?.flatten(targetType)?.decode(decoder, targetType)
+    get(path)?.let { it.flatten(targetType).decode(decoder, targetType) }
 
 @Suppress("NON_TAIL_RECURSIVE_CALL")
 private tailrec fun TomlValue.get(path: List<String>): TomlValue? = when {

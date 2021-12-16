@@ -1,5 +1,7 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.serialization
 
+import cc.ekblad.toml.TomlException
+import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.util.Generated
 
 internal class TomlBuilder private constructor() {
@@ -85,7 +87,7 @@ internal class TomlBuilder private constructor() {
                     line
                 )
             }
-        }.let(::ContextImpl)
+        }.let(TomlBuilder::ContextImpl)
 
     private val topLevelTable: ContextImpl = Context.new() as ContextImpl
     private var tableContext: ContextImpl = topLevelTable

@@ -1,6 +1,5 @@
 package cc.ekblad.toml.serialization
 
-import cc.ekblad.toml.TomlBuilder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.parser.TomlLexer
