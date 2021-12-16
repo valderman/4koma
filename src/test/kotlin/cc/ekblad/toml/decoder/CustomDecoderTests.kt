@@ -10,6 +10,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalStdlibApi::class)
 class CustomDecoderTests {
@@ -234,5 +235,12 @@ class CustomDecoderTests {
         val toml = TomlValue.Integer(123)
         assertEquals(123, toml.decode())
         assertNotEquals(nonDefaultDecoder, TomlDecoder.default)
+    }
+
+    @Test
+    fun `can decode to null`() {
+        val decoder = TomlDecoder.default.with<TomlValue.Integer, Int?> { _, _ -> null }
+        val toml = TomlValue.Integer(123)
+        assertNull(toml.decode<Int?>(decoder))
     }
 }

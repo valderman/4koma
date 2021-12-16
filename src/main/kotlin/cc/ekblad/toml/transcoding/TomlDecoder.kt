@@ -253,7 +253,7 @@ class TomlDecoder private constructor(
     internal fun mappingFor(type: KClass<*>): Map<KotlinName, TomlName> =
         mappings[type] ?: emptyMap()
 
-    internal fun <T : Any> decoderFor(type: KClass<T>): ((KType, TomlValue) -> T)? =
+    internal fun <T : Any?> decoderFor(type: KClass<*>): ((KType, TomlValue) -> T)? =
         decoders[type]?.let { decodersForType ->
             return decoder@{ type, value ->
                 decodersForType.asReversed().forEach { decode ->
@@ -361,21 +361,21 @@ private inline fun <reified T : TomlValue, reified R> defaultDecoderFunction(
  * Additionally, any subclass of [TomlValue] can always be decoded into itself.
  */
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T : Any> TomlValue.decode(): T =
+inline fun <reified T : Any?> TomlValue.decode(): T =
     decode(typeOf<T>())
 
 /**
  * Decodes the receiver TOML value into a value of the type corresponding to the given `KType`.
  * `T` and `type` should correspond to the same type, or the behavior of `decode` is undefined.
  */
-fun <T : Any> TomlValue.decode(type: KType): T =
+fun <T : Any?> TomlValue.decode(type: KType): T =
     decode(TomlDecoder.default, type)
 
 /**
  * Decodes the receiver TOML value into a value of type `T`, using the given custom decoder.
  */
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T : Any> TomlValue.decode(decoder: TomlDecoder): T =
+inline fun <reified T : Any?> TomlValue.decode(decoder: TomlDecoder): T =
     decode(decoder, typeOf<T>())
 
 /**
@@ -383,11 +383,12 @@ inline fun <reified T : Any> TomlValue.decode(decoder: TomlDecoder): T =
  * using the given custom decoder.
  * `T` and `type` should correspond to the same type, or the behavior of `decode` is undefined.
  */
-fun <T : Any> TomlValue.decode(decoder: TomlDecoder, type: KType): T =
+fun <T : Any?> TomlValue.decode(decoder: TomlDecoder, type: KType): T =
     decoder.decode(this, type)
 
-private fun <T : Any> TomlDecoder.decode(value: TomlValue, target: KType): T {
-    decoderFor(target.classifier!! as KClass<T>)?.let { decode ->
+private fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
+    val kClass = requireKClass(target.classifier)
+    decoderFor<T>(kClass)?.let { decode ->
         try {
             return@decode decode(target, value)
         } catch (e: TomlDecoder.Pass) {
