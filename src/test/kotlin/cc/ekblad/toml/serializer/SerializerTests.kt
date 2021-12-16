@@ -3,7 +3,8 @@ package cc.ekblad.toml.serializer
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
-import cc.ekblad.toml.write
+import cc.ekblad.toml.serialization.from
+import cc.ekblad.toml.serialization.write
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime

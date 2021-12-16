@@ -2,7 +2,7 @@ package cc.ekblad.toml.serializer
 
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
-import cc.ekblad.toml.write
+import cc.ekblad.toml.serialization.write
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.Charset

@@ -1,10 +1,10 @@
 package cc.ekblad.toml.encoder
 
-import cc.ekblad.toml.TomlEncoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
-import cc.ekblad.toml.encode
+import cc.ekblad.toml.transcoding.TomlEncoder
+import cc.ekblad.toml.transcoding.encode
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Clock

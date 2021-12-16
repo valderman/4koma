@@ -3,7 +3,8 @@ package cc.ekblad.toml.decoder
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.decode
+import cc.ekblad.toml.serialization.from
+import cc.ekblad.toml.transcoding.decode
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate

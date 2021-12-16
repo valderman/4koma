@@ -3,6 +3,7 @@ package cc.ekblad.toml.parser
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.serialization.from
 import org.antlr.v4.runtime.InputMismatchException
 import java.nio.file.Path
 import kotlin.test.Test

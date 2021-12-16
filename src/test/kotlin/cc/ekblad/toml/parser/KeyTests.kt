@@ -2,6 +2,7 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.serialization.from
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

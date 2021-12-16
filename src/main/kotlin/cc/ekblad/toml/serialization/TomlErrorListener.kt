@@ -1,5 +1,6 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.serialization
 
+import cc.ekblad.toml.TomlException
 import org.antlr.v4.runtime.ANTLRErrorListener
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.RecognitionException

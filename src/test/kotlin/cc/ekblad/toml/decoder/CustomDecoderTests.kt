@@ -1,9 +1,10 @@
 package cc.ekblad.toml.decoder
 
-import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.decode
+import cc.ekblad.toml.serialization.from
+import cc.ekblad.toml.transcoding.TomlDecoder
+import cc.ekblad.toml.transcoding.decode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

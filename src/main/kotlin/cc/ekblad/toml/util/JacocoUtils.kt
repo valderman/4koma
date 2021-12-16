@@ -1,5 +1,5 @@
 // ktlint-disable filename
-package cc.ekblad.toml
+package cc.ekblad.toml.util
 
 /**
  * Tells JaCoCo to disregard the annotated item when reporting code coverage.

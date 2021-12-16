@@ -1,5 +1,7 @@
 package cc.ekblad.toml
 
+import cc.ekblad.toml.util.Generated
+
 internal class TomlBuilder private constructor() {
     sealed interface Context {
         companion object {

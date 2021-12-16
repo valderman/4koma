@@ -2,7 +2,7 @@ package cc.ekblad.toml.decoder
 
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.get
+import cc.ekblad.toml.transcoding.get
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

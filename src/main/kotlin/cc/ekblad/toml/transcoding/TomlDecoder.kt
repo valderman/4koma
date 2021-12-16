@@ -1,7 +1,12 @@
 @file:Suppress("UNCHECKED_CAST")
 
-package cc.ekblad.toml
+package cc.ekblad.toml.transcoding
 
+import cc.ekblad.toml.TomlException
+import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.util.Generated
+import cc.ekblad.toml.util.KotlinName
+import cc.ekblad.toml.util.TomlName
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -16,9 +21,6 @@ import kotlin.reflect.full.createType
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.typeOf
-
-typealias TomlName = String
-typealias KotlinName = String
 
 /**
  * Describes how TOML values are to be decoded into Kotlin model types.
