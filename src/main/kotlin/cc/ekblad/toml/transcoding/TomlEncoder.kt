@@ -3,6 +3,8 @@ package cc.ekblad.toml.transcoding
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.util.Generated
+import cc.ekblad.toml.util.KotlinName
+import cc.ekblad.toml.util.TomlName
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -20,7 +22,8 @@ import kotlin.reflect.jvm.isAccessible
  * This API closely mirrors that of [TomlDecoder].
  */
 class TomlEncoder private constructor(
-    private val encoders: Map<KClass<*>, List<TomlEncoder.(Any) -> TomlValue>>
+    private val encoders: Map<KClass<*>, List<TomlEncoder.(Any) -> TomlValue>>,
+    private val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>,
 ) {
     /**
      * Thrown by an encoder function to indicate that it can't encode the given value, and that
@@ -55,7 +58,7 @@ class TomlEncoder private constructor(
                 }
             }
         }
-        return TomlEncoder(mutableEncoders)
+        return TomlEncoder(mutableEncoders, mappings)
     }
 
     /**
@@ -73,6 +76,34 @@ class TomlEncoder private constructor(
                 encoderFunction(value)
             }
         )
+
+    /**
+     * Returns a copy of the receiver TOML encoder, extended with a custom property mapping for the type `T`.
+     * Mappings are given on the form `"kotlinName" to "tomlName"`.
+     *
+     * See [TomlDecoder.withMapping] for more information about custom mappings.
+     */
+    inline fun <reified T : Any> withMapping(vararg mapping: Pair<TomlName, KotlinName>): TomlEncoder =
+        withMapping(T::class, *mapping)
+
+    /**
+     * Returns a copy of the receiver TOML encoder, extended with a custom property mapping for the type indicated
+     * by the given `KClass`.
+     * Mappings are given on the form `"kotlinName" to "tomlName"`.
+     *
+     * See [TomlDecoder.withMapping] for more information about custom mappings.
+     */
+    fun <T : Any> withMapping(kClass: KClass<T>, vararg mapping: Pair<TomlName, KotlinName>): TomlEncoder {
+        require(kClass.isData)
+        val updatedMappings = mappings.toMutableMap()
+        updatedMappings.compute(kClass) { _, previousMapping ->
+            (previousMapping ?: emptyMap()) + mapping
+        }
+        return TomlEncoder(encoders, updatedMappings)
+    }
+
+    internal fun mappingFor(type: KClass<*>): Map<KotlinName, TomlName> =
+        mappings[type] ?: emptyMap()
 
     internal fun encoderFor(type: KClass<*>): ((Any) -> TomlValue)? =
         encoders[type]?.let { encodersForType ->
@@ -94,7 +125,7 @@ class TomlEncoder private constructor(
          * Mirrors [TomlDecoder.default].
          * See [TomlValue.decode] for an exhaustive list of supported source types.
          */
-        val default: TomlEncoder = TomlEncoder(emptyMap()).with(
+        val default: TomlEncoder = TomlEncoder(emptyMap(), emptyMap()).with(
             defaultEncoderFunction { it: TomlValue.List -> it },
             defaultEncoderFunction { it: TomlValue.Map -> it },
             defaultEncoderFunction { it: TomlValue.Integer -> it },
@@ -178,6 +209,7 @@ private fun TomlEncoder.fromMap(value: Map<*, *>): TomlValue {
 }
 
 private fun TomlEncoder.fromDataClass(value: Any): TomlValue.Map {
+    val tomlNamesByParameterName = mappingFor(value::class)
     val fields = value::class.declaredMemberProperties.mapNotNull { prop ->
         if (value::class.visibility == KVisibility.PRIVATE) {
             prop.isAccessible = true
@@ -185,7 +217,8 @@ private fun TomlEncoder.fromDataClass(value: Any): TomlValue.Map {
 
         @Suppress("UNCHECKED_CAST")
         (prop as KProperty1<Any, Any?>).get(value)?.let {
-            (prop.name) to encode(it)
+            val name = tomlNamesByParameterName[prop.name] ?: prop.name
+            name to encode(it)
         }
     }
     return TomlValue.Map(fields.toMap())

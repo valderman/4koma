@@ -6,6 +6,7 @@ import cc.ekblad.toml.transcoding.TomlEncoder
 import cc.ekblad.toml.transcoding.encode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.fail
 
 class CustomEncoderTests : UnitTest {
@@ -69,5 +70,78 @@ class CustomEncoderTests : UnitTest {
             TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.String("123"))),
             encoder.encode(mapOf("foo" to Foo("123")))
         )
+    }
+
+    @Test
+    fun `can extend encoder with custom mapping`() {
+        val encoder = TomlEncoder.default.withMapping<Foo>("bar" to "hello")
+        assertEquals(TomlValue.Map("hello" to TomlValue.String("123")), encoder.encode(Foo("123")))
+    }
+
+    @Test
+    fun `can extend encoder with multiple custom mappings`() {
+        data class Test(val a: Int, val b: Int, val c: Int)
+        val encoder = TomlEncoder.default.withMapping<Test>("a" to "A", "b" to "B")
+        assertEquals(
+            TomlValue.Map(
+                "A" to TomlValue.Integer(1),
+                "B" to TomlValue.Integer(2),
+                "c" to TomlValue.Integer(3),
+            ),
+            encoder.encode(Test(1, 2, 3))
+        )
+    }
+
+    @Test
+    fun `can extend encoder with custom mappings in several calls`() {
+        data class Test(val a: Int, val b: Int, val c: Int)
+        val encoder = TomlEncoder.default
+            .withMapping<Test>("a" to "A")
+            .withMapping<Test>("b" to "B")
+        assertEquals(
+            TomlValue.Map(
+                "A" to TomlValue.Integer(1),
+                "B" to TomlValue.Integer(2),
+                "c" to TomlValue.Integer(3),
+            ),
+            encoder.encode(Test(1, 2, 3))
+        )
+    }
+
+    @Test
+    fun `newer mapping overrides older`() {
+        data class Test(val a: Int, val b: Int, val c: Int)
+        val encoder = TomlEncoder.default
+            .withMapping<Test>("a" to "A")
+            .withMapping<Test>("a" to "X")
+        assertEquals(
+            TomlValue.Map(
+                "X" to TomlValue.Integer(1),
+                "b" to TomlValue.Integer(2),
+                "c" to TomlValue.Integer(3),
+            ),
+            encoder.encode(Test(1, 2, 3))
+        )
+    }
+
+    @Test
+    fun `properties are serialized in order when there is a toml name clash`() {
+        data class Test(val a: Int, val b: Int, val c: Int)
+        val encoder = TomlEncoder.default.withMapping<Test>("a" to "b")
+        assertEquals(
+            TomlValue.Map(
+                "b" to TomlValue.Integer(2),
+                "c" to TomlValue.Integer(3),
+            ),
+            encoder.encode(Test(1, 2, 3))
+        )
+    }
+
+    @Test
+    fun `cant register mapping with non-data class`() {
+        class Test(val a: Int, val b: Int, val c: Int)
+        assertFailsWith<IllegalArgumentException> {
+            TomlEncoder.default.withMapping<Test>("a" to "A")
+        }
     }
 }
