@@ -1,5 +1,6 @@
 package cc.ekblad.toml.serializer
 
+import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
 import cc.ekblad.toml.serialization.write
@@ -94,8 +95,20 @@ class WriterTests : UnitTest {
     @Test
     fun `serializing to bad file throws IOException`() {
         assertFailsWith<IOException> {
-            val file = Path.of("nonexistend", "directory", "kaboom.toml")
+            val file = Path.of("nonexistent", "directory", "kaboom.toml")
             tomlValue.write(file)
+        }
+    }
+
+    @Test
+    fun `serializing bad toml to file throws SerializationError`() {
+        val file = kotlin.io.path.createTempFile()
+        try {
+            assertFailsWith<TomlException.SerializationError> {
+                TomlValue.Map("x" to TomlValue.String("\u0000")).write(file)
+            }
+        } finally {
+            file.deleteIfExists()
         }
     }
 }

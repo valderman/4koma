@@ -64,9 +64,10 @@ internal class TomlBuilder private constructor() {
             }
             list.value.add(MutableTomlValue.Map(mutableMapOf(), false))
             list
-        }
-        check(list is MutableTomlValue.List)
-        return ContextImpl(list.value.last().value)
+        } as MutableTomlValue.List?
+
+        // We never remove anything from the list, so we're guaranteed to never see null here.
+        return ContextImpl(list!!.value.last().value)
     }
 
     /**
