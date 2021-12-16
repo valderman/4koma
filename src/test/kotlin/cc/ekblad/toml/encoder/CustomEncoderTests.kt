@@ -138,6 +138,21 @@ class CustomEncoderTests : UnitTest {
     }
 
     @Test
+    fun `extending an encoder with a custom mapping does not affect parent`() {
+        data class Test(val a: Int, val b: Int, val c: Int)
+        val encoder = TomlEncoder.default.withMapping<Test>("a" to "X")
+        TomlEncoder.default.withMapping<Test>("a" to "Y")
+        assertEquals(
+            TomlValue.Map(
+                "A" to TomlValue.Integer(1),
+                "b" to TomlValue.Integer(2),
+                "c" to TomlValue.Integer(3),
+            ),
+            encoder.encode(Test(1, 2, 3))
+        )
+    }
+
+    @Test
     fun `cant register mapping with non-data class`() {
         class Test(val a: Int, val b: Int, val c: Int)
         assertFailsWith<IllegalArgumentException> {

@@ -152,6 +152,28 @@ class CustomDecoderTests {
     }
 
     @Test
+    fun `more than one kotlin property can not map to the same toml name`() {
+        data class Test(val a: Int, val b: Int)
+        val decoder = TomlDecoder.default.withMapping<User>("x" to "a", "x" to "b")
+        assertFailsWith<TomlException.DecodingError> {
+            TomlValue.Map("x" to TomlValue.Integer(42)).decode(decoder)
+        }
+    }
+
+    @Test
+    fun `the latest mapping is chosen when more than one toml name maps to the same kotlin property`() {
+        data class Test(val x: Int)
+        val decoder = TomlDecoder.default.withMapping<Test>("a" to "x", "b" to "x")
+        assertEquals(
+            Test(123),
+            TomlValue.Map(
+                "a" to TomlValue.Integer(0),
+                "b" to TomlValue.Integer(123)
+            ).decode(decoder)
+        )
+    }
+
+    @Test
     fun `can't add custom mapping for map or list`() {
         assertFailsWith<IllegalArgumentException> {
             TomlDecoder.default.withMapping<Map<*, *>>("name" to "KABOOM")
