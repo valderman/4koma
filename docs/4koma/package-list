@@ -1,23 +1,52 @@
 $dokka.format:html-v1
 $dokka.linkExtension:html
+$dokka.location:cc.ekblad.toml.serialization////PointingToDeclaration/4koma/cc.ekblad.toml.serialization/index.html
+$dokka.location:cc.ekblad.toml.serialization//encodeKey/#kotlin.String/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/encode-key.html
+$dokka.location:cc.ekblad.toml.serialization//from/cc.ekblad.toml.TomlValue.Companion#java.io.InputStream/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/from.html
+$dokka.location:cc.ekblad.toml.serialization//from/cc.ekblad.toml.TomlValue.Companion#java.nio.file.Path/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/from.html
+$dokka.location:cc.ekblad.toml.serialization//from/cc.ekblad.toml.TomlValue.Companion#kotlin.String/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/from.html
+$dokka.location:cc.ekblad.toml.serialization//write/cc.ekblad.toml.TomlValue.Map#java.io.OutputStream/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/write.html
+$dokka.location:cc.ekblad.toml.serialization//write/cc.ekblad.toml.TomlValue.Map#java.lang.Appendable/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/write.html
+$dokka.location:cc.ekblad.toml.serialization//write/cc.ekblad.toml.TomlValue.Map#java.nio.file.Path/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/write.html
+$dokka.location:cc.ekblad.toml.transcoding////PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/index.html
+$dokka.location:cc.ekblad.toml.transcoding//decode/cc.ekblad.toml.TomlValue#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/decode.html
+$dokka.location:cc.ekblad.toml.transcoding//decode/cc.ekblad.toml.TomlValue#cc.ekblad.toml.transcoding.TomlDecoder#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/decode.html
+$dokka.location:cc.ekblad.toml.transcoding//decode/cc.ekblad.toml.TomlValue#cc.ekblad.toml.transcoding.TomlDecoder/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/decode.html
+$dokka.location:cc.ekblad.toml.transcoding//decode/cc.ekblad.toml.TomlValue#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/decode.html
+$dokka.location:cc.ekblad.toml.transcoding//encode/cc.ekblad.toml.transcoding.TomlEncoder#kotlin.Any/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/encode.html
+$dokka.location:cc.ekblad.toml.transcoding//get/cc.ekblad.toml.TomlValue#cc.ekblad.toml.transcoding.TomlDecoder#kotlin.Array[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/get.html
+$dokka.location:cc.ekblad.toml.transcoding//get/cc.ekblad.toml.TomlValue#cc.ekblad.toml.transcoding.TomlDecoder#kotlin.reflect.KType#kotlin.collections.List[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/get.html
+$dokka.location:cc.ekblad.toml.transcoding//get/cc.ekblad.toml.TomlValue#kotlin.Array[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/get.html
+$dokka.location:cc.ekblad.toml.transcoding//get/cc.ekblad.toml.TomlValue#kotlin.reflect.KType#kotlin.collections.List[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/get.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder.Companion///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/-companion/index.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder.Companion/default/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/-companion/default.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/index.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/pass/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/pass.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/with/#kotlin.Array[kotlin.Pair[kotlin.reflect.KClass[*],kotlin.Function3[cc.ekblad.toml.transcoding.TomlDecoder,kotlin.reflect.KType,cc.ekblad.toml.TomlValue,kotlin.Any?]]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/with.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/with/#kotlin.Function2[cc.ekblad.toml.transcoding.TomlDecoder,TypeParam(bounds=[cc.ekblad.toml.TomlValue]),TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/with.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/with/#kotlin.Function3[cc.ekblad.toml.transcoding.TomlDecoder,kotlin.reflect.KType,TypeParam(bounds=[cc.ekblad.toml.TomlValue]),TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/with.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/withMapping/#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/with-mapping.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/withMapping/#kotlin.reflect.KClass[TypeParam(bounds=[kotlin.Any])]#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/with-mapping.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder.Companion///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/-companion/index.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder.Companion/default/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/-companion/default.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/index.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder/pass/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/pass.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder/with/#kotlin.Array[kotlin.Pair[kotlin.reflect.KClass[*],kotlin.Function2[cc.ekblad.toml.transcoding.TomlEncoder,kotlin.Any,cc.ekblad.toml.TomlValue]]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/with.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder/with/#kotlin.Function2[cc.ekblad.toml.transcoding.TomlEncoder,TypeParam(bounds=[kotlin.Any?]),cc.ekblad.toml.TomlValue]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/with.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder/withMapping/#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/with-mapping.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlEncoder/withMapping/#kotlin.reflect.KClass[TypeParam(bounds=[kotlin.Any])]#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/with-mapping.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder.Companion///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/-companion/index.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder.Companion/default/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/-companion/default.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/index.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/TomlTranscoder/#cc.ekblad.toml.transcoding.TomlEncoder#cc.ekblad.toml.transcoding.TomlDecoder/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/-toml-transcoder.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/decode/#cc.ekblad.toml.TomlValue/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/decode.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/decoder/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/decoder.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/encode/#kotlin.Any/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/encode.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/encoder/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/encoder.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/withMapping/#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/with-mapping.html
+$dokka.location:cc.ekblad.toml.transcoding/TomlTranscoder/withMapping/#kotlin.reflect.KClass[TypeParam(bounds=[kotlin.Any])]#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-transcoder/with-mapping.html
+$dokka.location:cc.ekblad.toml.util////PointingToDeclaration/4koma/cc.ekblad.toml.util.html
 $dokka.location:cc.ekblad.toml////PointingToDeclaration/4koma/cc.ekblad.toml/index.html
-$dokka.location:cc.ekblad.toml//decode/cc.ekblad.toml.TomlValue#/PointingToDeclaration/4koma/cc.ekblad.toml/decode.html
-$dokka.location:cc.ekblad.toml//decode/cc.ekblad.toml.TomlValue#cc.ekblad.toml.TomlDecoder#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml/decode.html
-$dokka.location:cc.ekblad.toml//decode/cc.ekblad.toml.TomlValue#cc.ekblad.toml.TomlDecoder/PointingToDeclaration/4koma/cc.ekblad.toml/decode.html
-$dokka.location:cc.ekblad.toml//decode/cc.ekblad.toml.TomlValue#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml/decode.html
-$dokka.location:cc.ekblad.toml//get/cc.ekblad.toml.TomlValue#cc.ekblad.toml.TomlDecoder#kotlin.Array[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml/get.html
-$dokka.location:cc.ekblad.toml//get/cc.ekblad.toml.TomlValue#cc.ekblad.toml.TomlDecoder#kotlin.reflect.KType#kotlin.collections.List[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml/get.html
-$dokka.location:cc.ekblad.toml//get/cc.ekblad.toml.TomlValue#kotlin.Array[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml/get.html
-$dokka.location:cc.ekblad.toml//get/cc.ekblad.toml.TomlValue#kotlin.reflect.KType#kotlin.collections.List[kotlin.String]/PointingToDeclaration/4koma/cc.ekblad.toml/get.html
-$dokka.location:cc.ekblad.toml//withMapping/cc.ekblad.toml.TomlDecoder#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml/with-mapping.html
-$dokka.location:cc.ekblad.toml//withMapping/cc.ekblad.toml.TomlDecoder#kotlin.reflect.KClass[TypeParam(bounds=[kotlin.Any])]#kotlin.Array[kotlin.Pair[kotlin.String,kotlin.String]]/PointingToDeclaration/4koma/cc.ekblad.toml/with-mapping.html
-$dokka.location:cc.ekblad.toml/TomlDecoder.Companion///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/-companion/index.html
-$dokka.location:cc.ekblad.toml/TomlDecoder.Companion/default/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/-companion/default.html
-$dokka.location:cc.ekblad.toml/TomlDecoder///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/index.html
-$dokka.location:cc.ekblad.toml/TomlDecoder/pass/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/pass.html
-$dokka.location:cc.ekblad.toml/TomlDecoder/with/#kotlin.Array[kotlin.Pair[kotlin.reflect.KClass[*],kotlin.Function3[cc.ekblad.toml.TomlDecoder,kotlin.reflect.KType,cc.ekblad.toml.TomlValue,kotlin.Any?]]]/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/with.html
-$dokka.location:cc.ekblad.toml/TomlDecoder/with/#kotlin.Function2[cc.ekblad.toml.TomlDecoder,TypeParam(bounds=[cc.ekblad.toml.TomlValue]),TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/with.html
-$dokka.location:cc.ekblad.toml/TomlDecoder/with/#kotlin.Function3[cc.ekblad.toml.TomlDecoder,kotlin.reflect.KType,TypeParam(bounds=[cc.ekblad.toml.TomlValue]),TypeParam(bounds=[kotlin.Any?])]/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-decoder/with.html
 $dokka.location:cc.ekblad.toml/TomlException.DecodingError///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-decoding-error/index.html
 $dokka.location:cc.ekblad.toml/TomlException.DecodingError/DecodingError/#cc.ekblad.toml.TomlValue#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-decoding-error/-decoding-error.html
 $dokka.location:cc.ekblad.toml/TomlException.DecodingError/DecodingError/#kotlin.String#cc.ekblad.toml.TomlValue#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-decoding-error/-decoding-error.html
@@ -27,6 +56,11 @@ $dokka.location:cc.ekblad.toml/TomlException.DecodingError/message/#/PointingToD
 $dokka.location:cc.ekblad.toml/TomlException.DecodingError/reason/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-decoding-error/reason.html
 $dokka.location:cc.ekblad.toml/TomlException.DecodingError/sourceValue/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-decoding-error/source-value.html
 $dokka.location:cc.ekblad.toml/TomlException.DecodingError/targetType/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-decoding-error/target-type.html
+$dokka.location:cc.ekblad.toml/TomlException.EncodingError///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-encoding-error/index.html
+$dokka.location:cc.ekblad.toml/TomlException.EncodingError/EncodingError/#kotlin.Any?#kotlin.Throwable?/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-encoding-error/-encoding-error.html
+$dokka.location:cc.ekblad.toml/TomlException.EncodingError/cause/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-encoding-error/cause.html
+$dokka.location:cc.ekblad.toml/TomlException.EncodingError/message/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-encoding-error/message.html
+$dokka.location:cc.ekblad.toml/TomlException.EncodingError/sourceValue/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-encoding-error/source-value.html
 $dokka.location:cc.ekblad.toml/TomlException.ParseError///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-parse-error/index.html
 $dokka.location:cc.ekblad.toml/TomlException.ParseError/ParseError/#kotlin.String#kotlin.Int#kotlin.Throwable?/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-parse-error/-parse-error.html
 $dokka.location:cc.ekblad.toml/TomlException.ParseError/ParseError/#kotlin.String#kotlin.Int/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-parse-error/-parse-error.html
@@ -34,14 +68,15 @@ $dokka.location:cc.ekblad.toml/TomlException.ParseError/cause/#/PointingToDeclar
 $dokka.location:cc.ekblad.toml/TomlException.ParseError/errorDescription/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-parse-error/error-description.html
 $dokka.location:cc.ekblad.toml/TomlException.ParseError/line/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-parse-error/line.html
 $dokka.location:cc.ekblad.toml/TomlException.ParseError/message/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-parse-error/message.html
+$dokka.location:cc.ekblad.toml/TomlException.SerializationError///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-serialization-error/index.html
+$dokka.location:cc.ekblad.toml/TomlException.SerializationError/SerializationError/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-serialization-error/-serialization-error.html
+$dokka.location:cc.ekblad.toml/TomlException.SerializationError/cause/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-serialization-error/cause.html
+$dokka.location:cc.ekblad.toml/TomlException.SerializationError/message/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/-serialization-error/message.html
 $dokka.location:cc.ekblad.toml/TomlException///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-exception/index.html
 $dokka.location:cc.ekblad.toml/TomlValue.Bool///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-bool/index.html
 $dokka.location:cc.ekblad.toml/TomlValue.Bool/Bool/#kotlin.Boolean/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-bool/-bool.html
 $dokka.location:cc.ekblad.toml/TomlValue.Bool/value/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-bool/value.html
 $dokka.location:cc.ekblad.toml/TomlValue.Companion///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-companion/index.html
-$dokka.location:cc.ekblad.toml/TomlValue.Companion/from/#java.io.InputStream/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-companion/from.html
-$dokka.location:cc.ekblad.toml/TomlValue.Companion/from/#java.nio.file.Path/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-companion/from.html
-$dokka.location:cc.ekblad.toml/TomlValue.Companion/from/#kotlin.String/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-companion/from.html
 $dokka.location:cc.ekblad.toml/TomlValue.Double///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-double/index.html
 $dokka.location:cc.ekblad.toml/TomlValue.Double/Double/#kotlin.Double/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-double/-double.html
 $dokka.location:cc.ekblad.toml/TomlValue.Double/value/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-double/value.html
@@ -74,4 +109,7 @@ $dokka.location:cc.ekblad.toml/TomlValue.String/String/#kotlin.String/PointingTo
 $dokka.location:cc.ekblad.toml/TomlValue.String/value/#/PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/-string/value.html
 $dokka.location:cc.ekblad.toml/TomlValue///PointingToDeclaration/4koma/cc.ekblad.toml/-toml-value/index.html
 cc.ekblad.toml
+cc.ekblad.toml.serialization
+cc.ekblad.toml.transcoding
+cc.ekblad.toml.util
 
