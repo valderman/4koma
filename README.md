@@ -11,10 +11,10 @@ A small, stand-alone, easy to use TOML parser library for Kotlin.
 
 4koma supports an array of convenient features, such as full TOML 1.0 compliance,
 type-safe decoding of configurations into arbitrary data classes using Kotlin generics,
-and easy access to individual properties for when you don't need the entire document.
+serialization support, and easy access to individual properties for when you don't need the entire document.
 
-4koma follows the UNIX philosophy, in that it tries to do one thing (i.e. TOML processing for Kotlin projects),
-and do it well.
+4koma follows the UNIX philosophy, in that it tries to do one thing, and do it well.
+If what you need is no-nonsense TOML processing for your Kotlin project, 4koma might be just what you need.
 If you need support for multiple configuration formats, or are using a JVM language other than Kotlin,
 some of the projects listed in the [Alternatives](#alternatives) section might serve you better.
 
