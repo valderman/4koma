@@ -1,4 +1,4 @@
-package cc.ekblad.toml.decoder
+package cc.ekblad.toml.transcoder
 
 import cc.ekblad.toml.StringTest
 import cc.ekblad.toml.TomlException

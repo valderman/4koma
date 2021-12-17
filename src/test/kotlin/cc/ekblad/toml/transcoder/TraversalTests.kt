@@ -1,4 +1,4 @@
-package cc.ekblad.toml.decoder
+package cc.ekblad.toml.transcoder
 
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue

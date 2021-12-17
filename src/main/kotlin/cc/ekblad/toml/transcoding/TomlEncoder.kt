@@ -20,6 +20,11 @@ import kotlin.reflect.jvm.isAccessible
 /**
  * Describes how Kotlin model types are encoded into [TomlValue]s.
  * This API closely mirrors that of [TomlDecoder].
+ *
+ * <br>
+ *
+ * If you intend to both encode and decode TOML, can get by with custom mappings, and don't need the full power
+ * of custom encoding functions, you should probably use [TomlTranscoder] instead.
  */
 class TomlEncoder private constructor(
     private val encoders: Map<KClass<*>, List<TomlEncoder.(Any) -> TomlValue>>,

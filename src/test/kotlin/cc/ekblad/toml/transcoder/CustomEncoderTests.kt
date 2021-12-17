@@ -1,4 +1,4 @@
-package cc.ekblad.toml.encoder
+package cc.ekblad.toml.transcoder
 
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest

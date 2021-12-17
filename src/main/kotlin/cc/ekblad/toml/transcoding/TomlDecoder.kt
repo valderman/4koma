@@ -27,6 +27,11 @@ import kotlin.reflect.typeOf
  * Describes how TOML values are to be decoded into Kotlin model types.
  * [decode], [get], etc. all accept an optional `TomlDecoder` to customize their behavior.
  * If no custom decoder is given, [TomlDecoder.default] is used.
+ *
+ * <br>
+ *
+ * If you intend to both encode and decode TOML, can get by with custom mappings, and don't need the full power
+ * of custom decoding functions, you should probably use [TomlTranscoder] instead.
  */
 class TomlDecoder private constructor(
     private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>,
