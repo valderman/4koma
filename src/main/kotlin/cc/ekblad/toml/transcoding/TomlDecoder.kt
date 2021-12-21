@@ -412,8 +412,9 @@ private val stringKType: KType = String::class.createType()
 
 private fun <T : Any> TomlDecoder.toList(value: TomlValue.List, target: KType): T =
     when (requireKClass(target.classifier)) {
-        // List also covers the MutableList case
+        // Set/List also covers the MutableSet/MutableList cases
         List::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
+        Set::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType).toSet() as T
         Collection::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
         Iterable::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType).asIterable() as T
         Any::class -> decodeList(value.elements, anyKType) as T

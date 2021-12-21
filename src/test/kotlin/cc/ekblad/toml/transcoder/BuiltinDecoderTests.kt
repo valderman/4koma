@@ -300,6 +300,12 @@ class BuiltinDecoderTests : StringTest {
     }
 
     @Test
+    fun `can decode to Set`() {
+        assertEquals(emptySet<String>(), TomlValue.List().decode())
+        assertEquals(mutableSetOf<String>(), TomlValue.List().decode())
+    }
+
+    @Test
     fun `can decode booleans`() {
         assertEquals(TomlValue.Bool(true).decode(), true)
         assertEquals(TomlValue.Bool(false).decode(), false)
