@@ -303,6 +303,8 @@ class BuiltinDecoderTests : StringTest {
     fun `can decode to Set`() {
         assertEquals(emptySet<String>(), TomlValue.List().decode())
         assertEquals(mutableSetOf<String>(), TomlValue.List().decode())
+        assertEquals(emptySet<Any>(), TomlValue.List().decode<Set<*>>())
+        assertEquals(mutableSetOf<Any>(), TomlValue.List().decode<MutableSet<*>>())
     }
 
     @Test
