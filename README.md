@@ -115,7 +115,7 @@ Why should you use 4koma? Maybe you shouldn't! When it comes to TOML libraries t
 This table compares 4koma with a number of alternatives that (a) can parse TOML, (b) can be reasonably easily used in
 a Kotlin/JVM project, and (c) have seen at least one new commit in the last four years.
 
-If you'd like your library to be on your list, or it's already there and you believe it's being misrepresented,
+If you'd like your library to be on this list, or it's already there and you believe it's being misrepresented,
 please open a pull request to rectify the situation.
 
 | Feature | 4koma | [KToml](https://github.com/akuleshov7/ktoml) | [konf](https://github.com/uchuhimo/konf) | [konfy](https://github.com/TanVD/konfy) | [toml4j](https://github.com/mwanji/toml4j) | [tomlj](https://github.com/tomlj/tomlj) | [jtoml](https://github.com/agrison/jtoml) | [Night Config](https://github.com/TheElectronWill/Night-Config) | [Jackson](https://github.com/FasterXML/jackson-dataformats-text)
