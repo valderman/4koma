@@ -129,7 +129,7 @@ private fun TomlValue.Map.writeTopLevel(output: Appendable) {
     }
 }
 
-fun encodeKey(key: String): String = when {
+private fun encodeKey(key: String): String = when {
     !key.contains(quotesRequiredRegex) -> key
     !key.contains('\n') -> "'$key'"
     else -> {
