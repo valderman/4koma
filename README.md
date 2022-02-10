@@ -52,11 +52,10 @@ password = "correct horse battery staple"
 
 ### 3. Write some code
 ```kotlin
-import cc.ekblad.toml.TomlDecoder
 import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.decode
-import cc.ekblad.toml.withMapping
-import cc.ekblad.toml.get
+import cc.ekblad.toml.transcoding.TomlDecoder
+import cc.ekblad.toml.transcoding.decode
+import cc.ekblad.toml.transcoding.get
 import java.nio.file.Path
 
 data class Config(
