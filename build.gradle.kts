@@ -4,17 +4,17 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.6.10"
-    id("org.jetbrains.dokka") version "1.6.0"
-    id("org.jlleitschuh.gradle.ktlint") version "10.2.0"
-    id("com.github.ben-manes.versions") version "0.39.0"
+    kotlin("jvm") version "1.6.20-M1"
+    id("org.jetbrains.dokka") version "1.6.10"
+    id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
+    id("com.github.ben-manes.versions") version "0.42.0"
     `maven-publish`
     antlr
     jacoco
 }
 
 group = "cc.ekblad"
-version = "0.4.0"
+version = "0.4.2"
 val kotlinJvmTarget = "1.8"
 
 repositories {
@@ -61,7 +61,7 @@ publishing {
 }
 
 dependencies {
-    val kotlinVersion = "1.6.10"
+    val kotlinVersion = "1.6.20-M1"
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
     antlr("org.antlr:antlr4:4.9.3")
@@ -103,7 +103,7 @@ tasks {
             dependsOn("generate${generateGrammarSourceInfix}GrammarSource")
             kotlinOptions {
                 jvmTarget = kotlinJvmTarget
-                freeCompilerArgs = listOf("-Xopt-in=kotlin.RequiresOptIn")
+                freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
             }
         }
     }
