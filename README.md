@@ -32,7 +32,7 @@ repositories {
 }
 
 dependencies {
-    implementation("cc.ekblad:4koma:0.4.1")
+    implementation("cc.ekblad:4koma:0.4.2")
 }
 ```
 
