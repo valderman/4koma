@@ -4,8 +4,8 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.6.20-RC"
-    id("org.jetbrains.dokka") version "1.6.10"
+    kotlin("jvm") version "1.6.20"
+    id("org.jetbrains.dokka") version "1.6.20"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("com.github.ben-manes.versions") version "0.42.0"
     `maven-publish`
@@ -61,16 +61,15 @@ publishing {
 }
 
 dependencies {
-    val kotlinVersion = "1.6.20-RC"
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    antlr("org.antlr:antlr4:4.9.3")
+    implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
+    antlr("org.antlr", "antlr4", "4.10.1")
 
-    testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
+    testImplementation(kotlin("test"))
 }
 
 ktlint {
-    version.set("0.44.0")
+    version.set("0.45.2")
 }
 
 tasks {
