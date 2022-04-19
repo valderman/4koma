@@ -39,31 +39,24 @@ import kotlin.reflect.typeOf
  * type parameter, and return `listOf("password123", "qwerty", "correct horse battery staple")`.
  */
 @OptIn(ExperimentalStdlibApi::class)
-inline operator fun <reified T : Any> TomlValue.get(vararg path: String): T? =
-    get(typeOf<T>(), path.toList())
-
-/**
- * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
- * `targetKType`. `targetKType` and `T` should correspond to the same type, or the behavior of `get` is undefined.
- */
-fun <T> TomlValue.get(targetType: KType, path: List<String>): T? =
-    get(TomlDecoder.default, targetType, path)
+operator fun TomlValue.get(vararg path: String): TomlValue? =
+    get(path.toList())
 
 /**
  * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
  * `T` using the given custom TOML decoder.
  */
 @OptIn(ExperimentalStdlibApi::class)
-inline fun <reified T : Any> TomlValue.get(decoder: TomlDecoder, vararg path: String): T? =
-    get(decoder, typeOf<T>(), path.toList())
+inline fun <reified T : Any> TomlValue.get(mapper: TomlMapper, vararg path: String): T? =
+    get(mapper, typeOf<T>(), path.toList())
 
 /**
  * Look up the value(s) at the given path in the receiver TOML structure, then decode them into the type given by
  * `targetKType` using the given custom TOML decoder.
  * `targetKType` and `T` should correspond to the same type, or the behavior of `get` is undefined.
  */
-fun <T> TomlValue.get(decoder: TomlDecoder, targetType: KType, path: List<String>): T? =
-    get(path)?.let { it.flatten(targetType).decode(decoder, targetType) }
+fun <T> TomlValue.get(mapper: TomlMapper, targetKType: KType, path: List<String>): T? =
+    get(path)?.let { mapper.decode(targetKType, it.flatten(targetKType)) }
 
 @Suppress("NON_TAIL_RECURSIVE_CALL")
 private tailrec fun TomlValue.get(path: List<String>): TomlValue? = when {

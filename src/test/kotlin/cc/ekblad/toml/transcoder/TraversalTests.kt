@@ -3,21 +3,30 @@ package cc.ekblad.toml.transcoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.transcoding.get
+import cc.ekblad.toml.transcoding.tomlMapper
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class TraversalTests {
+    private val mapper = tomlMapper { }
+
     @Test
-    fun `can get simple value with decode to Ant`() {
+    fun `can get simple value with decode to Any`() {
         val toml = TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.Integer(123)))
-        assertEquals(123L, toml.get<Any>("foo", "bar"))
+        assertEquals(123L, toml.get<Any>(mapper, "foo", "bar"))
+    }
+
+    @Test
+    fun `can get toml value`() {
+        val toml = TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.Integer(123)))
+        assertEquals(TomlValue.Integer(123), toml["foo", "bar"])
     }
 
     @Test
     fun `can get simple value with non-Any decoding`() {
         val toml = TomlValue.Map("foo" to TomlValue.Map("bar" to TomlValue.Integer(123)))
-        assertEquals(123.0, toml.get("foo", "bar"))
+        assertEquals(123.0, toml.get(mapper, "foo", "bar"))
     }
 
     @Test
@@ -28,7 +37,7 @@ class TraversalTests {
                 "bar" to TomlValue.Map("baz" to TomlValue.Integer(123))
             )
         )
-        assertEquals(Bar(123), toml.get("foo", "bar"))
+        assertEquals(Bar(123), toml.get(mapper, "foo", "bar"))
     }
 
     @Test
@@ -38,9 +47,9 @@ class TraversalTests {
                 "bar" to TomlValue.Map("baz" to TomlValue.Integer(123))
             )
         )
-        assertEquals(null, toml.get<Any>("foo", "bar", "nope"))
-        assertEquals(null, toml.get<Any>("foo", "barbar", "baz"))
-        assertEquals(null, toml.get<Any>("foo", "baz"))
+        assertEquals(null, toml.get<Any>(mapper, "foo", "bar", "nope"))
+        assertEquals(null, toml.get<Any>(mapper, "foo", "barbar", "baz"))
+        assertEquals(null, toml.get<Any>(mapper, "foo", "baz"))
     }
 
     @Test
@@ -50,7 +59,7 @@ class TraversalTests {
                 "bar" to TomlValue.List(TomlValue.String("baz"), TomlValue.String("quux"))
             )
         )
-        assertEquals(listOf("baz", "quux"), toml.get("foo", "bar"))
+        assertEquals(listOf("baz", "quux"), toml.get(mapper, "foo", "bar"))
     }
 
     @Test
@@ -63,7 +72,7 @@ class TraversalTests {
                 )
             )
         )
-        assertFailsWith<TomlException.DecodingError> { toml.get<String>("foo") }
+        assertFailsWith<TomlException.DecodingError> { toml.get<String>(mapper, "foo") }
     }
 
     @Test
@@ -73,7 +82,7 @@ class TraversalTests {
                 "bar" to TomlValue.List(TomlValue.String("baz"), TomlValue.Integer(1))
             )
         )
-        assertFailsWith<TomlException.DecodingError> { toml.get<List<Int>>("foo", "bar") }
+        assertFailsWith<TomlException.DecodingError> { toml.get<List<Int>>(mapper, "foo", "bar") }
     }
 
     @Test
@@ -90,9 +99,9 @@ class TraversalTests {
                 ),
             )
         )
-        assertEquals(listOf("baz", "hello"), toml.get("foo", "a"))
-        assertEquals(listOf("quux"), toml.get("foo", "b"))
-        assertEquals(listOf("world"), toml.get("foo", "c"))
+        assertEquals(listOf("baz", "hello"), toml.get(mapper, "foo", "a"))
+        assertEquals(listOf("quux"), toml.get(mapper, "foo", "b"))
+        assertEquals(listOf("world"), toml.get(mapper, "foo", "c"))
     }
 
     @Test
@@ -106,9 +115,9 @@ class TraversalTests {
                 ),
             )
         )
-        assertEquals(listOf("hello"), toml.get("foo", "a"))
-        assertEquals(emptyList<Any>(), toml.get("foo", "b"))
-        assertEquals(listOf("world"), toml.get("foo", "c"))
+        assertEquals(listOf("hello"), toml.get(mapper, "foo", "a"))
+        assertEquals(emptyList<Any>(), toml.get(mapper, "foo", "b"))
+        assertEquals(listOf("world"), toml.get(mapper, "foo", "c"))
     }
 
     @Test
@@ -135,13 +144,13 @@ class TraversalTests {
         )
 
         // Grouped
-        assertEquals(listOf(listOf("first"), listOf("baz", "hello")), toml.get("foo", "a"))
-        assertEquals(listOf(listOf("second"), listOf("quux")), toml.get("foo", "b"))
-        assertEquals(listOf(emptyList(), listOf("world")), toml.get("foo", "c"))
+        assertEquals(listOf(listOf("first"), listOf("baz", "hello")), toml.get(mapper, "foo", "a"))
+        assertEquals(listOf(listOf("second"), listOf("quux")), toml.get(mapper, "foo", "b"))
+        assertEquals(listOf(emptyList(), listOf("world")), toml.get(mapper, "foo", "c"))
 
         // Flattened
-        assertEquals(listOf("first", "baz", "hello"), toml.get("foo", "a"))
-        assertEquals(listOf("second", "quux"), toml.get("foo", "b"))
-        assertEquals(listOf("world"), toml.get("foo", "c"))
+        assertEquals(listOf("first", "baz", "hello"), toml.get(mapper, "foo", "a"))
+        assertEquals(listOf("second", "quux"), toml.get(mapper, "foo", "b"))
+        assertEquals(listOf("world"), toml.get(mapper, "foo", "c"))
     }
 }

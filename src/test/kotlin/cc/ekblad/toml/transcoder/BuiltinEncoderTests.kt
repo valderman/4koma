@@ -3,8 +3,8 @@ package cc.ekblad.toml.transcoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
-import cc.ekblad.toml.transcoding.TomlEncoder
 import cc.ekblad.toml.transcoding.encode
+import cc.ekblad.toml.transcoding.tomlMapper
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Clock
@@ -21,6 +21,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class BuiltinEncoderTests : UnitTest {
+    private val mapper = tomlMapper { }
+
     @Test
     fun `can encode integers`() {
         assertEncodesTo(123, TomlValue.Integer(123))
@@ -210,7 +212,7 @@ class BuiltinEncoderTests : UnitTest {
         class Foo(val bar: String)
         val fooValue = Foo("hello")
         val error = assertFailsWith<TomlException.EncodingError> {
-            TomlEncoder.default.encode(fooValue)
+            mapper.encode(fooValue)
         }
         assertEquals(error.sourceValue, fooValue)
         assertContains(error.message, fooValue.toString())
@@ -218,6 +220,6 @@ class BuiltinEncoderTests : UnitTest {
     }
 
     private fun assertEncodesTo(value: Any, tomlValue: TomlValue) {
-        assertEquals(tomlValue, TomlEncoder.default.encode(value))
+        assertEquals(tomlValue, mapper.encode(value))
     }
 }
