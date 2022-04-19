@@ -2,6 +2,7 @@ package cc.ekblad.toml.transcoding
 
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.merge
 import cc.ekblad.toml.transcoding.configuration.TomlMapperConfigurator
 import cc.ekblad.toml.util.InternalAPI
 import java.math.BigDecimal
@@ -43,9 +44,24 @@ class TomlMapper internal constructor(
     inline fun <reified T : Any?> decode(tomlValue: TomlValue): T =
         decode(typeOf<T>(), tomlValue)
 
+    /**
+     * Like [decode], but will take any missing values from the [defaultValue].
+     * Appropriate for use cases such as configuration files, where you may not want to force the user to configure
+     * every last thing, but just override the bits they want to customize.
+     */
+    inline fun <reified T : Any?> decodeWithDefaults(defaultValue: T, tomlValue: TomlValue): T =
+        decode(typeOf<T>(), tomlValue, defaultValue)
+
     @InternalAPI
     fun <T : Any?> decode(targetKType: KType, tomlValue: TomlValue): T =
         decoder.decode(tomlValue, targetKType)
+
+    @InternalAPI
+    fun <T : Any?> decode(targetKType: KType, tomlValue: TomlValue, defaultValue: T): T {
+        val defaultTomlValue = defaultValue?.let { encoder.encode(defaultValue) }
+        val mergedTomlValue = defaultTomlValue?.merge(tomlValue) ?: tomlValue
+        return decoder.decode(mergedTomlValue, targetKType)
+    }
 }
 
 /**

@@ -1,6 +1,7 @@
 package cc.ekblad.toml.transcoding
 
 import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.util.InternalAPI
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -55,6 +56,7 @@ inline fun <reified T : Any> TomlValue.get(mapper: TomlMapper, vararg path: Stri
  * `targetKType` using the given custom TOML decoder.
  * `targetKType` and `T` should correspond to the same type, or the behavior of `get` is undefined.
  */
+@OptIn(InternalAPI::class)
 fun <T> TomlValue.get(mapper: TomlMapper, targetKType: KType, path: List<String>): T? =
     get(path)?.let { mapper.decode(targetKType, it.flatten(targetKType)) }
 

@@ -5,6 +5,7 @@ import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.serialization.from
 import cc.ekblad.toml.transcoding.tomlMapper
+import cc.ekblad.toml.util.InternalAPI
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -23,6 +24,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalStdlibApi::class, InternalAPI::class)
 class BuiltinDecoderTests : StringTest {
     private val mapper = tomlMapper { }
     private data class Person(
@@ -33,7 +35,6 @@ class BuiltinDecoderTests : StringTest {
         val dad: Person?,
     )
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `throws on decode to invalid type`() {
         listOf(
@@ -105,7 +106,6 @@ class BuiltinDecoderTests : StringTest {
         assertEquals(expected.bar, mapper.decode<Foo>(TomlValue.from(toml)).bar)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `decoding error contains target type and the value that couldn't be decoded`() {
         data class Foo(val bar: String)
@@ -173,7 +173,6 @@ class BuiltinDecoderTests : StringTest {
         )
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `can decode maps to special maps`() {
         listOf(
@@ -188,7 +187,6 @@ class BuiltinDecoderTests : StringTest {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `can decode lists`() {
         listOf(
@@ -211,7 +209,6 @@ class BuiltinDecoderTests : StringTest {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `can decode lists to type-erased generics`() {
         listOf(
@@ -233,7 +230,6 @@ class BuiltinDecoderTests : StringTest {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun `can decode maps to type-erased generics`() {
         listOf(
@@ -404,5 +400,107 @@ class BuiltinDecoderTests : StringTest {
                     .abs() < BigDecimal(0.00001)
             )
         }
+    }
+
+    @Test
+    fun `can decode atomic values with default`() {
+        assertEquals(
+            "correct",
+            mapper.decodeWithDefaults("wrong", TomlValue.String("correct"))
+        )
+        assertEquals(
+            listOf("correct"),
+            mapper.decodeWithDefaults(listOf("wrong"), TomlValue.List(TomlValue.String("correct")))
+        )
+        assertEquals(
+            listOf("correct"),
+            mapper.decodeWithDefaults(emptyList(), TomlValue.List(TomlValue.String("correct")))
+        )
+        assertEquals(
+            emptyList(),
+            mapper.decodeWithDefaults(listOf("wrong"), TomlValue.List())
+        )
+    }
+
+    @Test
+    fun `can decode null values with default`() {
+        assertEquals(
+            "correct",
+            mapper.decodeWithDefaults<String?>(null, TomlValue.String("correct"))
+        )
+
+        val nullMapper = tomlMapper {
+            decoder<TomlValue.String, String> { _ -> null }
+        }
+        assertEquals(
+            null,
+            nullMapper.decodeWithDefaults<String?>("wrong", TomlValue.String("ignored"))
+        )
+    }
+
+    @Test
+    fun `defaults don't come into play for fully specified TOML`() {
+        data class Foo(val a: Int, val b: String)
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+            "b" to TomlValue.String("hej")
+        )
+        assertEquals(
+            Foo(123, "hej"),
+            mapper.decodeWithDefaults(Foo(0, ""), toml)
+        )
+    }
+
+    @Test
+    fun `defaults work properly in flat maps`() {
+        data class Foo(val a: Int, val b: String)
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+        )
+        assertEquals(
+            Foo(123, "defaulted"),
+            mapper.decodeWithDefaults(Foo(0, "defaulted"), toml)
+        )
+        assertEquals(
+            Foo(0, "defaulted"),
+            mapper.decodeWithDefaults(Foo(0, "defaulted"), TomlValue.Map())
+        )
+    }
+
+    @Test
+    fun `defaults work properly in nested maps`() {
+        data class Foo(val a: Int, val b: String)
+        data class Bar(val x: Foo, val y: Int)
+        val toml = TomlValue.Map(
+            "x" to TomlValue.Map(
+                "a" to TomlValue.Integer(123)
+            ),
+            "y" to TomlValue.Integer(321),
+        )
+        assertEquals(
+            Bar(Foo(123, "defaulted"), 321),
+            mapper.decodeWithDefaults(Bar(Foo(0, "defaulted"), 0), toml)
+        )
+    }
+
+    @Test
+    fun `defaults work properly in nested maps when a whole sub-map is missing or empty`() {
+        data class Foo(val a: Int, val b: String)
+        data class Bar(val x: Foo, val y: Int)
+        val tomlWithoutFoo = TomlValue.Map(
+            "y" to TomlValue.Integer(321),
+        )
+        val tomlWithEmptyFoo = TomlValue.Map(
+            "x" to TomlValue.Map(),
+            "y" to TomlValue.Integer(321),
+        )
+        assertEquals(
+            Bar(Foo(0, "defaulted"), 321),
+            mapper.decodeWithDefaults(Bar(Foo(0, "defaulted"), 0), tomlWithoutFoo)
+        )
+        assertEquals(
+            Bar(Foo(0, "defaulted"), 321),
+            mapper.decodeWithDefaults(Bar(Foo(0, "defaulted"), 0), tomlWithEmptyFoo)
+        )
     }
 }

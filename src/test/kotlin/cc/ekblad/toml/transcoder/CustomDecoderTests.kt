@@ -3,7 +3,6 @@ package cc.ekblad.toml.transcoder
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.serialization.from
-import cc.ekblad.toml.transcoding.decode
 import cc.ekblad.toml.transcoding.tomlMapper
 import kotlin.test.Test
 import kotlin.test.assertContains

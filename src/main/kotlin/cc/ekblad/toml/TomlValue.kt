@@ -32,3 +32,27 @@ sealed class TomlValue {
     // For serialization extension methods
     companion object
 }
+
+/**
+ * Recursively merge two TOML values.
+ * Whenever there is a conflict (i.e. two non-[TomlValue.Map] values are merged), the [other] value is preserved.
+ * Note that lists are treated as atomic (i.e. not recursively merged) due to the difficulties of establishing an
+ * unambiguous diff between two lists of elements without identity.
+ */
+internal fun TomlValue.merge(other: TomlValue): TomlValue = when {
+    this is TomlValue.Map && other is TomlValue.Map -> TomlValue.Map(properties.merge(other.properties))
+    else -> other
+}
+
+private fun Map<String, TomlValue>.merge(other: Map<String, TomlValue>): Map<String, TomlValue> {
+    val keys = this.keys + other.keys
+    return keys.associateWith { key ->
+        val thisValue = this[key]
+        val otherValue = other[key]
+        when {
+            thisValue != null && otherValue != null -> thisValue.merge(otherValue)
+            otherValue != null -> otherValue
+            else -> thisValue!!
+        }
+    }
+}
