@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "cc.ekblad"
-version = "0.4.2"
+version = "1.0.0"
 val kotlinJvmTarget = "1.8"
 
 repositories {
