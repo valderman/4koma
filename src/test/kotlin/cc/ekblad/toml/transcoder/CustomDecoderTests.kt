@@ -248,4 +248,112 @@ class CustomDecoderTests {
         val toml = TomlValue.Integer(123)
         assertNull(mapper.decode<Int?>(toml))
     }
+
+    @Test
+    fun `defaulting does nothing with atomic types`() {
+        val mapper = tomlMapper {
+            default("wrong")
+            default(listOf("wrong"))
+        }
+        assertEquals(
+            "correct",
+            mapper.decode(TomlValue.String("correct"))
+        )
+        assertEquals(
+            listOf("correct"),
+            mapper.decode(TomlValue.List(TomlValue.String("correct")))
+        )
+        assertEquals(
+            emptyList<String>(),
+            mapper.decode(TomlValue.List())
+        )
+    }
+
+    @Test
+    fun `defaults don't come into play for fully specified TOML`() {
+        data class Foo(val a: Int, val b: String)
+        val mapper = tomlMapper {
+            default(Foo(0, ""))
+        }
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+            "b" to TomlValue.String("hej")
+        )
+        assertEquals(
+            Foo(123, "hej"),
+            mapper.decode(toml)
+        )
+    }
+
+    @Test
+    fun `defaults work properly in flat maps`() {
+        data class Foo(val a: Int, val b: String)
+        val mapper = tomlMapper {
+            default(Foo(0, "defaulted"))
+        }
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+        )
+        assertEquals(
+            Foo(123, "defaulted"),
+            mapper.decode(toml)
+        )
+        assertEquals(
+            Foo(0, "defaulted"),
+            mapper.decode(TomlValue.Map())
+        )
+    }
+
+    @Test
+    fun `defaults work properly in lists`() {
+        data class Foo(val a: Int, val b: String)
+        val mapper = tomlMapper {
+            default(Foo(0, "defaulted"))
+        }
+        val toml = TomlValue.List(
+            TomlValue.Map("a" to TomlValue.Integer(123)),
+            TomlValue.Map("b" to TomlValue.String("hello")),
+            TomlValue.Map("a" to TomlValue.Integer(321), "b" to TomlValue.String("hello")),
+            TomlValue.Map(),
+        )
+        val expected = listOf(
+            Foo(123, "defaulted"),
+            Foo(0, "hello"),
+            Foo(321, "hello"),
+            Foo(0, "defaulted"),
+        )
+        assertEquals(
+            expected,
+            mapper.decode(toml)
+        )
+    }
+
+    @Test
+    fun `defaults work properly in nested maps`() {
+        data class Foo(val a: Int, val b: String)
+        data class Bar(val x: Foo, val y: Int)
+        val mapper = tomlMapper {
+            default(Foo(0, "defaulted"))
+            default(Bar(Foo(1, "the whole foo is missing"), 2))
+        }
+
+        TomlValue.Map(
+            "x" to TomlValue.Map(
+                "a" to TomlValue.Integer(123)
+            ),
+            "y" to TomlValue.Integer(321),
+        ).let { toml ->
+            assertEquals(
+                Bar(Foo(123, "defaulted"), 321),
+                mapper.decode(toml)
+            )
+        }
+
+        TomlValue.Map("y" to TomlValue.Integer(321)).let { toml ->
+            assertEquals(
+                Bar(Foo(1, "the whole foo is missing"), 321),
+                mapper.decode(toml)
+            )
+        }
+    }
 }

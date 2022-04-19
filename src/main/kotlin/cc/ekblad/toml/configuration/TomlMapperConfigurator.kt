@@ -15,7 +15,8 @@ import kotlin.reflect.full.primaryConstructor
 class TomlMapperConfigurator internal constructor(
     private val encoders: MutableMap<KClass<*>, MutableList<TomlEncoder.(Any) -> TomlValue>>,
     private val decoders: MutableMap<KClass<*>, MutableList<TomlDecoder.(KType, TomlValue) -> Any?>>,
-    private val mappings: MutableMap<KClass<*>, MutableMap<TomlName, KotlinName>>
+    private val mappings: MutableMap<KClass<*>, MutableMap<TomlName, KotlinName>>,
+    private val defaultValues: MutableMap<KClass<*>, Any>
 ) {
     /**
      * Configures a custom property mapping for the type Kotlin type `T`, where `T` is any class with
@@ -154,6 +155,23 @@ class TomlMapperConfigurator internal constructor(
     }
 
     /**
+     * Set the given [defaultValue] as the default for any missing values of type [T].
+     * Any time an object of type T is being decoded but the TOML document is missing one or more fields
+     * needed to construct the object, that value will be fetched from the default value.
+     *
+     * While it is possible to set defaults for atomic types, it will not have any effect as atomic types
+     * have no fields.
+     *
+     * As an example , if we try to decode a TOML document which
+     * only has the key `x = 42` into the type `data class Foo(val x: Int, val y: Int)`
+     * with a default value of `Foo(0, 0)`, the result will be
+     * `Foo(42, 0)`, as the `y` field is filled in from the default value.
+     */
+    fun <T : Any> default(defaultValue: T) {
+        defaultValues[defaultValue::class] = defaultValue
+    }
+
+    /**
      * Convenience overload for [decoder], for when you don't need to consider the full target KType.
      */
     inline fun <reified T : TomlValue, reified R : Any> decoder(crossinline decoder: TomlDecoder.(tomlValue: T) -> R?) =
@@ -192,11 +210,12 @@ class TomlMapperConfigurator internal constructor(
     }
 
     internal fun buildConfig(): TomlMapperConfig =
-        TomlMapperConfig(encoders, decoders, mappings)
+        TomlMapperConfig(encoders, decoders, mappings, defaultValues)
 }
 
 internal data class TomlMapperConfig(
     val encoders: Map<KClass<*>, List<TomlEncoder.(Any) -> TomlValue>>,
     val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>,
-    val mappings: Map<KClass<*>, Map<TomlName, KotlinName>>
+    val mappings: Map<KClass<*>, Map<TomlName, KotlinName>>,
+    val defaultValues: Map<KClass<*>, Any>
 )

@@ -94,7 +94,8 @@ fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
     val configurator = TomlMapperConfigurator(
         encoders = mutableMapOf(),
         decoders = mutableMapOf(),
-        mappings = mutableMapOf()
+        mappings = mutableMapOf(),
+        defaultValues = mutableMapOf()
     )
     val config = configurator
         .apply(configuration)
@@ -104,7 +105,7 @@ fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
         mappingForType.entries.associate { it.value to it.key }
     }
     val encoder = TomlEncoder(config.encoders, mappingsByParameter)
-    val decoder = TomlDecoder(config.decoders, mappingsByParameter)
+    val decoder = TomlDecoder(config.decoders, mappingsByParameter, config.defaultValues)
     return TomlMapper(encoder, decoder)
 }
 

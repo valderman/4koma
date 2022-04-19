@@ -9,15 +9,19 @@ import cc.ekblad.toml.util.TomlName
 import java.util.SortedMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
+import kotlin.reflect.KParameter
+import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 class TomlDecoder internal constructor(
     private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>,
-    private val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>
+    private val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>,
+    private val defaultValues: Map<KClass<*>, Any>
 ) {
     /**
      * Thrown by a TOML decoder function to indicate that it can't decode the given TOML into its target type and that
@@ -46,6 +50,12 @@ class TomlDecoder internal constructor(
                 }
                 throw Pass
             }
+        }
+
+    internal fun defaultValueFor(type: KClass<*>, parameter: KParameter): Any? =
+        defaultValues[type]?.let { defaultValue ->
+            val property = type.memberProperties.single { it.name == parameter.name } as KProperty1<Any, Any>
+            property.get(defaultValue)
         }
 }
 
@@ -120,7 +130,10 @@ private fun <T : Any> TomlDecoder.toDataClass(
     val tomlNamesByParameterName = mappingFor(kClass)
     val parameters = constructor.parameters.map { constructorParameter ->
         val tomlName = tomlNamesByParameterName[constructorParameter.name] ?: constructorParameter.name
-        val parameterValue = tomlMap.properties[tomlName]
+        val decodedParameterValue = tomlMap.properties[tomlName]?.let { value ->
+            decode<Any>(value, constructorParameter.type)
+        }
+        val parameterValue = decodedParameterValue ?: defaultValueFor(kClass, constructorParameter)
         if (!constructorParameter.type.isMarkedNullable && parameterValue == null) {
             throw TomlException.DecodingError(
                 "no value found for non-nullable parameter '${constructorParameter.name}'",
@@ -128,7 +141,7 @@ private fun <T : Any> TomlDecoder.toDataClass(
                 kType
             )
         }
-        parameterValue?.let { value -> decode<Any>(value, constructorParameter.type) }
+        parameterValue
     }.toTypedArray()
 
     if (kClass.visibility == KVisibility.PRIVATE) {
