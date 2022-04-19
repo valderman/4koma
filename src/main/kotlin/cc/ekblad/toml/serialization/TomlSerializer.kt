@@ -1,5 +1,6 @@
 package cc.ekblad.toml.serialization
 
+import cc.ekblad.toml.model.TomlDocument
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import java.io.OutputStream
@@ -9,25 +10,25 @@ import java.time.format.DateTimeFormatter
 import kotlin.io.path.outputStream
 
 /**
- * Serializes the receiver [TomlValue.Map] into a valid TOML document and writes it to the given [Appendable].
+ * Serializes the receiver [TomlDocument] into a valid TOML document and writes it to the given [Appendable].
  */
-fun TomlValue.Map.write(output: Appendable) {
+fun TomlDocument.write(output: Appendable) {
     writePath(output, emptyList())
 }
 
 /**
- * Serializes the receiver [TomlValue.Map] into a valid TOML document and writes it to the given [OutputStream].
+ * Serializes the receiver [TomlDocument] into a valid TOML document and writes it to the given [OutputStream].
  */
-fun TomlValue.Map.write(outputStream: OutputStream) {
+fun TomlDocument.write(outputStream: OutputStream) {
     val printStream = PrintStream(outputStream)
     write(printStream as Appendable)
 }
 
 /**
- * Serializes the receiver [TomlValue.Map] into a valid TOML document and writes it to the file
+ * Serializes the receiver [TomlDocument] into a valid TOML document and writes it to the file
  * represented by the given [Path].
  */
-fun TomlValue.Map.write(path: Path) {
+fun TomlDocument.write(path: Path) {
     path.outputStream().use {
         write(it)
     }
