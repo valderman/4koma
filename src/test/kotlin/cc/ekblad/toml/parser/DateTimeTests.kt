@@ -1,7 +1,7 @@
 package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.RandomTest
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlValue
 import java.time.format.DateTimeFormatter
 import kotlin.test.Test
 

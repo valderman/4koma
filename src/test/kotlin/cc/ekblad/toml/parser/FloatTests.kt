@@ -1,8 +1,8 @@
 package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.RandomTest
-import cc.ekblad.toml.TomlException
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlException
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
 import kotlin.math.abs
 import kotlin.math.pow

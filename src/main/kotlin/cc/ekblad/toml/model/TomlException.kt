@@ -1,4 +1,4 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.model
 
 import kotlin.reflect.KType
 import kotlin.reflect.javaType

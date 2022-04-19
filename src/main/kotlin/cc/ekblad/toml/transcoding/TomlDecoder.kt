@@ -2,8 +2,8 @@
 
 package cc.ekblad.toml.transcoding
 
-import cc.ekblad.toml.TomlException
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlException
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.util.KotlinName
 import cc.ekblad.toml.util.TomlName
 import java.util.SortedMap

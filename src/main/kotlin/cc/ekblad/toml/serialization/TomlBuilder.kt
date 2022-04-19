@@ -1,7 +1,7 @@
 package cc.ekblad.toml.serialization
 
-import cc.ekblad.toml.TomlException
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlException
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.util.Generated
 
 internal class TomlBuilder private constructor() {

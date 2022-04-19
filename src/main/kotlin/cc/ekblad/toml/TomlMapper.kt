@@ -1,9 +1,12 @@
-package cc.ekblad.toml.transcoding
+package cc.ekblad.toml
 
-import cc.ekblad.toml.TomlException
-import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.merge
-import cc.ekblad.toml.transcoding.configuration.TomlMapperConfigurator
+import cc.ekblad.toml.configuration.TomlMapperConfigurator
+import cc.ekblad.toml.model.TomlValue
+import cc.ekblad.toml.model.merge
+import cc.ekblad.toml.transcoding.TomlDecoder
+import cc.ekblad.toml.transcoding.TomlEncoder
+import cc.ekblad.toml.transcoding.decode
+import cc.ekblad.toml.transcoding.encode
 import cc.ekblad.toml.util.InternalAPI
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -29,7 +32,7 @@ class TomlMapper internal constructor(
 ) {
     /**
      * Encodes the given Kotlin value to as into a [TomlValue] using the receiver [TomlEncoder].
-     * If the value can't be encoded, a [TomlException.EncodingError] is thrown.
+     * If the value can't be encoded, a [cc.ekblad.toml.model.TomlException.EncodingError] is thrown.
      *
      * Note that as TOML does not have the concept of `null`, any `null` values present in encoded lists or maps
      * are ignored.
@@ -39,7 +42,8 @@ class TomlMapper internal constructor(
 
     /**
      * Decodes the receiver TOML value to the type indicated by type parameter `T` using the default TOML decoder.
-     * If the value can't be decoded into the target type, a [TomlException.DecodingError] is thrown.
+     * If the value can't be decoded into the target type, a [cc.ekblad.toml.model.TomlException.DecodingError]
+     * is thrown.
      */
     inline fun <reified T : Any?> decode(tomlValue: TomlValue): T =
         decode(typeOf<T>(), tomlValue)

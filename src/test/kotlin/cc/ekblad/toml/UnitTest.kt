@@ -1,5 +1,7 @@
 package cc.ekblad.toml
 
+import cc.ekblad.toml.model.TomlException
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.function.Executable

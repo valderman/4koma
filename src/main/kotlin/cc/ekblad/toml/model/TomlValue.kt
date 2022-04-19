@@ -1,4 +1,4 @@
-package cc.ekblad.toml
+package cc.ekblad.toml.model
 
 /**
  * Kotlin representation of a TOML value.
@@ -32,6 +32,11 @@ sealed class TomlValue {
     // For serialization extension methods
     companion object
 }
+
+/**
+ * A TOML document is a map of zero or more keys.
+ */
+typealias TomlDocument = TomlValue.Map
 
 /**
  * Recursively merge two TOML values.

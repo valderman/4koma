@@ -1,9 +1,9 @@
 package cc.ekblad.toml.transcoder
 
-import cc.ekblad.toml.TomlException
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlException
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
-import cc.ekblad.toml.transcoding.tomlMapper
+import cc.ekblad.toml.tomlMapper
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals

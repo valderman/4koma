@@ -1,7 +1,7 @@
 package cc.ekblad.toml.parser
 
-import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
+import cc.ekblad.toml.model.TomlValue
 import java.time.LocalDate
 import kotlin.test.Test
 

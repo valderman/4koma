@@ -1,6 +1,6 @@
-package cc.ekblad.toml.transcoding.configuration
+package cc.ekblad.toml.configuration
 
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.transcoding.TomlDecoder
 import cc.ekblad.toml.transcoding.TomlEncoder
 import cc.ekblad.toml.util.Generated

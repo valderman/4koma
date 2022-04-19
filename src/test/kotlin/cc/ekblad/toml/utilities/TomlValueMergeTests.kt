@@ -1,8 +1,8 @@
 package cc.ekblad.toml.utilities
 
-import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.UnitTest
-import cc.ekblad.toml.merge
+import cc.ekblad.toml.model.TomlValue
+import cc.ekblad.toml.model.merge
 import java.time.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals

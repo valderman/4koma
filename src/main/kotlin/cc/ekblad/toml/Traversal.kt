@@ -1,6 +1,6 @@
-package cc.ekblad.toml.transcoding
+package cc.ekblad.toml
 
-import cc.ekblad.toml.TomlValue
+import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.util.InternalAPI
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
