@@ -32,14 +32,14 @@ repositories {
 }
 
 dependencies {
-    implementation("cc.ekblad:4koma:0.4.2")
+    implementation("cc.ekblad:4koma:1.0.0")
 }
 ```
 
 ### 2. Obtain a TOML file
 ```toml
 [settings]
-maxLoginTries = 3
+maxLoginRetries = 3
 
 [[user]]
 name = "Alice"
@@ -51,11 +51,11 @@ password = "correct horse battery staple"
 ```
 
 ### 3. Write some code
+
+#### A minimal example
 ```kotlin
-import cc.ekblad.toml.TomlValue
-import cc.ekblad.toml.transcoding.TomlDecoder
-import cc.ekblad.toml.transcoding.decode
-import cc.ekblad.toml.transcoding.get
+import cc.ekblad.toml.decode
+import cc.ekblad.toml.tomlMapper
 import java.nio.file.Path
 
 data class Config(
@@ -67,46 +67,79 @@ data class Config(
 }
 
 fun main() {
-    // Parse a TOML document from a string, stream, or file
-    val tomlDocument = TomlValue.from(Path.of("test.toml"))
+    // Create a TOML mapper without any custom configuration
+    val mapper = tomlMapper { }
 
-    // Decode it to your config type
-    val config = tomlDocument.decode<Config>()
-
-    // If you're lazy, just decode it to a map
-    val mapConfig = tomlDocument.decode<Map<String, Any>>()
-
-    // ...or access properties directly
-    val maxLoginTries = tomlDocument["settings", "maxLoginTries"]
-
-    // ...or just grab a part of the document and decode it to some convenient data class
-    val settings = tomlDocument.get<Config.Settings>("settings")
-    val users = tomlDocument.get<List<User>>("user")
-
-    // You can also access properties on objects inside lists
-    val userNames = tomlDocument["user", "name"] // <- returns listOf("Alice", "Bob")
-
-    // Need to remap some names between your config file and your model types?
-    data class RemappedConfig(val users: List<User>) {
-        data class User(val userName: String, val userSecret: String)
-    }
-    val remappingDecoder = TomlDecoder.default
-        .withMapping<RemappedConfig>("user" to "users")
-        .withMapping<RemappedConfig.User>("name" to "userName", "password" to "userSecret")
-    val remappedConfig = tomlDocument.decode<RemappedConfig>(remappingDecoder)
-
-    // You can also use entirely custom decoder functions
-    val censoringDecoder = TomlDecoder.default.with { it: TomlValue.String -> 
-        if (it.value in listOfBadWords) {
-            // We don't allow any swearing in our strings!
-            it.value.map { '*' }.joinToString("")
-        } else {
-            it.value
-        }
-    }
-    val censoredConfig = tomlDocument.decode<Config>(censoringDecoder)
+    // Read our config from file
+    val tomlFile = Path.of("test.toml")
+    val config = mapper.decode<Config>(tomlFile)
+    println(config)
 }
 ```
+
+#### Mapping between TOML and Kotlin field names
+```kotlin
+import cc.ekblad.toml.decode
+import cc.ekblad.toml.tomlMapper
+import java.nio.file.Path
+
+data class Config(
+    val settings: Settings,
+    val users: List<User>
+) {
+    data class User(val userName: String, val password: String)
+    data class Settings(val retriesAfterWhichToDisableLogin: Int)
+}
+
+fun main() {
+    // Set up a mapper which maps "user", "name", etc. fields found in the TOML file onto fields "users", "userName",
+    // etc. in their respective Kotlin data types
+    val mapper = tomlMapper {
+        mapping<Config>("user" to "users")
+        mapping<Config.User>(
+            "name" to "userName",
+            "password" to "userSecret"
+        )
+        mapping<Config.Settings>(
+            "maxLoginRetries" to "retriesAfterWhichToDisableLogin"
+        )
+    }
+
+    // Read our config from file, using our custom field name mappings
+    val tomlFile = Path.of("test.toml")
+    val config = mapper.decode<Config>(tomlFile)
+    println(config)
+}
+```
+
+#### Custom decoders
+```kotlin
+import cc.ekblad.toml.decode
+import cc.ekblad.toml.model.TomlValue
+import cc.ekblad.toml.tomlMapper
+import java.nio.file.Path
+
+fun main() {
+    // Set up a mapper which replaces any string appearing in the list of bad words with a number of asterisks
+    val listOfBadWords = listOf("poop", "darn", "blockchain")
+    val mapper = tomlMapper {
+        decoder { it: TomlValue.String ->
+            if (it.value in listOfBadWords) {
+                // We don't allow any swearing in our strings!
+                it.value.map { '*' }.joinToString("")
+            } else {
+                it.value
+            }
+        }
+    }
+
+    // Read an arbitrary TOML document from file, using our custom string decoder
+    val tomlFile = Path.of("test.toml")
+    val config = mapper.decode<Map<String, Any>>(tomlFile)
+    println(config)
+}
+```
+
 For more detailed information, see the [API documentation](http://valderman.github.io/4koma/4koma/cc.ekblad.toml/).
 
 ## <span id="alternatives">Alternatives</span>
