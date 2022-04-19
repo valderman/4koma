@@ -77,6 +77,52 @@ fun main() {
 }
 ```
 
+#### Default values
+```kotlin
+import cc.ekblad.toml.decodeWithDefaults
+import cc.ekblad.toml.tomlMapper
+import java.nio.file.Path
+
+// We extend our config with extra fields (e.g. isAdmin, realmName and useTLS)
+// which are not configured in our example TOML document.
+data class Config(
+    val settings: Settings,
+    val user: List<User>
+) {
+    data class User(val name: String, val password: String, val isAdmin: Boolean)
+    data class Settings(val maxLoginRetries: Int, val realmName: String, val useTLS: Boolean)
+}
+
+// Then, we define a default configuration, from which we will fill in any missing values when we read the config.
+val defaultConfig = Config(
+    settings = Config.Settings(
+        maxLoginRetries = 5,
+        realmName = "Example Realm",
+        useTLS = true
+    ),
+    user = emptyList()
+)
+
+// We also define a default value for our user type, as we extended it with an extra field.
+val defaultUser = Config.User(
+    name = "default name",
+    password = "default password",
+    isAdmin = false
+)
+
+fun main() {
+    // Create a TOML mapper with default fields configured for our Config.User type.
+    val mapper = tomlMapper {
+        default(defaultUser)
+    }
+
+    // Read our config from file, replacing any missing values with the defaults from defaultConfig and defaultUser.
+    val tomlFile = Path.of("test.toml")
+    val config = mapper.decodeWithDefaults<Config>(defaultConfig, tomlFile)
+    println(config)
+}
+```
+
 #### Mapping between TOML and Kotlin field names
 ```kotlin
 import cc.ekblad.toml.decode
