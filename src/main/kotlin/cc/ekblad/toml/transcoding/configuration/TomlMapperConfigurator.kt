@@ -4,12 +4,14 @@ import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.transcoding.TomlDecoder
 import cc.ekblad.toml.transcoding.TomlEncoder
 import cc.ekblad.toml.util.Generated
+import cc.ekblad.toml.util.InternalAPI
 import cc.ekblad.toml.util.KotlinName
 import cc.ekblad.toml.util.TomlName
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.primaryConstructor
 
+@OptIn(InternalAPI::class)
 class TomlMapperConfigurator internal constructor(
     private val encoders: MutableMap<KClass<*>, MutableList<TomlEncoder.(Any) -> TomlValue>>,
     private val decoders: MutableMap<KClass<*>, MutableList<TomlDecoder.(KType, TomlValue) -> Any?>>,
@@ -100,7 +102,7 @@ class TomlMapperConfigurator internal constructor(
      * I.e. for some decoder `D = tomlMapper { decoder<T>(A) ; decoder<T>(B) }`,
      * `A` will always be tried before `B` when trying to decode values of type `T`.
      *
-     * A decoder function can signal that they are unable to decode their given input by calling [pass].
+     * A decoder function can signal that they are unable to decode their given input by calling [TomlDecoder.pass].
      * When this happens, the decoder will go on to try the next relevant decoder, if any.
      *
      * Binding decoder functions to a KClass rather than a [KType], while allowing the decoder function to access that
@@ -157,6 +159,7 @@ class TomlMapperConfigurator internal constructor(
     inline fun <reified T : TomlValue, reified R : Any> decoder(crossinline decoder: TomlDecoder.(tomlValue: T) -> R?) =
         decoder<T, R> @Generated { _, it -> decoder(it) }
 
+    @InternalAPI
     fun <T : Any> mapping(kClass: KClass<T>, mappings: List<Pair<TomlName, KotlinName>>) {
         val className = kClass.qualifiedName ?: kClass.simpleName
 
@@ -178,10 +181,12 @@ class TomlMapperConfigurator internal constructor(
         this.mappings.putIfAbsent(kClass, mappings.toMap(mutableMapOf()))?.putAll(mappings)
     }
 
+    @InternalAPI
     fun <T : Any> encoder(kClass: KClass<T>, encoder: TomlEncoder.(kotlinValue: Any) -> TomlValue) {
         encoders.putIfAbsent(kClass, mutableListOf(encoder))?.add(encoder)
     }
 
+    @InternalAPI
     fun <T : Any> decoder(kClass: KClass<T>, decoder: TomlDecoder.(targetType: KType, tomlValue: TomlValue) -> Any?) {
         decoders.putIfAbsent(kClass, mutableListOf(decoder))?.add(decoder)
     }

@@ -3,6 +3,7 @@ package cc.ekblad.toml.transcoding
 import cc.ekblad.toml.TomlException
 import cc.ekblad.toml.TomlValue
 import cc.ekblad.toml.transcoding.configuration.TomlMapperConfigurator
+import cc.ekblad.toml.util.InternalAPI
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.LocalDate
@@ -20,6 +21,7 @@ import kotlin.reflect.typeOf
  * decoder. Unless you need custom en/decoder functions, using a transcoder instead of a separate encoder and decoder
  * is highly recommended.
  */
+@OptIn(ExperimentalStdlibApi::class, InternalAPI::class)
 class TomlMapper internal constructor(
     private val encoder: TomlEncoder,
     private val decoder: TomlDecoder,
@@ -34,7 +36,6 @@ class TomlMapper internal constructor(
     fun encode(value: Any): TomlValue =
         encoder.encode(value)
 
-    @OptIn(ExperimentalStdlibApi::class)
     /**
      * Decodes the receiver TOML value to the type indicated by type parameter `T` using the default TOML decoder.
      * If the value can't be decoded into the target type, a [TomlException.DecodingError] is thrown.
@@ -42,6 +43,7 @@ class TomlMapper internal constructor(
     inline fun <reified T : Any?> decode(tomlValue: TomlValue): T =
         decode(typeOf<T>(), tomlValue)
 
+    @InternalAPI
     fun <T : Any?> decode(targetKType: KType, tomlValue: TomlValue): T =
         decoder.decode(tomlValue, targetKType)
 }
