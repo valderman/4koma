@@ -62,8 +62,10 @@ class TomlMapperConfigurator internal constructor(
      * <br>
      *
      * ```
-     * val myDecoder = TomlDecoder.default.withMapping<UserList>("user" to "users")
-     * val myUsers = toml.from(Path.of("path", "to", "users.toml")).decode<UserList>(myDecoder)
+     * val mapper = tomlMapper {
+     *     mapping<UserList>("user" to "users")
+     * }
+     * val myUsers = mapper.decode<UserList>(Path.of("path", "to", "users.toml"))
      * ```
      *
      * <br>
@@ -125,19 +127,17 @@ class TomlMapperConfigurator internal constructor(
      * <br>
      *
      * ```
-     * val myDecoder = TomlDecoder.default.with(
-     *     MyDataStructure::class to { kType, tomlValue ->
-     *         (tomlValue as? TomlValue.List)?.let {
-     *             val myDataStructure = MyDataStructure<Any>()
-     *             tomlValue.forEach {
-     *                 it.convert(this, kType.arguments.single().type!!)
-     *                 myDataStructure.add(convertedElement)
-     *             }
-     *             myDataStructure
-     *             } ?: pass()
+     * val mapper = tomlMapper {
+     *     decoder { kType, tomlValue: TomlValue.List ->
+     *         val myDataStructure = MyDataStructure<Any>()
+     *         tomlValue.forEach {
+     *             decode(it, kType.arguments.single().type!!)
+     *             myDataStructure.add(convertedElement)
+     *         }
+     *         myDataStructure
      *     }
-     * )
-     * val result = TomlValue.from(Path.of("path", "to", "file.toml")).decode(myDecoder)
+     *
+     * val result = mapper.decode<MyDataStructure<SomeType>>(Path.of("path", "to", "file.toml"))
      * ```
      *
      * <br>

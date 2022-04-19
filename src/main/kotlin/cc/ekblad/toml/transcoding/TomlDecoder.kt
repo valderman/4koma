@@ -59,7 +59,11 @@ class TomlDecoder internal constructor(
         }
 }
 
-internal fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
+/**
+ * Decode the given value into the given target type.
+ * Behavior is undefined if [T] is not equal to or a superclass of [target].
+ */
+fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
     val kClass = requireKClass(target.classifier)
     decoderFor<T>(kClass)?.let { decode ->
         try {

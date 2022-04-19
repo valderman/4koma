@@ -44,7 +44,10 @@ class TomlEncoder internal constructor(
         }
 }
 
-internal fun TomlEncoder.encode(value: Any): TomlValue {
+/**
+ * Encode the given value using the receiver encoder.
+ */
+fun TomlEncoder.encode(value: Any): TomlValue {
     encoderFor(value::class)?.let { encode ->
         try {
             return@encode encode(value)
