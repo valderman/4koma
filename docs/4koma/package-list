@@ -80,6 +80,8 @@ $dokka.location:cc.ekblad.toml.serialization//write/cc.ekblad.toml.model.TomlVal
 $dokka.location:cc.ekblad.toml.serialization//write/cc.ekblad.toml.model.TomlValue.Map#java.lang.Appendable/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/write.html
 $dokka.location:cc.ekblad.toml.serialization//write/cc.ekblad.toml.model.TomlValue.Map#java.nio.file.Path/PointingToDeclaration/4koma/cc.ekblad.toml.serialization/write.html
 $dokka.location:cc.ekblad.toml.transcoding////PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/index.html
+$dokka.location:cc.ekblad.toml.transcoding//decode/cc.ekblad.toml.transcoding.TomlDecoder#cc.ekblad.toml.model.TomlValue#kotlin.reflect.KType/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/decode.html
+$dokka.location:cc.ekblad.toml.transcoding//encode/cc.ekblad.toml.transcoding.TomlEncoder#kotlin.Any/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/encode.html
 $dokka.location:cc.ekblad.toml.transcoding/TomlDecoder///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/index.html
 $dokka.location:cc.ekblad.toml.transcoding/TomlDecoder/pass/#/PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-decoder/pass.html
 $dokka.location:cc.ekblad.toml.transcoding/TomlEncoder///PointingToDeclaration/4koma/cc.ekblad.toml.transcoding/-toml-encoder/index.html
