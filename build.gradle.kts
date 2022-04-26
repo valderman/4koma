@@ -5,7 +5,7 @@ import kotlin.io.path.inputStream
 
 plugins {
     kotlin("jvm") version "1.6.21"
-    id("org.jetbrains.dokka") version "1.6.20"
+    id("org.jetbrains.dokka") version "1.6.21"
     id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
     id("com.github.ben-manes.versions") version "0.42.0"
     `maven-publish`
@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "cc.ekblad"
-version = "1.0.1"
+version = "1.0.2"
 val kotlinJvmTarget = "1.8"
 
 repositories {
