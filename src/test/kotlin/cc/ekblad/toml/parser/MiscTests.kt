@@ -148,8 +148,31 @@ class MiscTests : StringTest {
     }
 
     @Test
+    fun `key-value pair can end in CRLF`() {
+        assertEquals(
+            TomlValue.Map("foo" to TomlValue.Integer(123)),
+            TomlValue.from("foo = 123\r\n")
+        )
+    }
+
+    @Test
+    fun `comment can end in CRLF`() {
+        assertEquals(
+            TomlValue.Map(),
+            TomlValue.from("# Hello\r\n")
+        )
+    }
+
+    @Test
     fun `throws on unspecified value`() {
         assertDocumentParseError("foo =")
+    }
+
+    @Test
+    fun `throws on comment containing CR`() {
+        asciiControlChars.assertAll {
+            assertDocumentParseError("# this is \r bad")
+        }
     }
 
     @Test

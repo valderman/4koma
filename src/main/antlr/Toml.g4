@@ -64,7 +64,7 @@ array_table : '[' '[' key ']' ']' ;
 
 WS : [ \t]+ -> skip ;
 NL : ('\r'? '\n')+ ;
-COMMENT : '#' (~[\n])* ;
+COMMENT : '#' (~[\r\n])* ;
 
 fragment DIGIT : [0-9] ;
 fragment ALPHA : [A-Za-z] ;
