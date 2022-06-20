@@ -16,13 +16,7 @@ import java.time.ZoneOffset
 import java.util.SortedMap
 import kotlin.reflect.full.createType
 import kotlin.reflect.typeOf
-import kotlin.test.Test
-import kotlin.test.assertContains
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 @OptIn(ExperimentalStdlibApi::class, InternalAPI::class)
 class BuiltinDecoderTests : StringTest {
@@ -501,6 +495,99 @@ class BuiltinDecoderTests : StringTest {
         assertEquals(
             Bar(Foo(0, "defaulted"), 321),
             mapper.decodeWithDefaults(Bar(Foo(0, "defaulted"), 0), tomlWithEmptyFoo)
+        )
+    }
+
+    @Test
+    fun `can decode to null in data class`() {
+        data class Foo(val i: Int?)
+        val nullMapper = tomlMapper {
+            decoder<TomlValue.Integer, Int> { _, _ -> null }
+        }
+
+        assertEquals(nullMapper.decode(TomlValue.Map(
+            "i" to TomlValue.Integer(123)
+        )), Foo(null))
+    }
+
+    @Test
+    fun `cannot decode to null for non-nullable field in data class`() {
+        data class Foo(val i: Int)
+        val nullMapper = tomlMapper {
+            decoder<TomlValue.Integer, Int> { _, _ -> null }
+        }
+
+        assertFails {
+            nullMapper.decode<Foo>(TomlValue.Map(
+                "i" to TomlValue.Integer(123)
+            ))
+        }
+    }
+
+    @Test
+    fun `optional arguments work properly in flat maps`() {
+        data class Foo(val a: Int = 1, val b: String = "default")
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+        )
+        assertEquals(
+            Foo(123, "default"),
+            mapper.decode(toml)
+        )
+        assertEquals(
+            Foo(1, "default"),
+            mapper.decode(TomlValue.Map())
+        )
+    }
+
+    @Test
+    fun `optional arguments work properly in nested maps`() {
+        data class Foo(val a: Int = 0, val b: String = "defaulted")
+        data class Bar(val x: Foo = Foo(), val y: Int = 0)
+        val toml = TomlValue.Map(
+            "x" to TomlValue.Map(
+                "a" to TomlValue.Integer(123)
+            ),
+            "y" to TomlValue.Integer(321),
+        )
+        assertEquals(
+            Bar(Foo(123, "defaulted"), 321),
+            mapper.decode(toml)
+        )
+    }
+
+    @Test
+    fun `defaults take priority over optional arguments`() {
+        data class Foo(val a: Int = 1, val b: String = "default")
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+        )
+        assertEquals(
+            Foo(123, "defaulted"),
+            mapper.decodeWithDefaults(Foo(0, "defaulted"), toml)
+        )
+        assertEquals(
+            Foo(0, "defaulted"),
+            mapper.decodeWithDefaults(Foo(0, "defaulted"), TomlValue.Map())
+        )
+    }
+
+    @Test
+    fun `missing and null values are differentiated between`() {
+        data class Foo(val a: Int? = 1)
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+        )
+        val nullMapper = tomlMapper {
+            decoder<TomlValue.Integer, Int> { _, _ -> null }
+        }
+        assertEquals(
+            Foo(null),
+            nullMapper.decode(toml)
+        )
+        assertEquals(
+            Foo(1),
+            nullMapper.decode(TomlValue.Map())
         )
     }
 }
