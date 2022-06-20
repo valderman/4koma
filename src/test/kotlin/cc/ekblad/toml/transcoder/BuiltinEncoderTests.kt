@@ -181,6 +181,20 @@ class BuiltinEncoderTests : UnitTest {
     }
 
     @Test
+    fun can_encode_data_classes_with_private_properties() {
+        data class Foo(val foo: Int, private val bar: String) {
+            private val woof: String = "$foo $bar"
+        }
+        assertEncodesTo(
+            Foo(1, "text"),
+            TomlValue.Map(
+                "foo" to TomlValue.Integer(1),
+                "bar" to TomlValue.String("text"),
+            )
+        )
+    }
+
+    @Test
     fun `can encode TomlValues`() {
         fun assertEncodesToSelf(value: TomlValue) {
             assertEncodesTo(value, value)
