@@ -59,4 +59,16 @@ sealed class TomlException : RuntimeException() {
         override val message: String
             get() = "toml decoding error: unable to encode '$sourceValue' into a toml value"
     }
+
+    /**
+     * An access error occurred while encoding a Kotlin value into a TOML value.
+     */
+    data class AccessError(
+        val name: String,
+        val tomlName: String,
+        override val cause: Throwable?
+    ) : TomlException() {
+        override val message: String
+            get() = "Cannot access constructor property: '$name' mapped from '$tomlName'"
+    }
 }
