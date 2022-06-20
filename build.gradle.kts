@@ -4,9 +4,9 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.6.21"
-    id("org.jetbrains.dokka") version "1.6.21"
-    id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
+    kotlin("jvm") version "1.7.0"
+    id("org.jetbrains.dokka") version "1.7.0"
+    id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
     id("com.github.ben-manes.versions") version "0.42.0"
     `maven-publish`
     antlr
@@ -78,7 +78,19 @@ ktlint {
     version.set("0.45.2")
 }
 
+data class DependencyVersion(val module: String, val version: String)
+
+val excludedVersions = setOf(
+    "ktlint" to "0.46.0" // Crashes when running any ktlint target
+)
+
 tasks {
+    dependencyUpdates {
+        rejectVersionIf {
+            (candidate.module to candidate.version) in excludedVersions
+        }
+    }
+
     val dependencyUpdateSentinel = register<DependencyUpdateSentinel>("dependencyUpdateSentinel") {
         dependsOn(dependencyUpdates)
     }
