@@ -64,8 +64,14 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
     antlr("org.antlr", "antlr4", "4.10.1")
+    implementation("org.antlr", "antlr4-runtime", "4.10.1")
 
     testImplementation(kotlin("test"))
+}
+
+// Exclude antlr4 from transitive dependencies (https://github.com/gradle/gradle/issues/820)
+configurations[JavaPlugin.API_CONFIGURATION_NAME].let { apiConfiguration ->
+    apiConfiguration.setExtendsFrom(apiConfiguration.extendsFrom.filter { it.name != "antlr" })
 }
 
 ktlint {
