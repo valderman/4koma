@@ -75,7 +75,7 @@ fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
     return when (value) {
         is TomlValue.List -> toList(value, target)
         is TomlValue.Map -> toObject(value, target)
-        else -> throw TomlException.DecodingError(value, target)
+        else -> throw TomlException.DecodingError("no decoder registered for value/target pair", value, target)
     }
 }
 
@@ -132,10 +132,15 @@ private fun <T : Any> TomlDecoder.toDataClass(
 ): T {
     val constructor = kClass.primaryConstructor!!
     val tomlNamesByParameterName = mappingFor(kClass)
-    val parameters = constructor.parameters.map { constructorParameter ->
+    val parameters = mutableMapOf<KParameter, Any?>()
+    for (constructorParameter in constructor.parameters) {
         val tomlName = tomlNamesByParameterName[constructorParameter.name] ?: constructorParameter.name
-        val decodedParameterValue = tomlMap.properties[tomlName]?.let { value ->
-            decode<Any>(value, constructorParameter.type)
+        val encodedParameterValue = tomlMap.properties[tomlName]
+        if (encodedParameterValue == null && constructorParameter.isOptional) {
+            continue
+        }
+        val decodedParameterValue = encodedParameterValue?.let { value ->
+            decode<Any?>(value, constructorParameter.type)
         }
         val parameterValue = decodedParameterValue ?: defaultValueFor(kClass, constructorParameter)
         if (!constructorParameter.type.isMarkedNullable && parameterValue == null) {
@@ -145,13 +150,13 @@ private fun <T : Any> TomlDecoder.toDataClass(
                 kType
             )
         }
-        parameterValue
-    }.toTypedArray()
+        parameters[constructorParameter] = parameterValue
+    }
 
     if (kClass.visibility == KVisibility.PRIVATE) {
         constructor.isAccessible = true
     }
-    return constructor.call(*parameters) as T
+    return constructor.callBy(parameters) as T
 }
 
 internal fun requireKClass(classifier: KClassifier?): KClass<*> =
