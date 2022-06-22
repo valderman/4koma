@@ -16,7 +16,14 @@ import java.time.ZoneOffset
 import java.util.SortedMap
 import kotlin.reflect.full.createType
 import kotlin.reflect.typeOf
-import kotlin.test.*
+import kotlin.test.Test
+import kotlin.test.assertContains
+import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalStdlibApi::class, InternalAPI::class)
 class BuiltinDecoderTests : StringTest {
@@ -505,9 +512,14 @@ class BuiltinDecoderTests : StringTest {
             decoder<TomlValue.Integer, Int> { _, _ -> null }
         }
 
-        assertEquals(nullMapper.decode(TomlValue.Map(
-            "i" to TomlValue.Integer(123)
-        )), Foo(null))
+        assertEquals(
+            nullMapper.decode(
+                TomlValue.Map(
+                    "i" to TomlValue.Integer(123)
+                )
+            ),
+            Foo(null)
+        )
     }
 
     @Test
@@ -518,9 +530,11 @@ class BuiltinDecoderTests : StringTest {
         }
 
         assertFails {
-            nullMapper.decode<Foo>(TomlValue.Map(
-                "i" to TomlValue.Integer(123)
-            ))
+            nullMapper.decode<Foo>(
+                TomlValue.Map(
+                    "i" to TomlValue.Integer(123)
+                )
+            )
         }
     }
 

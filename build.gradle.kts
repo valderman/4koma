@@ -80,8 +80,9 @@ ktlint {
 
 data class DependencyVersion(val module: String, val version: String)
 
-val excludedVersions = setOf(
-    "ktlint" to "0.46.0" // Crashes when running any ktlint target
+val excludedVersions: Set<Pair<String, String>> = setOf(
+    "ktlint" to "0.46.0", // Crashes when running any ktlint target
+    "ktlint" to "0.46.1" // Crashes when running any ktlint target
 )
 
 tasks {
