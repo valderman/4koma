@@ -6,8 +6,8 @@ import cc.ekblad.toml.util.KotlinName
 import cc.ekblad.toml.util.TomlName
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 class TomlEncoder internal constructor(
@@ -72,15 +72,24 @@ private fun TomlEncoder.fromMap(value: Map<*, *>): TomlValue {
 
 private fun TomlEncoder.fromDataClass(value: Any): TomlValue.Map {
     val tomlNamesByParameterName = mappingFor(value::class)
-    val fields = value::class.declaredMemberProperties.mapNotNull { prop ->
-        if (value::class.visibility == KVisibility.PRIVATE) {
-            prop.isAccessible = true
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        (prop as KProperty1<Any, Any?>).get(value)?.let {
-            val name = tomlNamesByParameterName[prop.name] ?: prop.name
-            name to encode(it)
+    val properties = value::class.declaredMemberProperties
+    val fields = value::class.primaryConstructor!!.parameters.mapNotNull { param ->
+        properties.firstOrNull { it.name == param.name }?.let { p ->
+            val prop = @Suppress("UNCHECKED_CAST") (p as KProperty1<Any, Any?>)
+            val tomlName = tomlNamesByParameterName[prop.name] ?: prop.name
+            val oldAccessible = prop.isAccessible
+            try {
+                if (!prop.isAccessible) {
+                    prop.isAccessible = true
+                }
+                prop.get(value)?.let {
+                    tomlName to encode(it)
+                }
+            } catch (e: IllegalAccessException) {
+                throw TomlException.AccessError(prop.name, tomlName, e)
+            } finally {
+                prop.isAccessible = oldAccessible
+            }
         }
     }
     return TomlValue.Map(fields.toMap())
