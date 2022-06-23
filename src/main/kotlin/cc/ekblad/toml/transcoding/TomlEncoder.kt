@@ -61,6 +61,7 @@ fun TomlEncoder.encode(value: Any): TomlValue {
         value is Iterable<*> -> TomlValue.List(value.mapNotNull { it?.let(::encode) })
         value::class.isData -> fromDataClass(value)
         value::class.isSubclassOf(Enum::class) -> TomlValue.String((value as Enum<*>).name)
+        value is Lazy<*> -> value.value?.let { encode(it) } ?: throw TomlException.EncodingError(value, null)
         else -> throw TomlException.EncodingError(value, null)
     }
 }

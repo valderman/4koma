@@ -26,6 +26,19 @@ class BuiltinEncoderTests : UnitTest {
     private enum class EnumWithArgs(val number: Int) { Foo(12), Bar(32) }
 
     @Test
+    fun `can encode lazy values`() {
+        data class Foo(val foo: Int, private val bar: String)
+
+        assertEncodesTo(lazy { "hello" }, TomlValue.String("hello"))
+        assertEncodesTo(lazy { PublicEnum.Bar }, TomlValue.String("Bar"))
+        assertEncodesTo(lazy { listOf(PublicEnum.Bar) }, TomlValue.List(TomlValue.String("Bar")))
+        assertEncodesTo(
+            lazy { Foo(123, "hello") },
+            TomlValue.Map("foo" to TomlValue.Integer(123), "bar" to TomlValue.String("hello"))
+        )
+    }
+
+    @Test
     fun `can encode enum values`() {
         assertEncodesTo(PublicEnum.Foo, TomlValue.String("Foo"))
         assertEncodesTo(PublicEnum.Bar, TomlValue.String("Bar"))
