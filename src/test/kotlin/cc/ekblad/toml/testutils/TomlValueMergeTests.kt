@@ -1,4 +1,4 @@
-package cc.ekblad.toml.utilities
+package cc.ekblad.toml.testutils
 
 import cc.ekblad.toml.UnitTest
 import cc.ekblad.toml.model.TomlValue

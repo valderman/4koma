@@ -6,6 +6,7 @@ import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.util.KotlinName
 import cc.ekblad.toml.util.TomlName
+import cc.ekblad.toml.util.subst
 import java.util.SortedMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
@@ -84,7 +85,7 @@ fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
 private fun noDecoder(value: TomlValue, target: KType) =
     TomlException.DecodingError("no decoder registered for value/target pair", value, target)
 
-fun <T : Any> toEnum(value: TomlValue.String, target: KType): T {
+private fun <T : Any> toEnum(value: TomlValue.String, target: KType): T {
     val kClass = requireKClass(target.classifier)
     if (!kClass.isSubclassOf(Enum::class)) {
         throw noDecoder(value, target)
@@ -157,6 +158,10 @@ private fun <T : Any> TomlDecoder.toDataClass(
     val constructor = kClass.primaryConstructor!!
     val tomlNamesByParameterName = mappingFor(kClass)
     val parameters = mutableMapOf<KParameter, Any?>()
+    val substitutions = kClass.typeParameters.zip(kType.arguments) { parameter, projection ->
+        parameter to projection.type!!
+    }.toMap()
+
     for (constructorParameter in constructor.parameters) {
         val tomlName = tomlNamesByParameterName[constructorParameter.name] ?: constructorParameter.name
         val encodedParameterValue = tomlMap.properties[tomlName]
@@ -164,7 +169,7 @@ private fun <T : Any> TomlDecoder.toDataClass(
             continue
         }
         val decodedParameterValue = encodedParameterValue?.let { value ->
-            decode<Any?>(value, constructorParameter.type)
+            decode<Any?>(value, constructorParameter.type.subst(substitutions))
         }
         val parameterValue = decodedParameterValue ?: defaultValueFor(kClass, constructorParameter)
         if (!constructorParameter.type.isMarkedNullable && parameterValue == null) {

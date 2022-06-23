@@ -38,7 +38,7 @@ class BuiltinDecoderTests : StringTest {
 
     enum class PublicEnum { Foo, Bar }
     private enum class PrivateEnum { Foo, Bar }
-    private enum class EnumWithArgs(someValue: String) { Foo("hello"), Bar("goodbye") }
+    private enum class EnumWithArgs(val someValue: String) { Foo("hello"), Bar("goodbye") }
 
     @Test
     fun `throws on decode to invalid type`() {
@@ -65,8 +65,8 @@ class BuiltinDecoderTests : StringTest {
         val error = assertFailsWith<TomlException.DecodingError> { mapper.decode<Person>(TomlValue.Map()) }
         assertNotNull(error.reason)
         assertNull(error.cause)
-        assertContains(error.reason!!, "no value found for non-nullable parameter")
-        assertContains(error.message, error.reason!!)
+        assertContains(error.reason, "no value found for non-nullable parameter")
+        assertContains(error.message, error.reason)
     }
 
     @Test
@@ -86,14 +86,14 @@ class BuiltinDecoderTests : StringTest {
         }
         assertNotNull(error.reason)
         assertNull(error.cause)
-        assertContains(error.reason!!, "not a constructor of enum class")
+        assertContains(error.reason, "not a constructor of enum class")
         assertEquals(TomlValue.String("Not Foo"), error.sourceValue)
         assertEquals(typeOf<PublicEnum>(), error.targetType)
     }
 
     @Test
     fun `enum decoding is case sensitive`() {
-        val error = assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError> {
             mapper.decode<PublicEnum>(TomlValue.String("foo"))
         }
     }
@@ -657,6 +657,64 @@ class BuiltinDecoderTests : StringTest {
         assertEquals(
             Foo(1),
             nullMapper.decode(TomlValue.Map())
+        )
+    }
+
+    @Test
+    fun can_decode_to_parameterized_data_class() {
+        data class Foo<T>(val x: T, val y: Foo<T>?)
+        assertEquals(
+            Foo(1, Foo(2, Foo(3, null))),
+            mapper.decode(
+                TomlValue.Map(
+                    "x" to TomlValue.Integer(1),
+                    "y" to TomlValue.Map(
+                        "x" to TomlValue.Integer(2),
+                        "y" to TomlValue.Map(
+                            "x" to TomlValue.Integer(3)
+                        )
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
+    fun can_decode_to_data_class_with_multiple_type_parameters() {
+        data class Foo<T, U>(val x: U, val y: T, val z: List<Foo<U, T>>)
+        assertEquals(
+            Foo(
+                "one",
+                1,
+                listOf(
+                    Foo(2, "two", emptyList()),
+                    Foo(3, "three", listOf(Foo("four", 4, emptyList())))
+                )
+            ),
+            mapper.decode(
+                TomlValue.Map(
+                    "x" to TomlValue.String("one"),
+                    "y" to TomlValue.Integer(1),
+                    "z" to TomlValue.List(
+                        TomlValue.Map(
+                            "x" to TomlValue.Integer(2),
+                            "y" to TomlValue.String("two"),
+                            "z" to TomlValue.List()
+                        ),
+                        TomlValue.Map(
+                            "x" to TomlValue.Integer(3),
+                            "y" to TomlValue.String("three"),
+                            "z" to TomlValue.List(
+                                TomlValue.Map(
+                                    "x" to TomlValue.String("four"),
+                                    "y" to TomlValue.Integer(4),
+                                    "z" to TomlValue.List()
+                                )
+                            )
+                        )
+                    )
+                )
+            )
         )
     }
 }
