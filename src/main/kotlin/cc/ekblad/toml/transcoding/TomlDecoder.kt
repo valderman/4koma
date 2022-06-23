@@ -14,6 +14,7 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
@@ -75,8 +76,27 @@ fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
     return when (value) {
         is TomlValue.List -> toList(value, target)
         is TomlValue.Map -> toObject(value, target)
-        else -> throw TomlException.DecodingError("no decoder registered for value/target pair", value, target)
+        is TomlValue.String -> toEnum(value, target)
+        else -> throw noDecoder(value, target)
     }
+}
+
+private fun noDecoder(value: TomlValue, target: KType) =
+    TomlException.DecodingError("no decoder registered for value/target pair", value, target)
+
+fun <T : Any> toEnum(value: TomlValue.String, target: KType): T {
+    val kClass = requireKClass(target.classifier)
+    if (!kClass.isSubclassOf(Enum::class)) {
+        throw noDecoder(value, target)
+    }
+    val enumValues = kClass.java.enumConstants as Array<Enum<*>>
+    val enumValue = enumValues.singleOrNull { it.name == value.value }
+        ?: throw TomlException.DecodingError(
+            "${value.value} is not a constructor of enum class ${kClass.simpleName}",
+            value,
+            target
+        )
+    return enumValue as T
 }
 
 private val anyKType: KType = Any::class.createType()
