@@ -7,6 +7,7 @@ import cc.ekblad.toml.util.TomlName
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
@@ -59,6 +60,7 @@ fun TomlEncoder.encode(value: Any): TomlValue {
         value is Map<*, *> -> fromMap(value)
         value is Iterable<*> -> TomlValue.List(value.mapNotNull { it?.let(::encode) })
         value::class.isData -> fromDataClass(value)
+        value::class.isSubclassOf(Enum::class) -> TomlValue.String((value as Enum<*>).name)
         else -> throw TomlException.EncodingError(value, null)
     }
 }

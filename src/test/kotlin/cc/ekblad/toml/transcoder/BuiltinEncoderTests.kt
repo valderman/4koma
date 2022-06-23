@@ -21,6 +21,19 @@ import kotlin.test.assertNull
 
 class BuiltinEncoderTests : UnitTest {
     private val mapper = tomlMapper { }
+    enum class PublicEnum { Foo, Bar }
+    private enum class PrivateEnum { Foo, Bar }
+    private enum class EnumWithArgs(val number: Int) { Foo(12), Bar(32) }
+
+    @Test
+    fun `can encode enum values`() {
+        assertEncodesTo(PublicEnum.Foo, TomlValue.String("Foo"))
+        assertEncodesTo(PublicEnum.Bar, TomlValue.String("Bar"))
+        assertEncodesTo(PrivateEnum.Foo, TomlValue.String("Foo"))
+        assertEncodesTo(PrivateEnum.Bar, TomlValue.String("Bar"))
+        assertEncodesTo(EnumWithArgs.Foo, TomlValue.String("Foo"))
+        assertEncodesTo(EnumWithArgs.Bar, TomlValue.String("Bar"))
+    }
 
     @Test
     fun `can encode integers`() {
