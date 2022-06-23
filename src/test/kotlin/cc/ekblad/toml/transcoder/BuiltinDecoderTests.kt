@@ -36,6 +36,10 @@ class BuiltinDecoderTests : StringTest {
         val dad: Person?,
     )
 
+    enum class PublicEnum { Foo, Bar }
+    private enum class PrivateEnum { Foo, Bar }
+    private enum class EnumWithArgs(someValue: String) { Foo("hello"), Bar("goodbye") }
+
     @Test
     fun `throws on decode to invalid type`() {
         listOf(
@@ -63,6 +67,57 @@ class BuiltinDecoderTests : StringTest {
         assertNull(error.cause)
         assertContains(error.reason!!, "no value found for non-nullable parameter")
         assertContains(error.message, error.reason!!)
+    }
+
+    @Test
+    fun `can decode strings to enums`() {
+        assertEquals(PublicEnum.Foo, mapper.decode(TomlValue.String("Foo")))
+        assertEquals(PublicEnum.Bar, mapper.decode(TomlValue.String("Bar")))
+        assertEquals(PrivateEnum.Foo, mapper.decode(TomlValue.String("Foo")))
+        assertEquals(PrivateEnum.Bar, mapper.decode(TomlValue.String("Bar")))
+        assertEquals(EnumWithArgs.Foo, mapper.decode(TomlValue.String("Foo")))
+        assertEquals(EnumWithArgs.Bar, mapper.decode(TomlValue.String("Bar")))
+    }
+
+    @Test
+    fun `decoding string to nonexistent enum constructor throws`() {
+        val error = assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("Not Foo"))
+        }
+        assertNotNull(error.reason)
+        assertNull(error.cause)
+        assertContains(error.reason!!, "not a constructor of enum class")
+        assertEquals(TomlValue.String("Not Foo"), error.sourceValue)
+        assertEquals(typeOf<PublicEnum>(), error.targetType)
+    }
+
+    @Test
+    fun `enum decoding is case sensitive`() {
+        val error = assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("foo"))
+        }
+    }
+
+    @Test
+    fun `enum decoding compares the entire strings`() {
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("Fooo"))
+        }
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("oFoo"))
+        }
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("oFooo"))
+        }
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("oo"))
+        }
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("Fo"))
+        }
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<PublicEnum>(TomlValue.String("o"))
+        }
     }
 
     @Test
