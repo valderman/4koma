@@ -17,6 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class BuiltinEncoderTests : UnitTest {
@@ -27,7 +28,7 @@ class BuiltinEncoderTests : UnitTest {
 
     @Test
     fun `can encode lazy values`() {
-        data class Foo(val foo: Int, private val bar: String)
+        data class Foo(val foo: Int, val bar: String)
 
         assertEncodesTo(lazy { "hello" }, TomlValue.String("hello"))
         assertEncodesTo(lazy { PublicEnum.Bar }, TomlValue.String("Bar"))
@@ -36,6 +37,23 @@ class BuiltinEncoderTests : UnitTest {
             lazy { Foo(123, "hello") },
             TomlValue.Map("foo" to TomlValue.Integer(123), "bar" to TomlValue.String("hello"))
         )
+    }
+
+    @Test
+    fun `encoding_lazy,_unencodable_value_throws_EncodingError`() {
+        assertFailsWith<TomlException.EncodingError> {
+            mapper.encode(lazy { object { } })
+        }
+    }
+
+    @Test
+    fun `encoding lazy value that evaluates to null throws EncodingError`() {
+        val error = assertFailsWith<TomlException.EncodingError> {
+            mapper.encode(lazy { null })
+        }
+        assertNotNull(error.reason)
+        assertNull(error.cause)
+        assertContains(error.message, "lazy value evaluated to null")
     }
 
     @Test
@@ -207,7 +225,7 @@ class BuiltinEncoderTests : UnitTest {
     }
 
     @Test
-    fun can_encode_data_classes_with_private_properties() {
+    fun `can encode data classes with private properties`() {
         data class Foo(val foo: Int, private val bar: String) {
             private val woof: String = "$foo $bar"
         }
@@ -247,7 +265,7 @@ class BuiltinEncoderTests : UnitTest {
     }
 
     @Test
-    fun `cant_encode_non-data_classes`() {
+    fun `cant encode non-data classes`() {
         class Foo(val bar: String)
         val fooValue = Foo("hello")
         val error = assertFailsWith<TomlException.EncodingError> {
@@ -256,6 +274,22 @@ class BuiltinEncoderTests : UnitTest {
         assertEquals(error.sourceValue, fooValue)
         assertContains(error.message, fooValue.toString())
         assertNull(error.cause)
+    }
+
+    @Test
+    fun `IllegalAccessException gets converted into AccessError`() {
+        data class Foo(val boom: Lazy<String>)
+        val mapper = tomlMapper {
+            mapping<Foo>("kablamo" to "boom")
+        }
+        val illegalAccessException = IllegalAccessException()
+        val error = assertFailsWith<TomlException.AccessError> {
+            mapper.encode(Foo(lazy { throw illegalAccessException }))
+        }
+        assertEquals(error.cause, illegalAccessException)
+        assertEquals("boom", error.name)
+        assertEquals("kablamo", error.tomlName)
+        assertEquals("Cannot access constructor property: 'boom' mapped from 'kablamo'", error.message)
     }
 
     private fun assertEncodesTo(value: Any, tomlValue: TomlValue) {

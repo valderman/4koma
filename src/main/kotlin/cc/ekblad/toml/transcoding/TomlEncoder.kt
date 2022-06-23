@@ -61,7 +61,8 @@ fun TomlEncoder.encode(value: Any): TomlValue {
         value is Iterable<*> -> TomlValue.List(value.mapNotNull { it?.let(::encode) })
         value::class.isData -> fromDataClass(value)
         value::class.isSubclassOf(Enum::class) -> TomlValue.String((value as Enum<*>).name)
-        value is Lazy<*> -> value.value?.let { encode(it) } ?: throw TomlException.EncodingError(value, null)
+        value is Lazy<*> -> value.value?.let { encode(it) }
+            ?: throw TomlException.EncodingError("lazy value evaluated to null", value, null)
         else -> throw TomlException.EncodingError(value, null)
     }
 }
@@ -75,24 +76,23 @@ private fun TomlEncoder.fromMap(value: Map<*, *>): TomlValue {
 
 private fun TomlEncoder.fromDataClass(value: Any): TomlValue.Map {
     val tomlNamesByParameterName = mappingFor(value::class)
-    val properties = value::class.declaredMemberProperties
-    val fields = value::class.primaryConstructor!!.parameters.mapNotNull { param ->
-        properties.firstOrNull { it.name == param.name }?.let { p ->
-            val prop = @Suppress("UNCHECKED_CAST") (p as KProperty1<Any, Any?>)
-            val tomlName = tomlNamesByParameterName[prop.name] ?: prop.name
-            val oldAccessible = prop.isAccessible
-            try {
-                if (!prop.isAccessible) {
-                    prop.isAccessible = true
-                }
-                prop.get(value)?.let {
-                    tomlName to encode(it)
-                }
-            } catch (e: IllegalAccessException) {
-                throw TomlException.AccessError(prop.name, tomlName, e)
-            } finally {
-                prop.isAccessible = oldAccessible
+    val parameterNames = value::class.primaryConstructor!!.parameters.map { it.name }.toSet()
+    val propertiesToEncode = value::class.declaredMemberProperties.filter { it.name in parameterNames }
+    val fields = propertiesToEncode.mapNotNull { p ->
+        val prop = @Suppress("UNCHECKED_CAST") (p as KProperty1<Any, Any?>)
+        val tomlName = tomlNamesByParameterName[prop.name] ?: prop.name
+        val oldAccessible = prop.isAccessible
+        try {
+            if (!prop.isAccessible) {
+                prop.isAccessible = true
             }
+            prop.get(value)?.let {
+                tomlName to encode(it)
+            }
+        } catch (e: IllegalAccessException) {
+            throw TomlException.AccessError(prop.name, tomlName, e)
+        } finally {
+            prop.isAccessible = oldAccessible
         }
     }
     return TomlValue.Map(fields.toMap())

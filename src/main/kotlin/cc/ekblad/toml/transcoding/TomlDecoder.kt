@@ -110,7 +110,11 @@ private fun <T : Any> TomlDecoder.toList(value: TomlValue.List, target: KType): 
         Collection::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
         Iterable::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType).asIterable() as T
         Any::class -> decodeList(value.elements, anyKType) as T
-        else -> throw TomlException.DecodingError(value, target)
+        else -> throw TomlException.DecodingError(
+            "lists can only be decoded into lists, sets, collections or iterables",
+            value,
+            target
+        )
     }
 
 private fun TomlDecoder.decodeList(value: List<TomlValue>, elementType: KType): List<Any> =

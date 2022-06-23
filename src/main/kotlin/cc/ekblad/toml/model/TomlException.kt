@@ -30,22 +30,19 @@ sealed class TomlException : RuntimeException() {
      * An error occurred while decoding a TOML value into some other Kotlin type.
      */
     data class DecodingError(
-        val reason: String?,
+        val reason: String,
         val sourceValue: TomlValue,
         val targetType: KType,
         override val cause: Throwable?
     ) : TomlException() {
         constructor(reason: String, sourceValue: TomlValue, targetType: KType) :
             this(reason, sourceValue, targetType, null)
-        constructor(sourceValue: TomlValue, targetType: KType) :
-            this(null, sourceValue, targetType, null)
 
         @OptIn(ExperimentalStdlibApi::class)
         override val message: String
             get() {
-                val reasonSuffix = if (reason != null) ": $reason" else ""
                 val type = targetType.javaType.typeName
-                return "toml decoding error: unable to decode toml value '$sourceValue' to type '$type'$reasonSuffix"
+                return "toml decoding error: unable to decode toml value '$sourceValue' to type '$type': $reason"
             }
     }
 
@@ -53,15 +50,19 @@ sealed class TomlException : RuntimeException() {
      * An error occurred while encoding a Kotlin value into a TOML value.
      */
     data class EncodingError(
+        val reason: String?,
         val sourceValue: Any?,
         override val cause: Throwable?
     ) : TomlException() {
+        constructor(sourceValue: Any?, cause: Throwable?) : this(null, sourceValue, cause)
         override val message: String
-            get() = "toml decoding error: unable to encode '$sourceValue' into a toml value"
+            get() = "toml decoding error: unable to encode '$sourceValue' into a toml value${reason?.let { " ($it)" }}"
     }
 
     /**
      * An access error occurred while encoding a Kotlin value into a TOML value.
+     * This exception should never be thrown under normal operation. If you see this happen, please file a bug report
+     * at [github.com/valderman/4koma](https://github.com/valderman/4koma/issues).
      */
     data class AccessError(
         val name: String,
