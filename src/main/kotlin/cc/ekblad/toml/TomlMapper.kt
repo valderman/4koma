@@ -34,8 +34,8 @@ class TomlMapper internal constructor(
      * Encodes the given Kotlin value to as into a [TomlValue] using the receiver [TomlEncoder].
      * If the value can't be encoded, a [cc.ekblad.toml.model.TomlException.EncodingError] is thrown.
      *
-     * Note that as TOML does not have the concept of `null`, any `null` values present in encoded lists or maps
-     * are ignored.
+     * Note that as TOML does not have the concept of `null`, any `null` values present in lists, maps or data classes
+     * are not included in the encoding.
      */
     fun encode(value: Any): TomlValue =
         encoder.encode(value)
@@ -44,14 +44,21 @@ class TomlMapper internal constructor(
      * Decodes the receiver TOML value to the type indicated by type parameter `T` using the default TOML decoder.
      * If the value can't be decoded into the target type, a [cc.ekblad.toml.model.TomlException.DecodingError]
      * is thrown.
+     *
+     * When decoding into a data class, all fields of that class must be present in the given `TomlValue`,
+     * except fields that are nullable and/or have a default value.
+     * A field which is both nullable and defaulted will be assigned its default value, if missing from the given
+     * `TomlValue`.
      */
     inline fun <reified T : Any?> decode(tomlValue: TomlValue): T =
         decode(typeOf<T>(), tomlValue)
 
     /**
-     * Like [decode], but will take any missing values from the [defaultValue].
+     * Like [decode], but will fill in any missing fields from the [defaultValue].
      * Appropriate for use cases such as configuration files, where you may not want to force the user to configure
      * every last thing, but just override the bits they want to customize.
+     *
+     * Values from `defaultValue` take priority over any default values set in the target class itself.
      */
     inline fun <reified T : Any?> decodeWithDefaults(defaultValue: T, tomlValue: TomlValue): T =
         decode(typeOf<T>(), tomlValue, defaultValue)
@@ -75,20 +82,21 @@ class TomlMapper internal constructor(
  *
  * <br>
  *
- * Without any extra configuration, TOML types can be decoded to Kotlin types as follows:
+ * Without any extra configuration, TOML types can be transcoded to/from Kotlin types as follows:
  * * List: [List], [MutableList], [Collection] or [Iterable]
  * * Map: [Map], [MutableMap], [SortedMap], or any class with primary constructor fields corresponding
  *     to the keys of the TOML document.
  * * Bool: [Boolean]
  * * Double: [Double], [Float] or [BigDecimal]
  * * Integer: [Int], [Long], [Float], [Double], [BigDecimal] or [BigInteger]
- * * String: [String]
+ * * String: [String] or any [Enum] type
  * * LocalDate: [LocalDate]
  * * LocalTime: [LocalTime]
  * * LocalDateTime: [LocalDateTime]
  * * OffsetDateTime: [OffsetDateTime]
  *
- * Additionally, any subclass of [TomlValue] can always be decoded into itself.
+ * Additionally, any subclass of [TomlValue] can always be transcoded to/from itself,
+ * and any value which could be transcoded to/from a type `T` can also be transcoded to/from `Lazy<T>`.
  */
 fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
     val configurator = TomlMapperConfigurator(
