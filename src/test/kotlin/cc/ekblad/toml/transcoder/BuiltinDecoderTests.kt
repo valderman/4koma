@@ -717,4 +717,36 @@ class BuiltinDecoderTests : StringTest {
             )
         )
     }
+
+    @Test
+    fun `can decode to lazy value`() {
+        data class Foo<T>(val x: Lazy<T>)
+        data class Bar(val int: Int?, val list: List<String>)
+        assertEquals(
+            "hello",
+            mapper.decode<Foo<String>>(TomlValue.Map("x" to TomlValue.String("hello"))).x.value
+        )
+        assertEquals(
+            PublicEnum.Bar,
+            mapper.decode<Foo<PublicEnum>>(TomlValue.Map("x" to TomlValue.String("Bar"))).x.value
+        )
+        assertEquals(
+            Bar(null, listOf("hello", "hi")),
+            mapper.decode<Foo<Bar>>(
+                TomlValue.Map(
+                    "x" to TomlValue.Map(
+                        "list" to TomlValue.List(TomlValue.String("hello"), TomlValue.String("hi"))
+                    )
+                )
+            ).x.value
+        )
+    }
+
+    @Test
+    fun `decoding to lazy values is strict`() {
+        data class Foo(val x: Lazy<Int>)
+        assertFailsWith<TomlException.DecodingError> {
+            mapper.decode<Foo>(TomlValue.Map("x" to TomlValue.String("hello")))
+        }
+    }
 }

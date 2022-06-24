@@ -81,7 +81,7 @@ private fun TomlValue.isNestedList(): Boolean =
     this is TomlValue.List && elements.all { it is TomlValue.List }
 
 @OptIn(ExperimentalStdlibApi::class)
-private val KType.elementType: KType
+internal val KType.elementType: KType
     get() = arguments.firstOrNull()?.type ?: typeOf<Any>()
 
 private fun KType.isListType(): Boolean =

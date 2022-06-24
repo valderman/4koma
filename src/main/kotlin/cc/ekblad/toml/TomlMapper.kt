@@ -161,6 +161,7 @@ private fun TomlMapperConfigurator.defaultConfig() {
     decoder { it: TomlValue.LocalDate -> it.value }
     decoder { it: TomlValue.LocalTime -> it.value }
     decoder { it: TomlValue.String -> it.value }
+    decoder { targetType, it: TomlValue -> decode<Any>(it, targetType.elementType).let { lazy { it } } }
     decoder<TomlValue, Any> { it ->
         when (it) {
             is TomlValue.Bool -> it.value
