@@ -35,6 +35,39 @@ class SerializerTests : UnitTest {
     }
 
     @Test
+    fun `can serialize top level list`() {
+        assertSerializesTo(
+            TomlValue.Map(
+                "list" to TomlValue.List(TomlValue.String("foo"), TomlValue.String("bar"))
+            ),
+            "list = [ \"foo\", \"bar\" ]"
+        )
+    }
+
+    @Test
+    fun `can serialize top level list containing both map and non-map elements`() {
+        assertSerializesTo(
+            TomlValue.Map(
+                "list" to TomlValue.List(
+                    TomlValue.String("foo"),
+                    TomlValue.Map("bar" to TomlValue.String("baz"))
+                )
+            ),
+            "list = [ \"foo\", { bar = \"baz\" } ]"
+        )
+    }
+
+    @Test
+    fun `can serialize nested list`() {
+        assertSerializesTo(
+            TomlValue.Map(
+                "list" to TomlValue.List(TomlValue.List(TomlValue.String("foo"), TomlValue.String("bar")))
+            ),
+            "list = [ [ \"foo\", \"bar\" ] ]"
+        )
+    }
+
+    @Test
     fun `can serialize simple object`() {
         assertSerializesTo(
             TomlValue.Map(

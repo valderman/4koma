@@ -101,9 +101,24 @@ private fun TomlValue.Map.writeValue(output: Appendable) {
 private fun encodePath(path: List<String>) =
     path.joinToString(".", transform = ::encodeKey)
 
+private val TomlValue.mustBeInline: Boolean
+    get() = this is TomlValue.Primitive || (this is TomlValue.List && elements.any { it !is TomlValue.Map })
+
+private val TomlValue.shouldBeInline: Boolean
+    get() = mustBeInline
+
 private fun TomlValue.Map.writeTopLevel(output: Appendable) {
-    val (primitive, complex) = properties.entries.partition { it.value is TomlValue.Primitive }
-    (primitive + complex).fold(true) { first, it ->
+    val (inline, table) = properties.entries.partition { (_, value) -> value.shouldBeInline }
+
+    inline.forEach { (key, value) ->
+        value.writeKeyValue(output, listOf(".", key))
+    }
+
+    if (inline.isNotEmpty() && table.isNotEmpty()) {
+        output.appendLine()
+    }
+
+    table.fold(true) { first, it ->
         when (val value = it.value) {
             is TomlValue.Map -> {
                 if (!first) {
@@ -122,8 +137,8 @@ private fun TomlValue.Map.writeTopLevel(output: Appendable) {
                     false
                 }
             }
-            is TomlValue.Primitive -> {
-                it.value.writeKeyValue(output, listOf(".", it.key))
+            else -> {
+                error("unreachable")
             }
         }
         false
