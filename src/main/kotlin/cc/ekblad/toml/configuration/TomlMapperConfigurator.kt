@@ -3,8 +3,8 @@ package cc.ekblad.toml.configuration
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.transcoding.TomlDecoder
 import cc.ekblad.toml.transcoding.TomlEncoder
-import cc.ekblad.toml.util.Generated
 import cc.ekblad.toml.util.InternalAPI
+import cc.ekblad.toml.util.JacocoIgnore
 import cc.ekblad.toml.util.KotlinName
 import cc.ekblad.toml.util.TomlName
 import kotlin.reflect.KClass
@@ -86,7 +86,7 @@ class TomlMapperConfigurator internal constructor(
      *
      */
     inline fun <reified T : Any> encoder(noinline encoder: TomlEncoder.(kotlinValue: T) -> TomlValue) {
-        encoder(T::class) @Generated { value ->
+        encoder(T::class) @JacocoIgnore("inlined") { value ->
             if (value !is T) {
                 pass()
             }
@@ -146,7 +146,7 @@ class TomlMapperConfigurator internal constructor(
     inline fun <reified T : TomlValue, reified R : Any> decoder(
         noinline decoder: TomlDecoder.(targetType: KType, tomlValue: T) -> R?
     ) {
-        decoder(R::class) @Generated { kType, value ->
+        decoder(R::class) @JacocoIgnore("inlined") { kType, value ->
             if (value !is T) {
                 pass()
             }
@@ -175,7 +175,7 @@ class TomlMapperConfigurator internal constructor(
      * Convenience overload for [decoder], for when you don't need to consider the full target KType.
      */
     inline fun <reified T : TomlValue, reified R : Any> decoder(crossinline decoder: TomlDecoder.(tomlValue: T) -> R?) =
-        decoder<T, R> @Generated { _, it -> decoder(it) }
+        decoder<T, R> @JacocoIgnore("inlined") { _, it -> decoder(it) }
 
     @InternalAPI
     fun <T : Any> mapping(kClass: KClass<T>, mappings: List<Pair<TomlName, KotlinName>>) {

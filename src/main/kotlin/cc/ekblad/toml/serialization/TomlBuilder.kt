@@ -2,7 +2,7 @@ package cc.ekblad.toml.serialization
 
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
-import cc.ekblad.toml.util.Generated
+import cc.ekblad.toml.util.JacocoIgnore
 
 internal class TomlBuilder private constructor() {
     sealed interface Context {
@@ -41,7 +41,7 @@ internal class TomlBuilder private constructor() {
     }
 
     @JvmInline
-    @Generated
+    @JacocoIgnore("Value classes confuse JaCoCo")
     private value class ContextImpl(val properties: MutableMap<String, MutableTomlValue>) : Context
 
     fun resetContext() {

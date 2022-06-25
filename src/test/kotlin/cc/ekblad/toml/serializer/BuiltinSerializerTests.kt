@@ -16,7 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-class SerializerTests : UnitTest {
+class BuiltinSerializerTests : UnitTest {
     @Test
     fun `can serialize single key value pair`() {
         assertSerializesTo(
@@ -53,7 +53,56 @@ class SerializerTests : UnitTest {
                     TomlValue.Map("bar" to TomlValue.String("baz"))
                 )
             ),
-            "list = [ \"foo\", { bar = \"baz\" } ]"
+            """
+            list = [
+                "foo",
+                { bar = "baz" }
+            ]
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun `lists are never multiline when they occur inside an object`() {
+        assertSerializesTo(
+            TomlValue.Map(
+                "list" to TomlValue.List(
+                    TomlValue.String("foo"),
+                    TomlValue.Map(
+                        "bar" to TomlValue.List(
+                            TomlValue.Map(
+                                "hello" to TomlValue.String("hi")
+                            )
+                        )
+                    )
+                )
+            ),
+            """
+            list = [
+                "foo",
+                { bar = [ { hello = "hi" } ] }
+            ]
+            """.trimIndent()
+        )
+    }
+
+    @Test
+    fun `each element gets its own line when serializing list of objects`() {
+        assertSerializesTo(
+            TomlValue.Map(
+                "list" to TomlValue.List(
+                    TomlValue.Integer(123),
+                    TomlValue.Map("bar" to TomlValue.String("foo")),
+                    TomlValue.Map("bar" to TomlValue.String("baz"))
+                )
+            ),
+            """
+            list = [
+                123,
+                { bar = "foo" },
+                { bar = "baz" }
+            ]
+            """.trimIndent()
         )
     }
 
@@ -61,9 +110,17 @@ class SerializerTests : UnitTest {
     fun `can serialize nested list`() {
         assertSerializesTo(
             TomlValue.Map(
-                "list" to TomlValue.List(TomlValue.List(TomlValue.String("foo"), TomlValue.String("bar")))
+                "list" to TomlValue.List(
+                    TomlValue.List(TomlValue.String("foo"), TomlValue.String("bar")),
+                    TomlValue.List(TomlValue.String("baz"))
+                )
             ),
-            "list = [ [ \"foo\", \"bar\" ] ]"
+            """
+            list = [
+                [ "foo", "bar" ],
+                [ "baz" ]
+            ]
+            """.trimIndent()
         )
     }
 
@@ -191,7 +248,12 @@ class SerializerTests : UnitTest {
             ),
             """
                 [foo]
-                bar = [ 1, "asd", [ false, 1.2 ], { a = { inner = "very inner" }, b = [ 345 ], c = [  ], d = "hello" } ]
+                bar = [
+                    1,
+                    "asd",
+                    [ false, 1.2 ],
+                    { a = { inner = "very inner" }, b = [ 345 ], c = [  ], d = "hello" }
+                ]
             """.trimIndent()
         )
     }

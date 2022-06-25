@@ -4,6 +4,7 @@ import cc.ekblad.toml.UnitTest
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.write
+import cc.ekblad.toml.tomlSerializer
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.Charset
@@ -71,9 +72,25 @@ class WriterTests : UnitTest {
     }
 
     @Test
+    fun `can serialize to string buffer using serializer`() {
+        val buf = StringBuffer()
+        tomlSerializer { }.write(tomlValue, buf)
+        val tomlDocument = buf.toString()
+        assertEquals(expectedTomlDocument, tomlDocument)
+    }
+
+    @Test
     fun `can serialize to output stream`() {
         val stream = ByteArrayOutputStream()
         tomlValue.write(stream)
+        val tomlDocument = stream.toString(Charset.forName("UTF-8"))
+        assertEquals(expectedTomlDocument, tomlDocument)
+    }
+
+    @Test
+    fun `can serialize to output stream using serializer`() {
+        val stream = ByteArrayOutputStream()
+        tomlSerializer { }.write(tomlValue, stream)
         val tomlDocument = stream.toString(Charset.forName("UTF-8"))
         assertEquals(expectedTomlDocument, tomlDocument)
     }
@@ -93,10 +110,28 @@ class WriterTests : UnitTest {
     }
 
     @Test
+    fun `can serialize to file using serializer`() {
+        val file = kotlin.io.path.createTempFile()
+        try {
+            tomlSerializer { }.write(tomlValue, file)
+            val tomlDocument = file.inputStream().use {
+                it.readAllBytes().toString(Charset.forName("UTF-8"))
+            }
+            assertEquals(expectedTomlDocument, tomlDocument)
+        } finally {
+            file.deleteIfExists()
+        }
+    }
+
+    @Test
     fun `serializing to bad file throws IOException`() {
         assertFailsWith<IOException> {
             val file = Path.of("nonexistent", "directory", "kaboom.toml")
             tomlValue.write(file)
+        }
+        assertFailsWith<IOException> {
+            val file = Path.of("nonexistent", "directory", "kaboom.toml")
+            tomlSerializer { }.write(tomlValue, file)
         }
     }
 
