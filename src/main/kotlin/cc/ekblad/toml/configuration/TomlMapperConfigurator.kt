@@ -201,12 +201,12 @@ class TomlMapperConfigurator internal constructor(
 
     @InternalAPI
     fun <T : Any> encoder(kClass: KClass<T>, encoder: TomlEncoder.(kotlinValue: Any) -> TomlValue) {
-        encoders.putIfAbsent(kClass, mutableListOf(encoder))?.add(encoder)
+        encoders.putIfAbsent(kClass, mutableListOf(encoder))?.add(0, encoder)
     }
 
     @InternalAPI
     fun <T : Any> decoder(kClass: KClass<T>, decoder: TomlDecoder.(targetType: KType, tomlValue: TomlValue) -> Any?) {
-        decoders.putIfAbsent(kClass, mutableListOf(decoder))?.add(decoder)
+        decoders.putIfAbsent(kClass, mutableListOf(decoder))?.add(0, decoder)
     }
 
     internal fun buildConfig(): TomlMapperConfig =

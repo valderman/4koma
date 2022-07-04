@@ -23,10 +23,10 @@ class CustomEncoderTests : UnitTest {
     }
 
     @Test
-    fun `encoders are tried in the correct order`() {
+    fun `newer encoder overrides older`() {
         val mapper = tomlMapper {
-            encoder { _: Dummy -> TomlValue.String("the dummy") }
             encoder { _: Dummy -> fail("shouldn't get here") }
+            encoder { _: Dummy -> TomlValue.String("the dummy") }
         }
         assertEquals(TomlValue.String("the dummy"), mapper.encode(Dummy))
         assertEquals(TomlValue.Map("foo" to TomlValue.String("the dummy")), mapper.encode(mapOf("foo" to Dummy)))

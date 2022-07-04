@@ -23,6 +23,20 @@ class CustomDecoderTests {
     }
 
     @Test
+    fun `custom decoder overrides builtin`() {
+        val mapper = tomlMapper {
+            decoder { _: TomlValue.Integer ->
+                42
+            }
+        }
+        val toml = TomlValue.Map(
+            "a" to TomlValue.Integer(123),
+            "b" to TomlValue.Integer(456),
+        )
+        assertEquals(mapOf("a" to 42, "b" to 42), mapper.decode(toml))
+    }
+
+    @Test
     fun `can use multiple custom decoder functions`() {
         data class Foo(val value: Int)
         data class Bar(val value: String)
@@ -44,15 +58,15 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `decoder functions are searched in the correct order`() {
+    fun `newer decoder overrides older`() {
         val goodMapper = tomlMapper {
-            decoder<TomlValue.List, Int> { it: TomlValue.List -> it.elements.size }
             decoder<TomlValue.List, Int> { _ -> error("should never get here") }
+            decoder<TomlValue.List, Int> { it: TomlValue.List -> it.elements.size }
         }
 
         val badMapper = tomlMapper {
-            decoder<TomlValue.List, Int> { _ -> error("boom!") }
             decoder<TomlValue.List, Int> { it: TomlValue.List -> it.elements.size }
+            decoder<TomlValue.List, Int> { _ -> error("boom!") }
         }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
@@ -61,10 +75,10 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `can use pass to pass the ball to the next decoder`() {
+    fun `newer decoder can pass to older`() {
         val mapper = tomlMapper {
-            decoder<TomlValue.List, Int> { _, _ -> pass() }
             decoder { it: TomlValue.List -> it.elements.size }
+            decoder<TomlValue.List, Int> { _, _ -> pass() }
         }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
@@ -131,6 +145,43 @@ class CustomDecoderTests {
                 TomlValue.Map(
                     "name" to TomlValue.String("Anonymous"),
                     "years" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `newer mapping overrides older`() {
+        val mapper = tomlMapper {
+            mapping<User>("name" to "homeAddress")
+            mapping<User>("name" to "fullName")
+        }
+        assertEquals(
+            User("Anonymous", 123, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `newer mapping overrides older, multiple args version`() {
+        val mapper = tomlMapper {
+            mapping<User>("name" to "age")
+            mapping<User>(
+                "name" to "homeAddress",
+                "name" to "fullName"
+            )
+        }
+        assertEquals(
+            User("Anonymous", 123, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
                 )
             )
         )

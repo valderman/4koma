@@ -106,8 +106,8 @@ fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
         defaultValues = mutableMapOf()
     )
     val config = configurator
-        .apply(configuration)
         .apply(TomlMapperConfigurator::defaultConfig)
+        .apply(configuration)
         .buildConfig()
     val mappingsByParameter = config.mappings.mapValues { (_, mappingForType) ->
         mappingForType.entries.associate { it.value to it.key }
