@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.util.SortedMap
+import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -73,6 +74,22 @@ class TomlMapper internal constructor(
         val mergedTomlValue = defaultTomlValue?.merge(tomlValue) ?: tomlValue
         return decoder.decode(mergedTomlValue, targetKType)
     }
+
+    @Suppress("UNCHECKED_CAST")
+    @InternalAPI
+    fun <T : Any> delegate(kClass: KClass<T>, configurator: TomlMapperConfigurator) {
+        encoder.encoderFor(kClass)?.let { encoder ->
+            configurator.encoder(kClass) { encoder(it) }
+        }
+        decoder.decoderFor<T>(kClass)?.let { decoder ->
+            configurator.decoder(kClass) { kType, tomlValue -> decoder(kType, tomlValue) }
+        }
+        if (kClass.isData) {
+            decoder.mappingFor(kClass).entries.let { entries ->
+                configurator.mapping(kClass, entries.map { it.value to it.key })
+            }
+        }
+    }
 }
 
 /**
@@ -115,6 +132,11 @@ fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
     val encoder = TomlEncoder(config.encoders, mappingsByParameter)
     val decoder = TomlDecoder(config.decoders, mappingsByParameter, config.defaultValues)
     return TomlMapper(encoder, decoder)
+}
+
+@OptIn(InternalAPI::class)
+inline fun <reified T : Any> TomlMapperConfigurator.delegate(mapper: TomlMapper) {
+    mapper.delegate(T::class, this)
 }
 
 private fun TomlMapperConfigurator.defaultConfig() {

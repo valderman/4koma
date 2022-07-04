@@ -1,6 +1,7 @@
 package cc.ekblad.toml.transcoder
 
 import cc.ekblad.toml.UnitTest
+import cc.ekblad.toml.delegate
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.tomlMapper
 import kotlin.test.Test
@@ -12,6 +13,7 @@ import kotlin.test.fail
 class CustomEncoderTests : UnitTest {
     private object Dummy
     private data class Foo(val bar: String)
+    private data class User(val fullName: String, val age: Int, val homeAddress: String?)
 
     @Test
     fun `can use custom encoder function`() {
@@ -201,5 +203,59 @@ class CustomEncoderTests : UnitTest {
             assertContains(it.message ?: "", "KABOOM")
             assertContains(it.message ?: "", "CustomEncoderTests.Foo")
         }
+    }
+
+    @Test
+    fun `can delegate to another mapper`() {
+        val otherMapper = tomlMapper {
+            mapping<User>("name" to "fullName")
+        }
+        val mapper = tomlMapper {
+            delegate<User>(otherMapper)
+        }
+        assertEquals(
+            TomlValue.Map(
+                "name" to TomlValue.String("Anonymous"),
+                "age" to TomlValue.Integer(123)
+            ),
+            mapper.encode(User("Anonymous", 123, null))
+        )
+    }
+
+    @Test
+    fun `can override delegated mapper`() {
+        val otherMapper = tomlMapper {
+            mapping<User>("years" to "age")
+            mapping<User>("name" to "homeAddress")
+        }
+        val mapper = tomlMapper {
+            delegate<User>(otherMapper)
+            mapping<User>("name" to "fullName")
+        }
+
+        assertEquals(
+            TomlValue.Map(
+                "name" to TomlValue.String("Anonymous"),
+                "years" to TomlValue.Integer(123)
+            ),
+            mapper.encode(User("Anonymous", 123, null))
+        )
+    }
+
+    @Test
+    fun `delegate decoding of primitive values`() {
+        val otherMapper = tomlMapper {
+            encoder<Int> { TomlValue.Integer(42) }
+        }
+        val mapper = tomlMapper {
+            delegate<Int>(otherMapper)
+        }
+        assertEquals(
+            TomlValue.Map(
+                "fullName" to TomlValue.String("Anonymous"),
+                "age" to TomlValue.Integer(42)
+            ),
+            mapper.encode(User("Anonymous", 123, null))
+        )
     }
 }

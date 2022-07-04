@@ -1,5 +1,6 @@
 package cc.ekblad.toml.transcoder
 
+import cc.ekblad.toml.delegate
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
@@ -406,5 +407,64 @@ class CustomDecoderTests {
                 mapper.decode(toml)
             )
         }
+    }
+
+    @Test
+    fun `can delegate to another mapper`() {
+        val otherMapper = tomlMapper {
+            mapping<User>("name" to "fullName")
+        }
+        val mapper = tomlMapper {
+            delegate<User>(otherMapper)
+        }
+        assertEquals(
+            User("Anonymous", 123, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `can override delegated mapper`() {
+        val otherMapper = tomlMapper {
+            mapping<User>("years" to "age")
+            mapping<User>("name" to "homeAddress")
+        }
+        val mapper = tomlMapper {
+            delegate<User>(otherMapper)
+            mapping<User>("name" to "fullName")
+        }
+        assertEquals(
+            User("Anonymous", 123, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "years" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `delegate decoding of primitive values`() {
+        val otherMapper = tomlMapper {
+            decoder<TomlValue.Integer, Int> { _ -> 42 }
+        }
+        val mapper = tomlMapper {
+            delegate<Int>(otherMapper)
+        }
+        assertEquals(
+            User("Anonymous", 42, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "fullName" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
     }
 }
