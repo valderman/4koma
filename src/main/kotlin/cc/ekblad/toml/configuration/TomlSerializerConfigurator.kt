@@ -58,7 +58,7 @@ class TomlSerializerConfigurator internal constructor() {
         indentStep = indentStep,
         inlineListMode = inlineListMode,
         preferredTableSyntax = preferredTableSyntax,
-        preferredListSyntax = preferredListSyntax
+        preferredListSyntax = preferredListSyntax,
     )
 }
 

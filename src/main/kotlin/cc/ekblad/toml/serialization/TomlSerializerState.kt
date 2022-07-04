@@ -118,15 +118,15 @@ internal class TomlSerializerState(
 internal data class TomlSerializerConfig(
     val indentStep: Int,
     val inlineListMode: InlineListMode,
-    val preferredTableSyntax: cc.ekblad.toml.serialization.CollectionSyntax,
-    val preferredListSyntax: cc.ekblad.toml.serialization.CollectionSyntax,
+    val preferredTableSyntax: CollectionSyntax,
+    val preferredListSyntax: CollectionSyntax,
 ) {
     companion object {
         val default: TomlSerializerConfig = TomlSerializerConfig(
             indentStep = 4,
             inlineListMode = InlineListMode.Adaptive,
             preferredTableSyntax = CollectionSyntax.Table,
-            preferredListSyntax = CollectionSyntax.Table
+            preferredListSyntax = CollectionSyntax.Table,
         )
     }
 }
