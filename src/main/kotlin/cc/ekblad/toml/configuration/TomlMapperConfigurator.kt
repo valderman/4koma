@@ -155,14 +155,14 @@ class TomlMapperConfigurator internal constructor(
     }
 
     /**
-     * Set the given [defaultValue] as the default for any missing values of type [T].
+     * Set the given [defaultValue] as the default for any missing members of data class [T].
      * Any time an object of type T is being decoded but the TOML document is missing one or more fields
      * needed to construct the object, that value will be fetched from the default value.
      *
      * While it is possible to set defaults for atomic types, it will not have any effect as atomic types
      * have no fields.
      *
-     * As an example , if we try to decode a TOML document which
+     * As an example, if we try to decode a TOML document which
      * only has the key `x = 42` into the type `data class Foo(val x: Int, val y: Int)`
      * with a default value of `Foo(0, 0)`, the result will be
      * `Foo(42, 0)`, as the `y` field is filled in from the default value.
