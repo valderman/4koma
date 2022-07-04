@@ -100,10 +100,10 @@ class TomlMapperConfigurator internal constructor(
      * to that target type. Custom decoder functions are associated with a [KClass] representing that target type.
      *
      * When a TOML value is decoded to some target type, the decoder will look for all decoder functions associated with
-     * that type. All decoder functions matching that type are then tried in the order
-     * they were registered with the decoder.
+     * that type. All decoder functions matching that type are then tried in reverse order of registration, from newest
+     * to oldest.
      * I.e. for some decoder `D = tomlMapper { decoder<T>(A) ; decoder<T>(B) }`,
-     * `A` will always be tried before `B` when trying to decode values of type `T`.
+     * `B` will always be tried before `A` when trying to decode values of type `T`.
      *
      * A decoder function can signal that they are unable to decode their given input by calling [TomlDecoder.pass].
      * When this happens, the decoder will go on to try the next relevant decoder, if any.
