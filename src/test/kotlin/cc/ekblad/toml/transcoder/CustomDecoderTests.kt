@@ -469,7 +469,7 @@ class CustomDecoderTests {
     }
 
     @Test
-    fun `can delegate create derived mapper`() {
+    fun `can create derived mapper`() {
         val otherMapper = tomlMapper {
             decoder<TomlValue.Integer, Int> { _ -> 42 }
             mapping<User>("name" to "fullName")
@@ -480,6 +480,40 @@ class CustomDecoderTests {
             mapper.decode(
                 TomlValue.Map(
                     "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `default are carried over when inheriting mapper`() {
+        val otherMapper = tomlMapper {
+            default(User("BobX", 0, "x"))
+        }
+        val mapper = tomlMapper(otherMapper) { }
+        assertEquals(
+            User("BobX", 123, "x"),
+            mapper.decode(
+                TomlValue.Map(
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `default are carried over when delegating to mapper`() {
+        val otherMapper = tomlMapper {
+            default(User("BobX", 0, "x"))
+        }
+        val mapper = tomlMapper {
+            delegate<User>(otherMapper)
+        }
+        assertEquals(
+            User("BobX", 123, "x"),
+            mapper.decode(
+                TomlValue.Map(
                     "age" to TomlValue.Integer(123)
                 )
             )

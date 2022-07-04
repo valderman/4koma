@@ -89,6 +89,9 @@ class TomlMapper internal constructor(
                 configurator.mapping(kClass, entries.map { it.value to it.key })
             }
         }
+        decoder.defaultValues[kClass]?.let { defaultValue ->
+            configurator.default(defaultValue)
+        }
     }
 
     internal fun createDerivedConfigurator(): TomlMapperConfigurator {
