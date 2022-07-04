@@ -90,6 +90,17 @@ class TomlMapper internal constructor(
             }
         }
     }
+
+    internal fun createDerivedConfigurator(): TomlMapperConfigurator {
+        return TomlMapperConfigurator(
+            encoders = encoder.encoders.entries.associateTo(mutableMapOf()) { it.key to it.value.toMutableList() },
+            decoders = decoder.decoders.entries.associateTo(mutableMapOf()) { it.key to it.value.toMutableList() },
+            mappings = decoder.mappings.mapValuesTo(mutableMapOf()) { (_, mappingForType) ->
+                mappingForType.entries.associateTo(mutableMapOf()) { it.value to it.key }
+            },
+            defaultValues = decoder.defaultValues.toMutableMap()
+        )
+    }
 }
 
 /**
@@ -115,17 +126,33 @@ class TomlMapper internal constructor(
  * Additionally, any subclass of [TomlValue] can always be transcoded to/from itself,
  * and any value which could be transcoded to/from a type `T` can also be transcoded to/from `Lazy<T>`.
  */
-fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
-    val configurator = TomlMapperConfigurator(
-        encoders = mutableMapOf(),
-        decoders = mutableMapOf(),
-        mappings = mutableMapOf(),
-        defaultValues = mutableMapOf()
-    )
-    val config = configurator
-        .apply(TomlMapperConfigurator::defaultConfig)
-        .apply(configuration)
-        .buildConfig()
+fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper =
+    tomlMapper(defaultTomlMapper, configuration)
+
+/**
+ * Creates a mapper which inherits all its configuration from the given [baseMapper].
+ *
+ * Note that custom encoders/decoders always take precedence over mappings. If your mapper inherits from a mapper
+ * which contains a custom decoder for some type T, this decoder will *not* be overridden by subsequent calls to
+ * [TomlMapperConfigurator.mapping], unless the decoder's [TomlMapper] subtype is something other than [TomlValue.Map].
+ */
+fun tomlMapper(baseMapper: TomlMapper, configuration: TomlMapperConfigurator.() -> Unit): TomlMapper =
+    tomlMapper(baseMapper.createDerivedConfigurator(), configuration)
+
+/**
+ * Delegate the handling of the given type to the given [mapper].
+ * Overrides any previous configuration for that type, and will be overridden in turn by any subsequent configuration.
+ */
+@OptIn(InternalAPI::class)
+inline fun <reified T : Any> TomlMapperConfigurator.delegate(mapper: TomlMapper) {
+    mapper.delegate(T::class, this)
+}
+
+private fun tomlMapper(
+    configurator: TomlMapperConfigurator,
+    configuration: TomlMapperConfigurator.() -> Unit
+): TomlMapper {
+    val config = configurator.apply(configuration).buildConfig()
     val mappingsByParameter = config.mappings.mapValues { (_, mappingForType) ->
         mappingForType.entries.associate { it.value to it.key }
     }
@@ -134,9 +161,18 @@ fun tomlMapper(configuration: TomlMapperConfigurator.() -> Unit): TomlMapper {
     return TomlMapper(encoder, decoder)
 }
 
-@OptIn(InternalAPI::class)
-inline fun <reified T : Any> TomlMapperConfigurator.delegate(mapper: TomlMapper) {
-    mapper.delegate(T::class, this)
+/**
+ * Mapper containing all default values. Used to create derived mappers instead of applying the [defaultConfig]
+ * over and over for performance reasons.
+ */
+private val defaultTomlMapper: TomlMapper by lazy {
+    val configurator = TomlMapperConfigurator(
+        encoders = mutableMapOf(),
+        decoders = mutableMapOf(),
+        mappings = mutableMapOf(),
+        defaultValues = mutableMapOf()
+    )
+    tomlMapper(configurator, TomlMapperConfigurator::defaultConfig)
 }
 
 private fun TomlMapperConfigurator.defaultConfig() {

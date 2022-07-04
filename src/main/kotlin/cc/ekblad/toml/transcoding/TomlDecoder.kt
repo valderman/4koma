@@ -21,9 +21,9 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 class TomlDecoder internal constructor(
-    private val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>,
-    private val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>,
-    private val defaultValues: Map<KClass<*>, Any>
+    internal val decoders: Map<KClass<*>, List<TomlDecoder.(KType, TomlValue) -> Any?>>,
+    internal val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>,
+    internal val defaultValues: Map<KClass<*>, Any>
 ) {
     /**
      * Thrown by a TOML decoder function to indicate that it can't decode the given TOML into its target type and that

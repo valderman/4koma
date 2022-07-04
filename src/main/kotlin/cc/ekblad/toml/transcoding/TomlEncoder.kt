@@ -12,7 +12,7 @@ import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
 class TomlEncoder internal constructor(
-    private val encoders: Map<KClass<*>, List<TomlEncoder.(Any) -> TomlValue>>,
+    internal val encoders: Map<KClass<*>, List<TomlEncoder.(Any) -> TomlValue>>,
     private val mappings: Map<KClass<*>, Map<KotlinName, TomlName>>,
 ) {
     /**

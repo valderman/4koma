@@ -467,4 +467,61 @@ class CustomDecoderTests {
             )
         )
     }
+
+    @Test
+    fun `can delegate create derived mapper`() {
+        val otherMapper = tomlMapper {
+            decoder<TomlValue.Integer, Int> { _ -> 42 }
+            mapping<User>("name" to "fullName")
+        }
+        val mapper = tomlMapper(otherMapper) { }
+        assertEquals(
+            User("Anonymous", 42, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `can override decoders in derived mapper`() {
+        val otherMapper = tomlMapper {
+            decoder<TomlValue.Integer, Int> { _ -> 42 }
+            mapping<User>("name" to "fullName")
+        }
+        val mapper = tomlMapper(otherMapper) {
+            decoder<TomlValue.Integer, Int> { _ -> 43 }
+        }
+        assertEquals(
+            User("Anonymous", 43, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `custom decoders always take precedence over mappings`() {
+        val otherMapper = tomlMapper {
+            decoder<TomlValue.Map, User> { _ -> User("x", 10, null) }
+        }
+        val mapper = tomlMapper(otherMapper) {
+            mapping<User>("name" to "fullName")
+        }
+        assertEquals(
+            User("x", 10, null),
+            mapper.decode(
+                TomlValue.Map(
+                    "name" to TomlValue.String("Anonymous"),
+                    "age" to TomlValue.Integer(123)
+                )
+            )
+        )
+    }
 }
