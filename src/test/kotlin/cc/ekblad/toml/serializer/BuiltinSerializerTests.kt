@@ -26,6 +26,30 @@ class BuiltinSerializerTests : UnitTest {
     }
 
     @Test
+    fun `serializer should not quote keys because of underscores`() {
+        assertSerializesTo(
+            TomlValue.Map("foo_foo" to TomlValue.String("bar")),
+            "foo_foo = \"bar\""
+        )
+    }
+
+    @Test
+    fun `serializer should not quote keys because of dashes`() {
+        assertSerializesTo(
+            TomlValue.Map("foo-foo" to TomlValue.String("bar")),
+            "foo-foo = \"bar\""
+        )
+    }
+
+    @Test
+    fun `digit-only keys are ok`() {
+        assertSerializesTo(
+            TomlValue.Map("123" to TomlValue.String("bar")),
+            "123 = \"bar\""
+        )
+    }
+
+    @Test
     fun `can't serialize string with invalid chars`() {
         val error = assertFailsWith<TomlException.SerializationError> {
             TomlValue.Map("foo" to TomlValue.String("Bad char: \u0000")).write(StringBuffer())
