@@ -4,9 +4,9 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.7.0"
-    id("org.jetbrains.dokka") version "1.7.0"
-    id("org.jlleitschuh.gradle.ktlint") version "10.3.0"
+    kotlin("jvm") version "1.7.20-RC"
+    id("org.jetbrains.dokka") version "1.7.10"
+    id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
     id("com.github.ben-manes.versions") version "0.42.0"
     `maven-publish`
     antlr
@@ -63,8 +63,8 @@ publishing {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
-    antlr("org.antlr", "antlr4", "4.10.1")
-    implementation("org.antlr", "antlr4-runtime", "4.10.1")
+    antlr("org.antlr", "antlr4", "4.11.1")
+    implementation("org.antlr", "antlr4-runtime", "4.11.1")
 
     testImplementation(kotlin("test"))
 }
@@ -81,8 +81,11 @@ ktlint {
 data class DependencyVersion(val module: String, val version: String)
 
 val excludedVersions: Set<Pair<String, String>> = setOf(
-    "ktlint" to "0.46.0", // Crashes when running any ktlint target
-    "ktlint" to "0.46.1" // Crashes when running any ktlint target
+    // Ktlint >=0.46 doesn't work with the ktlint plugin.
+    "ktlint" to "0.46.0",
+    "ktlint" to "0.46.1",
+    "ktlint" to "0.47.0",
+    "ktlint" to "0.47.1",
 )
 
 tasks {
