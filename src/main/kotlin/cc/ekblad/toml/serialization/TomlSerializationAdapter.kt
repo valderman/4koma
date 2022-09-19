@@ -144,7 +144,7 @@ private fun encodeKey(key: String): String = when {
     }
 }
 
-private val quotesRequiredRegex = Regex("[^a-zA-Z0-9]")
+private val quotesRequiredRegex = Regex("[^a-zA-Z0-9_-]")
 
 private enum class QuoteType(val quotes: String) {
     Plain("\""),
