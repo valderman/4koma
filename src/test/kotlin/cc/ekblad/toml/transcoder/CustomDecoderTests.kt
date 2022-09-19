@@ -93,7 +93,7 @@ class CustomDecoderTests {
         }
 
         val toml = TomlValue.List(TomlValue.Integer(123), TomlValue.Bool(false))
-        assertFailsWith<TomlException.DecodingError> { mapper.decode(toml) }
+        assertFailsWith<TomlException.DecodingError.IllegalListTargetType> { mapper.decode(toml) }
     }
 
     @Test
@@ -131,7 +131,9 @@ class CustomDecoderTests {
         val mapper = tomlMapper {
             mapping<User>("name" to "fullName")
         }
-        assertFailsWith<TomlException.DecodingError> { mapper.decode<User>(TomlValue.Integer(123)) }
+        assertFailsWith<TomlException.DecodingError.NoSuchDecoder> {
+            mapper.decode<User>(TomlValue.Integer(123))
+        }
     }
 
     @Test
@@ -192,10 +194,11 @@ class CustomDecoderTests {
     fun `more than one kotlin property can't map to the same toml name`() {
         data class Test(val a: Int, val b: Int)
         val mapper = tomlMapper {
+            // The mapping from x to a is overridden by the mapping from x to b.
             mapping<Test>("x" to "a", "x" to "b")
         }
-        assertFailsWith<TomlException.DecodingError> {
-            mapper.decode(TomlValue.Map("x" to TomlValue.Integer(42)))
+        assertFailsWith<TomlException.DecodingError.MissingNonNullableValue> {
+            mapper.decode<Test>(TomlValue.Map("x" to TomlValue.Integer(42)))
         }
     }
 

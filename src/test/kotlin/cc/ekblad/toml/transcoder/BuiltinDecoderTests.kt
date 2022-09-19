@@ -15,6 +15,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.SortedMap
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -47,25 +48,33 @@ class BuiltinDecoderTests : StringTest {
             typeOf<String>() to TomlValue.Integer(1),
             typeOf<String>() to TomlValue.Bool(false),
             typeOf<String>() to TomlValue.Double(1.0),
-            typeOf<String>() to TomlValue.List(),
             typeOf<String>() to TomlValue.LocalTime(LocalTime.of(1, 1)),
             typeOf<String>() to TomlValue.LocalDate(LocalDate.of(2001, 1, 1)),
             typeOf<String>() to TomlValue.LocalDateTime(LocalDateTime.of(2001, 1, 1, 1, 1)),
             typeOf<String>() to TomlValue.OffsetDateTime(OffsetDateTime.of(2001, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC)),
             typeOf<List<String>>() to TomlValue.String("hello"),
-            typeOf<List<String>>() to TomlValue.Map("hello" to TomlValue.String("hello")),
-            typeOf<Map<Int, String>>() to TomlValue.Map("hello" to TomlValue.String("hello")),
         ).assertAll { (kType, tomlValue) ->
-            assertFailsWith<TomlException.DecodingError> { mapper.decode(kType, tomlValue) }
+            assertFailsWith<TomlException.DecodingError.NoSuchDecoder> { mapper.decode(kType, tomlValue) }
+        }
+        assertFailsWith<TomlException.DecodingError.IllegalListTargetType> {
+            mapper.decode(typeOf<String>(), TomlValue.List())
+        }
+        assertFailsWith<TomlException.DecodingError.IllegalMapTargetType> {
+            mapper.decode(typeOf<List<String>>(), TomlValue.Map("hello" to TomlValue.String("hello")))
+        }
+        assertFailsWith<TomlException.DecodingError.IllegalMapKeyType> {
+            mapper.decode(typeOf<Map<Int, String>>(), TomlValue.Map("hello" to TomlValue.String("hello")))
         }
     }
 
     @Test
     fun `throws on missing non-nullable key when decoding to data class`() {
-        val error = assertFailsWith<TomlException.DecodingError> { mapper.decode<Person>(TomlValue.Map()) }
+        val error = assertFailsWith<TomlException.DecodingError.MissingNonNullableValue> {
+            mapper.decode<Person>(TomlValue.Map())
+        }
         assertNotNull(error.reason)
-        assertNull(error.cause)
-        assertContains(error.reason, "no value found for non-nullable parameter")
+        assertContains(error.reason, "No value found for non-nullable parameter")
+        assertEquals(error.parameter, Person::class.primaryConstructor?.parameters?.first())
         assertContains(error.message, error.reason)
     }
 
@@ -81,7 +90,7 @@ class BuiltinDecoderTests : StringTest {
 
     @Test
     fun `decoding string to nonexistent enum constructor throws`() {
-        val error = assertFailsWith<TomlException.DecodingError> {
+        val error = assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("Not Foo"))
         }
         assertNotNull(error.reason)
@@ -93,29 +102,29 @@ class BuiltinDecoderTests : StringTest {
 
     @Test
     fun `enum decoding is case sensitive`() {
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("foo"))
         }
     }
 
     @Test
     fun `enum decoding compares the entire strings`() {
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("Fooo"))
         }
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("oFoo"))
         }
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("oFooo"))
         }
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("oo"))
         }
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("Fo"))
         }
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.InvalidEnumValue> {
             mapper.decode<PublicEnum>(TomlValue.String("o"))
         }
     }
@@ -211,7 +220,7 @@ class BuiltinDecoderTests : StringTest {
     @Test
     fun `can't use decode to cast from one type of TomlValue to another`() {
         val toml = """bar = "hello""""
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.NoSuchDecoder> {
             mapper.decode<Map<String, TomlValue.Integer>>(TomlValue.from(toml))
         }
     }
@@ -745,7 +754,7 @@ class BuiltinDecoderTests : StringTest {
     @Test
     fun `decoding to lazy values is strict`() {
         data class Foo(val x: Lazy<Int>)
-        assertFailsWith<TomlException.DecodingError> {
+        assertFailsWith<TomlException.DecodingError.NoSuchDecoder> {
             mapper.decode<Foo>(TomlValue.Map("x" to TomlValue.String("hello")))
         }
     }

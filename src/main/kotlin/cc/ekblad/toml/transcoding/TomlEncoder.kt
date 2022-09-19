@@ -62,8 +62,8 @@ fun TomlEncoder.encode(value: Any): TomlValue {
         value::class.isData -> fromDataClass(value)
         value::class.isSubclassOf(Enum::class) -> TomlValue.String((value as Enum<*>).name)
         value is Lazy<*> -> value.value?.let { encode(it) }
-            ?: throw TomlException.EncodingError("lazy value evaluated to null", value, null)
-        else -> throw TomlException.EncodingError(value, null)
+            ?: throw TomlException.EncodingError.LazyValueEvaluatedToNull(value)
+        else -> throw TomlException.EncodingError.NoSuchEncoder(value)
     }
 }
 

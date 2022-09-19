@@ -49,9 +49,11 @@ class TomlMapperExtensionTests : UnitTest {
 
     @Test
     fun `encodeToDocument throws serialization error on input which doesn't serialize to a valid document`() {
-        assertFailsWith<TomlException.SerializationError> {
+        val exception = assertFailsWith<TomlException.SerializationError.NotAMap> {
             mapper.encodeToDocument("hello")
         }
+        assertEquals("hello", exception.sourceValue)
+        assertEquals(TomlValue.String("hello"), exception.tomlValue)
     }
 
     @Test

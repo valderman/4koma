@@ -139,7 +139,7 @@ class WriterTests : UnitTest {
     fun `serializing bad toml to file throws SerializationError`() {
         val file = kotlin.io.path.createTempFile()
         try {
-            assertFailsWith<TomlException.SerializationError> {
+            assertFailsWith<TomlException.SerializationError.InvalidString> {
                 TomlValue.Map("x" to TomlValue.String("\u0000")).write(file)
             }
         } finally {

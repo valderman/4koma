@@ -15,11 +15,11 @@ import kotlin.io.path.moveTo
  * If [value] does not serialize to a valid TOML document (i.e. a map of zero or more keys),
  * an [TomlException.SerializationError] is thrown.
  */
-fun TomlMapper.encodeToDocument(value: Any): TomlDocument = encode(value) as? TomlDocument
-    ?: throw TomlException.SerializationError(
-        "class '${value.javaClass.name}' doesn't serialize to a valid TOML document",
-        null
-    )
+fun TomlMapper.encodeToDocument(value: Any): TomlDocument {
+    val tomlValue = encode(value)
+    return tomlValue as? TomlDocument
+        ?: throw TomlException.SerializationError.NotAMap(value, tomlValue)
+}
 
 /**
  * Encodes the given [value] into a valid TOML document and serializes it into a string.

@@ -83,7 +83,7 @@ fun <T : Any?> TomlDecoder.decode(value: TomlValue, target: KType): T {
 }
 
 private fun noDecoder(value: TomlValue, target: KType) =
-    TomlException.DecodingError("no decoder registered for value/target pair", value, target)
+    TomlException.DecodingError.NoSuchDecoder(value, target)
 
 private fun <T : Any> toEnum(value: TomlValue.String, target: KType): T {
     val kClass = requireKClass(target.classifier)
@@ -92,11 +92,7 @@ private fun <T : Any> toEnum(value: TomlValue.String, target: KType): T {
     }
     val enumValues = kClass.java.enumConstants as Array<Enum<*>>
     val enumValue = enumValues.singleOrNull { it.name == value.value }
-        ?: throw TomlException.DecodingError(
-            "${value.value} is not a constructor of enum class ${kClass.simpleName}",
-            value,
-            target
-        )
+        ?: throw TomlException.DecodingError.InvalidEnumValue(value, target)
     return enumValue as T
 }
 
@@ -111,11 +107,7 @@ private fun <T : Any> TomlDecoder.toList(value: TomlValue.List, target: KType): 
         Collection::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType) as T
         Iterable::class -> decodeList(value.elements, target.arguments.single().type ?: anyKType).asIterable() as T
         Any::class -> decodeList(value.elements, anyKType) as T
-        else -> throw TomlException.DecodingError(
-            "lists can only be decoded into lists, sets, collections or iterables",
-            value,
-            target
-        )
+        else -> throw TomlException.DecodingError.IllegalListTargetType(value, target)
     }
 
 private fun TomlDecoder.decodeList(value: List<TomlValue>, elementType: KType): List<Any> =
@@ -129,22 +121,13 @@ private fun <T : Any> TomlDecoder.toObject(value: TomlValue.Map, target: KType):
         kClass == SortedMap::class -> toMap(value, target).toSortedMap() as T
         kClass == Any::class -> toMap(value, Any::class.createType()) as T
         kClass.primaryConstructor != null -> toDataClass(value, target, kClass)
-        else -> throw TomlException.DecodingError(
-            "objects can only be decoded into maps, data classes, " +
-                "or types for which a custom decoder function has been registered",
-            value,
-            target
-        )
+        else -> throw TomlException.DecodingError.IllegalMapTargetType(value, target)
     }
 }
 
 private fun TomlDecoder.toMap(value: TomlValue.Map, targetMapType: KType): Map<String, Any> {
     if (targetMapType.arguments.firstOrNull()?.type !in setOf(null, anyKType, stringKType)) {
-        throw TomlException.DecodingError(
-            "when decoding an object into a map, that map must have keys of type String or Any",
-            value,
-            targetMapType
-        )
+        throw TomlException.DecodingError.IllegalMapKeyType(value, targetMapType)
     }
     val elementType = targetMapType.arguments.getOrNull(1)?.type ?: anyKType
     return value.properties.mapValues { decode(it.value, elementType) }
@@ -173,11 +156,7 @@ private fun <T : Any> TomlDecoder.toDataClass(
         }
         val parameterValue = decodedParameterValue ?: defaultValueFor(kClass, constructorParameter)
         if (!constructorParameter.type.isMarkedNullable && parameterValue == null) {
-            throw TomlException.DecodingError(
-                "no value found for non-nullable parameter '${constructorParameter.name}'",
-                tomlMap,
-                kType
-            )
+            throw TomlException.DecodingError.MissingNonNullableValue(constructorParameter, tomlMap, kType)
         }
         parameters[constructorParameter] = parameterValue
     }

@@ -41,19 +41,18 @@ class BuiltinEncoderTests : UnitTest {
 
     @Test
     fun `encoding_lazy,_unencodable_value_throws_EncodingError`() {
-        assertFailsWith<TomlException.EncodingError> {
+        assertFailsWith<TomlException.EncodingError.NoSuchEncoder> {
             mapper.encode(lazy { object { } })
         }
     }
 
     @Test
     fun `encoding lazy value that evaluates to null throws EncodingError`() {
-        val error = assertFailsWith<TomlException.EncodingError> {
+        val error = assertFailsWith<TomlException.EncodingError.LazyValueEvaluatedToNull> {
             mapper.encode(lazy { null })
         }
         assertNotNull(error.reason)
         assertNull(error.cause)
-        assertContains(error.message, "lazy value evaluated to null")
     }
 
     @Test

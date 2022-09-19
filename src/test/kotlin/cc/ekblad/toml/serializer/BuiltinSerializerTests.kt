@@ -14,7 +14,6 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNull
 
 class BuiltinSerializerTests : UnitTest {
     @Test
@@ -51,11 +50,12 @@ class BuiltinSerializerTests : UnitTest {
 
     @Test
     fun `can't serialize string with invalid chars`() {
-        val error = assertFailsWith<TomlException.SerializationError> {
+        val error = assertFailsWith<TomlException.SerializationError.InvalidString> {
             TomlValue.Map("foo" to TomlValue.String("Bad char: \u0000")).write(StringBuffer())
         }
         assertContains(error.message, "\\u0")
-        assertNull(error.cause)
+        assertEquals(error.invalidChars, setOf('\u0000'))
+        assertEquals(error.sourceValue, "Bad char: \u0000")
     }
 
     @Test
