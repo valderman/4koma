@@ -162,11 +162,7 @@ private fun <T> List<T>.removeIf(condition: Boolean, vararg remove: T) = if (con
 private fun TomlSerializerState.writeValue(value: TomlValue.String) {
     val invalidChars = value.value.filter { it in invalidTomlChars }.toSet()
     if (invalidChars.isNotEmpty()) {
-        val invalidCharString = invalidChars.joinToString(", ") { "\\u${it.code.toString(16)}" }
-        throw TomlException.SerializationError(
-            "string contains characters which are not allowed in a toml document: $invalidCharString",
-            null
-        )
+        throw TomlException.SerializationError.InvalidString(value.value, invalidChars)
     }
     val eligibleQuoteTypes = QuoteType.values().toList()
         .removeIf(value.value.contains("''"), QuoteType.Literal, QuoteType.MultilineLiteral)

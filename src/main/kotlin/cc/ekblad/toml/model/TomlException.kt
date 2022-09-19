@@ -1,8 +1,9 @@
 package cc.ekblad.toml.model
 
-import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.javaType
+import kotlin.reflect.jvm.javaType
 
 /**
  * Base class of all exceptions that might be thrown during TOML processing.
@@ -25,7 +26,18 @@ sealed class TomlException : RuntimeException() {
     /**
      * An error occurred while serializing a TOML value.
      */
-    data class SerializationError(override val message: String, override val cause: Throwable?) : TomlException()
+    sealed class SerializationError(override val message: String, val sourceValue: Any) : TomlException() {
+        class NotAMap(sourceValue: Any, val tomlValue: TomlValue) : SerializationError(
+            "Class '${sourceValue.javaClass.name}' encoded to a non-map TOML value, which is not serializable.",
+            sourceValue
+        )
+
+        class InvalidString(sourceValue: String, val invalidChars: Set<Char>) : SerializationError(
+            "String contains characters which are not allowed in a TOML document: " +
+                "'${invalidChars.joinToString(", ") { "\\u${it.code.toString(16)}" }}'.",
+            sourceValue
+        )
+    }
 
     /**
      * An error occurred while decoding a TOML value into some other Kotlin type.
@@ -50,7 +62,7 @@ sealed class TomlException : RuntimeException() {
          * constructor names.
          */
         class InvalidEnumValue(tomlString: TomlValue.String, targetType: KType) : DecodingError(
-            "'${tomlString.value}' is not a constructor of enum class '${(targetType.classifier as? KClass<*>)?.simpleName}'.",
+            "'${tomlString.value}' is not a constructor of enum class '${targetType.javaType.typeName}'.",
             tomlString,
             targetType
         )
@@ -80,17 +92,17 @@ sealed class TomlException : RuntimeException() {
          */
         class IllegalMapKeyType(tomlMap: TomlValue.Map, targetMapType: KType) : DecodingError(
             "Tried to decode object into map with illegal key type " +
-                "'${(targetMapType.classifier as? KClass<*>)?.simpleName}'. Key type must be String or Any.",
+                "'${targetMapType.javaType.typeName}'. Key type must be String or Any.",
             tomlMap,
             targetMapType
         )
 
         /**
-         * Thrown when [targetType] is a data class with a non-nullable parameter named [parameterName],
+         * Thrown when [targetType] is a data class with a non-nullable parameter named [parameter],
          * but [sourceValue] does not contain any fields by that name.
          */
-        class MissingNonNullableValue(val parameterName: String, tomlMap: TomlValue.Map, kType: KType) : DecodingError(
-            "No value found for non-nullable parameter '$parameterName'.",
+        class MissingNonNullableValue(val parameter: KParameter, tomlMap: TomlValue.Map, kType: KType) : DecodingError(
+            "No value found for non-nullable parameter '${parameter.name}'.",
             tomlMap,
             kType
         )

@@ -156,7 +156,7 @@ private fun <T : Any> TomlDecoder.toDataClass(
         }
         val parameterValue = decodedParameterValue ?: defaultValueFor(kClass, constructorParameter)
         if (!constructorParameter.type.isMarkedNullable && parameterValue == null) {
-            throw TomlException.DecodingError.MissingNonNullableValue(constructorParameter.name ?: "", tomlMap, kType)
+            throw TomlException.DecodingError.MissingNonNullableValue(constructorParameter, tomlMap, kType)
         }
         parameters[constructorParameter] = parameterValue
     }

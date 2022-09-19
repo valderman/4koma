@@ -15,6 +15,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.SortedMap
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -72,8 +73,8 @@ class BuiltinDecoderTests : StringTest {
             mapper.decode<Person>(TomlValue.Map())
         }
         assertNotNull(error.reason)
-        assertNull(error.cause)
         assertContains(error.reason, "No value found for non-nullable parameter")
+        assertEquals(error.parameter, Person::class.primaryConstructor?.parameters?.first())
         assertContains(error.message, error.reason)
     }
 
