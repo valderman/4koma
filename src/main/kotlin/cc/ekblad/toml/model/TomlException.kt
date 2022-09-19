@@ -27,11 +27,18 @@ sealed class TomlException : RuntimeException() {
      * An error occurred while serializing a TOML value.
      */
     sealed class SerializationError(override val message: String, val sourceValue: Any) : TomlException() {
+        /**
+         * Thrown when attempting to serialize a value which successfully encoded to a non-map TOML value,
+         * as all valid TOML documents are maps with zero or more keys.
+         */
         class NotAMap(sourceValue: Any, val tomlValue: TomlValue) : SerializationError(
             "Class '${sourceValue.javaClass.name}' encoded to a non-map TOML value, which is not serializable.",
             sourceValue
         )
 
+        /**
+         * Thrown when attempting to serialize a TOML document containing strings with one or more invalid characters.
+         */
         class InvalidString(sourceValue: String, val invalidChars: Set<Char>) : SerializationError(
             "String contains characters which are not allowed in a TOML document: " +
                 "'${invalidChars.joinToString(", ") { "\\u${it.code.toString(16)}" }}'.",
@@ -122,11 +129,17 @@ sealed class TomlException : RuntimeException() {
         val reason: String,
         val sourceValue: Any
     ) : TomlException() {
+        /**
+         * Thrown when attempting to encode a type for which no encoder is registered.
+         */
         class NoSuchEncoder(sourceValue: Any) : EncodingError(
             "No encoder registered for type.",
             sourceValue
         )
 
+        /**
+         * Thrown when a lazy value evaluates to null during encoding.
+         */
         class LazyValueEvaluatedToNull(sourceValue: Lazy<*>) : EncodingError(
             "Lazy values must not evaluate to null.",
             sourceValue
