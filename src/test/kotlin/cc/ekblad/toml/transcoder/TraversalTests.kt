@@ -72,7 +72,7 @@ class TraversalTests {
                 )
             )
         )
-        assertFailsWith<TomlException.DecodingError> { toml.get<String>(mapper, "foo") }
+        assertFailsWith<TomlException.DecodingError.IllegalListTargetType> { toml.get<String>(mapper, "foo") }
     }
 
     @Test
@@ -82,7 +82,7 @@ class TraversalTests {
                 "bar" to TomlValue.List(TomlValue.String("baz"), TomlValue.Integer(1))
             )
         )
-        assertFailsWith<TomlException.DecodingError> { toml.get<List<Int>>(mapper, "foo", "bar") }
+        assertFailsWith<TomlException.DecodingError.NoSuchDecoder> { toml.get<List<Int>>(mapper, "foo", "bar") }
     }
 
     @Test
