@@ -19,6 +19,9 @@ val kotlinJvmTarget = "1.8"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
@@ -65,6 +68,7 @@ dependencies {
     implementation(kotlin("reflect"))
     antlr("org.antlr", "antlr4", "4.11.1")
     implementation("org.antlr", "antlr4-runtime", "4.11.1")
+    implementation("cc.ekblad.konbini", "konbini", "0.1.0")
 
     testImplementation(kotlin("test"))
 }
