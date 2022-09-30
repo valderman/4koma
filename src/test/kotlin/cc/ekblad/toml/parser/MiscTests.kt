@@ -5,13 +5,11 @@ import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.serialization.from
 import cc.ekblad.toml.transcoding.requireKClass
-import org.antlr.v4.runtime.InputMismatchException
 import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertIs
 
 class MiscTests : StringTest {
     private val test_toml = TomlValue.Map(
@@ -143,8 +141,7 @@ class MiscTests : StringTest {
         assertEquals(5, exception.line)
         assertContains(exception.message, "line 5")
         assertContains(exception.message, exception.errorDescription)
-        assertContains(exception.errorDescription, "mismatched input")
-        assertIs<InputMismatchException>(exception.cause)
+        assertContains(exception.errorDescription, "Expected EOF")
     }
 
     @Test

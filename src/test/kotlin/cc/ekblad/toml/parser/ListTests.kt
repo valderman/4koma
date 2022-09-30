@@ -62,7 +62,9 @@ class ListTests : UnitTest {
                 TomlValue.List(listOf(TomlValue.String("b"), TomlValue.String("c"))),
             ) to "[[\n  'a'],['b',\n'c']]",
         ).assertAll { (list, expr) ->
+            println("LIST: '$expr'")
             assertParsesTo(TomlValue.List(list), expr)
+            println("ok")
         }
     }
 

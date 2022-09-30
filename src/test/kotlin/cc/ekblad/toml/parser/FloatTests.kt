@@ -76,7 +76,9 @@ class FloatTests : RandomTest {
             "1.9_1" to 1.91,
             "1e0_9" to 1e9
         ).assertAll { (string, expected) ->
+            println(string)
             assertParsesWithin(expected, string)
+            println("ok")
         }
     }
 
