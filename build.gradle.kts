@@ -65,7 +65,7 @@ publishing {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
-    implementation("cc.ekblad.konbini", "konbini", "0.1.1")
+    implementation("cc.ekblad.konbini", "konbini", "0.1.3")
     testImplementation(kotlin("test"))
 }
 

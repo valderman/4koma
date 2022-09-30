@@ -2,7 +2,6 @@ package cc.ekblad.toml.parser
 
 import cc.ekblad.konbini.Parser
 import cc.ekblad.konbini.ParserResult
-import cc.ekblad.konbini.ParserState
 import cc.ekblad.konbini.boolean
 import cc.ekblad.konbini.many
 import cc.ekblad.konbini.oneOf
@@ -27,24 +26,23 @@ internal val value: Parser<TomlValue> = parser {
     }
 }
 
-private fun ParserState.statement(builder: TomlBuilder) {
+private val statement: TomlBuilder.() -> Unit = {
     whitespace()
     when (next) {
-        '[' -> parseTable(builder)
+        '[' -> parseTable()
         '#' -> { }
-        else -> parseKeyValuePair(builder)
+        else -> parseKeyValuePair()
     }
     eol()
 }
 
-private val document = parser {
-    val tomlBuilder = TomlBuilder.create()
-    many { statement(tomlBuilder) }
-    tomlBuilder.build()
+private val document: TomlBuilder.() -> TomlDocument = {
+    many { statement() }
+    build()
 }
 
 internal fun parseTomlDocument(input: String): TomlDocument =
-    when (val result = document.parseToEnd(input, ignoreWhitespace = true)) {
+    when (val result = document.parseToEnd(input, ignoreWhitespace = true, state = TomlBuilder.create())) {
         is ParserResult.Ok -> result.result
         is ParserResult.Error -> throw TomlException.ParseError(result.reason, result.line)
     }

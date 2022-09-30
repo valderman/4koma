@@ -1,40 +1,39 @@
 package cc.ekblad.toml.parser
 
-import cc.ekblad.konbini.ParserState
 import cc.ekblad.konbini.bracket
 import cc.ekblad.konbini.regex
 
 /**
  * Parse either a standard table or an array table.
  */
-internal fun ParserState.parseTable(builder: TomlBuilder) {
+internal val parseTable: TomlBuilder.() -> Unit = {
     if (rest.startsWith("[[")) {
-        parseArrayTable(builder)
+        parseArrayTable()
     } else {
-        parseStandardTable(builder)
+        parseStandardTable()
     }
 }
 
 private val table = bracket(regex("$ws\\[$ws"), regex("$ws]"), key)
 private val tableArray = bracket(regex("$ws\\[\\[$ws"), regex("$ws]]"), key)
 
-private fun ParserState.parseStandardTable(builder: TomlBuilder) {
-    builder.resetContext()
+private val parseStandardTable: TomlBuilder.() -> Unit = {
+    resetContext()
     val pos = position
     val line = { computeLine(input, pos) }
     val key = table()
-    val tableCtx = builder.defineTable(line, key.dropLast(1), true)
+    val tableCtx = defineTable(line, key.dropLast(1), true)
     val newTableCtx = tableCtx.subcontext(key.last()) ?: TomlBuilder.Context.new()
     tableCtx.set(line, key.last(), newTableCtx.asMap())
-    builder.setContext(newTableCtx)
+    setContext(newTableCtx)
 }
 
-private fun ParserState.parseArrayTable(builder: TomlBuilder) {
-    builder.resetContext()
+private val parseArrayTable: TomlBuilder.() -> Unit = {
+    resetContext()
     val pos = position
     val line = { computeLine(input, pos) }
     val key = tableArray()
-    val tableCtx = builder.defineTable(line, key.dropLast(1), true)
-    val newTableCtx = with(builder) { tableCtx.addTableArrayEntry(line, key.last()) }
-    builder.setContext(newTableCtx)
+    val tableCtx = defineTable(line, key.dropLast(1), true)
+    val newTableCtx = tableCtx.addTableArrayEntry(line, key.last())
+    setContext(newTableCtx)
 }

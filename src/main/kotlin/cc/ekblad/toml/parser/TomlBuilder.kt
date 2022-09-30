@@ -1,10 +1,11 @@
 package cc.ekblad.toml.parser
 
+import cc.ekblad.konbini.ParserState
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.util.JacocoIgnore
 
-internal class TomlBuilder private constructor() {
+internal class TomlBuilder private constructor() : ParserState() {
     sealed interface Context {
         companion object {
             fun new(): Context = ContextImpl(mutableMapOf())

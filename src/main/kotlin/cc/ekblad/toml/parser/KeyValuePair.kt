@@ -1,6 +1,5 @@
 package cc.ekblad.toml.parser
 
-import cc.ekblad.konbini.ParserState
 import cc.ekblad.konbini.parser
 import cc.ekblad.konbini.regex
 import cc.ekblad.toml.model.TomlValue
@@ -14,11 +13,11 @@ internal val keyValuePair = parser {
     k to v
 }
 
-internal fun ParserState.parseKeyValuePair(builder: TomlBuilder) {
+internal val parseKeyValuePair: TomlBuilder.() -> Unit = {
     val pos = position
     val line = { computeLine(input, pos) }
     val (key, value) = keyValuePair()
-    val tableCtx = builder.defineTable(line, key.dropLast(1), false)
+    val tableCtx = defineTable(line, key.dropLast(1), false)
     tableCtx.set(line, key.last(), value.toMutableTomlValue())
 }
 
