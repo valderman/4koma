@@ -1,4 +1,4 @@
-package cc.ekblad.toml.serialization
+package cc.ekblad.toml.parser
 
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue

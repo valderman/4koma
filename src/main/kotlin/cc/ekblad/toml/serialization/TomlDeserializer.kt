@@ -3,6 +3,7 @@ package cc.ekblad.toml.serialization
 import cc.ekblad.toml.model.TomlDocument
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
+import cc.ekblad.toml.parser.parseTomlDocument
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.inputStream
