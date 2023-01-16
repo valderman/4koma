@@ -4,10 +4,10 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.7.20-RC"
-    id("org.jetbrains.dokka") version "1.7.10"
+    kotlin("jvm") version "1.8.0"
+    id("org.jetbrains.dokka") version "1.7.20"
     id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
-    id("com.github.ben-manes.versions") version "0.42.0"
+    id("com.github.ben-manes.versions") version "0.44.0"
     `maven-publish`
     antlr
     jacoco
@@ -81,11 +81,13 @@ ktlint {
 data class DependencyVersion(val module: String, val version: String)
 
 val excludedVersions: Set<Pair<String, String>> = setOf(
-    // Ktlint >=0.46 doesn't work with the ktlint plugin.
+    // Ktlint >= 0.46 doesn't work with the ktlint plugin.
     "ktlint" to "0.46.0",
     "ktlint" to "0.46.1",
     "ktlint" to "0.47.0",
     "ktlint" to "0.47.1",
+    "ktlint" to "0.48.0",
+    "ktlint" to "0.48.1",
 )
 
 tasks {
