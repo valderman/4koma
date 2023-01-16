@@ -103,6 +103,14 @@ tasks {
         }
     }
 
+    listOf(compileKotlin, compileTestKotlin).map { task ->
+        task {
+            kotlinOptions {
+                jvmTarget = kotlinJvmTarget
+            }
+        }
+    }
+
     test {
         useJUnitPlatform()
         finalizedBy(jacocoTestReport)
