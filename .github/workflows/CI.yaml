@@ -26,6 +26,13 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew check
 
+      - name: Save test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: build/reports/tests
+        if: always()
+
       - name: Generate JaCoCo Badge
         uses: cicirello/jacoco-badge-generator@v2
         with:
@@ -53,7 +60,7 @@ jobs:
           fi
 
       - name: Upload JaCoCo coverage report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: jacoco-report
           path: build/reports/jacoco/test/
