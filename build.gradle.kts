@@ -4,21 +4,23 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.8.10"
     id("org.jetbrains.dokka") version "1.7.20"
-    id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
-    id("com.github.ben-manes.versions") version "0.44.0"
+    id("org.jlleitschuh.gradle.ktlint") version "11.1.0"
+    id("com.github.ben-manes.versions") version "0.45.0"
     `maven-publish`
-    antlr
     jacoco
 }
 
 group = "cc.ekblad"
-version = "1.1.0"
-val kotlinJvmTarget = "1.8"
+version = "1.2.0"
+val kotlinJvmTarget = "17"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://jitpack.io")
+    }
 }
 
 val dokkaHtml by tasks.getting(org.jetbrains.dokka.gradle.DokkaTask::class)
@@ -63,15 +65,8 @@ publishing {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
-    antlr("org.antlr", "antlr4", "4.11.1")
-    implementation("org.antlr", "antlr4-runtime", "4.11.1")
-
+    implementation("cc.ekblad.konbini", "konbini", "0.1.3")
     testImplementation(kotlin("test"))
-}
-
-// Exclude antlr4 from transitive dependencies (https://github.com/gradle/gradle/issues/820)
-configurations[JavaPlugin.API_CONFIGURATION_NAME].let { apiConfiguration ->
-    apiConfiguration.setExtendsFrom(apiConfiguration.extendsFrom.filter { it.name != "antlr" })
 }
 
 ktlint {
@@ -88,6 +83,7 @@ val excludedVersions: Set<Pair<String, String>> = setOf(
     "ktlint" to "0.47.1",
     "ktlint" to "0.48.0",
     "ktlint" to "0.48.1",
+    "ktlint" to "0.48.2",
 )
 
 tasks {
@@ -101,18 +97,6 @@ tasks {
         dependsOn(dependencyUpdates)
     }
 
-    generateGrammarSource {
-        outputDirectory = Paths.get(
-            "build", "generated-src", "antlr", "main", "cc", "ekblad", "toml", "parser"
-        ).toFile()
-        mustRunAfter("runKtlintCheckOverMainSourceSet")
-        mustRunAfter("dokkaHtml")
-    }
-
-    generateTestGrammarSource {
-        mustRunAfter("runKtlintCheckOverTestSourceSet")
-    }
-
     listOf(compileJava, compileTestJava).map { task ->
         task {
             sourceCompatibility = kotlinJvmTarget
@@ -121,18 +105,11 @@ tasks {
     }
 
     listOf(compileKotlin, compileTestKotlin).map { task ->
-        val generateGrammarSourceInfix = if (task === compileTestKotlin) "Test" else ""
         task {
-            dependsOn("generate${generateGrammarSourceInfix}GrammarSource")
             kotlinOptions {
                 jvmTarget = kotlinJvmTarget
-                freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn")
             }
         }
-    }
-
-    kotlinSourcesJar {
-        dependsOn("generateGrammarSource")
     }
 
     test {

@@ -160,7 +160,7 @@ private fun <T> List<T>.removeIf(condition: Boolean, vararg remove: T) = if (con
 }
 
 private fun TomlSerializerState.writeValue(value: TomlValue.String) {
-    val invalidChars = value.value.filter { it in invalidTomlChars }.toSet()
+    val invalidChars = value.value.filter { it in invalidChars }.toSet()
     if (invalidChars.isNotEmpty()) {
         throw TomlException.SerializationError.InvalidString(value.value, invalidChars)
     }
@@ -179,3 +179,10 @@ private fun TomlSerializerState.writeValue(value: TomlValue.String) {
     }
     append(quoteType.quotes, text, quoteType.quotes)
 }
+
+private val invalidChars = listOf(
+    '\u0000'..'\u0008',
+    '\u000B'..'\u000C',
+    '\u000E'..'\u001F',
+    listOf('\u007F', '�'),
+).flatten().joinToString("")

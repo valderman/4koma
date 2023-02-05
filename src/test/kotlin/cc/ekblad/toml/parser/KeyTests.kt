@@ -52,10 +52,12 @@ class KeyTests : StringTest {
     @Test
     fun `can parse keys containing escape codes`() {
         escapeCodeSamples.assertAll { (string, expected) ->
+            println("\"$string\"...")
             assertEquals(
                 TomlValue.Map(expected to TomlValue.String("world")),
                 TomlValue.from("\"$string\" = 'world'")
             )
+            println("ok")
         }
     }
 
