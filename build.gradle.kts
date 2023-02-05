@@ -4,10 +4,10 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.inputStream
 
 plugins {
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.8.10"
     id("org.jetbrains.dokka") version "1.7.20"
-    id("org.jlleitschuh.gradle.ktlint") version "11.0.0"
-    id("com.github.ben-manes.versions") version "0.44.0"
+    id("org.jlleitschuh.gradle.ktlint") version "11.1.0"
+    id("com.github.ben-manes.versions") version "0.45.0"
     `maven-publish`
     jacoco
 }
@@ -83,6 +83,7 @@ val excludedVersions: Set<Pair<String, String>> = setOf(
     "ktlint" to "0.47.1",
     "ktlint" to "0.48.0",
     "ktlint" to "0.48.1",
+    "ktlint" to "0.48.2",
 )
 
 tasks {
