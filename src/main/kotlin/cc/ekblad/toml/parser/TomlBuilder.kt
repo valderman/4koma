@@ -1,10 +1,11 @@
-package cc.ekblad.toml.serialization
+package cc.ekblad.toml.parser
 
+import cc.ekblad.konbini.ParserState
 import cc.ekblad.toml.model.TomlException
 import cc.ekblad.toml.model.TomlValue
 import cc.ekblad.toml.util.JacocoIgnore
 
-internal class TomlBuilder private constructor() {
+internal class TomlBuilder private constructor() : ParserState() {
     sealed interface Context {
         companion object {
             fun new(): Context = ContextImpl(mutableMapOf())
@@ -15,10 +16,10 @@ internal class TomlBuilder private constructor() {
          * to again. However, if the value is a (non-inline) table or array, it may be extended with additional
          * properties or additional elements respectively.
          */
-        fun set(line: Int, key: String, value: MutableTomlValue) {
+        fun set(line: () -> Int, key: String, value: MutableTomlValue) {
             val previousValue = (this as ContextImpl).properties.putIfAbsent(key, value)
             if (previousValue != null && !canOverwrite(previousValue, value)) {
-                throw TomlException.ParseError("overwriting previously defined value at '$key' is not allowed", line)
+                throw TomlException.ParseError("overwriting previously defined value at '$key' is not allowed", line())
             }
             // If this was previously an implicitly defined table, it's now explicitly defined.
             if (previousValue is MutableTomlValue.Map) {
@@ -56,11 +57,11 @@ internal class TomlBuilder private constructor() {
      * Add an entry to the table at the given key in the receiver context.
      * If the table does not already exist, it is created.
      */
-    fun Context.addTableArrayEntry(line: Int, key: String): Context {
+    fun Context.addTableArrayEntry(line: () -> Int, key: String): Context {
         val list = (this as ContextImpl).properties.compute(key) { _, previousValue ->
             val list = (previousValue as? MutableTomlValue.List) ?: MutableTomlValue.List(mutableListOf())
             if (previousValue != null && previousValue !is MutableTomlValue.List) {
-                throw TomlException.ParseError("tried to append to non-list '$key'", line)
+                throw TomlException.ParseError("tried to append to non-list '$key'", line())
             }
             list.value.add(MutableTomlValue.Map(mutableMapOf(), false))
             list
@@ -74,18 +75,18 @@ internal class TomlBuilder private constructor() {
      * Define a hierarchy of tables (i.e. foo.bar.baz), either explicitly or implicitly.
      * If explicitly, table in the hierarchy may be explicitly redefined using \[\[table]] syntax.
      */
-    fun defineTable(line: Int, fragments: List<String>, implicit: Boolean): Context =
+    fun defineTable(line: () -> Int, fragments: List<String>, implicit: Boolean): Context =
         fragments.fold(tableContext.properties) { context, fragment ->
             when (val newContext = context.getOrPut(fragment) { MutableTomlValue.Map(mutableMapOf(), implicit) }) {
                 is MutableTomlValue.Map -> newContext.value
                 is MutableTomlValue.List -> newContext.value.last().value
                 is MutableTomlValue.InlineMap -> throw TomlException.ParseError(
                     "extending inline table '$fragment' is not allowed",
-                    line
+                    line()
                 )
                 else -> throw TomlException.ParseError(
                     "tried to extend non-table '$fragment'",
-                    line
+                    line()
                 )
             }
         }.let(TomlBuilder::ContextImpl)
