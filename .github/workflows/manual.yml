@@ -48,11 +48,11 @@ jobs:
         tag_name: ${{ github.event.inputs.name }}
         body: "new release"
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
     - name: upload linux artifact
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ secrets.RELEASE_PAT }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./build/libs/4koma-${{ github.event.inputs.name }}.jar
