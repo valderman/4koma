@@ -46,7 +46,7 @@ jobs:
         prerelease: false
         release_name: ${{ github.event.inputs.name }}
         tag_name: ${{ github.event.inputs.name }}
-        body_path: CHANGELOG.md
+        body: "new release"
       env:
         GITHUB_TOKEN: ${{ github.token }}
     - name: upload linux artifact
