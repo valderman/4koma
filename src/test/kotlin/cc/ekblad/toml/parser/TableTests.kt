@@ -226,6 +226,22 @@ class TableTests : UnitTest {
 
         assertDocumentParseError(
             """
+                [product]
+                type = { name = "Nail" }
+                type.edible = false
+            """.trimIndent()
+        )
+
+        assertDocumentParseError(
+            """
+                [product]
+                type.name = "Nail"
+                type = { edible = false }
+            """.trimIndent()
+        )
+
+        assertDocumentParseError(
+            """
                 foo = 123
                 [foo.bar]
             """.trimIndent()

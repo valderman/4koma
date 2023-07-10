@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.function.Executable
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.fail
 
 interface UnitTest {
     fun <T> Collection<T>.assertAll(assertion: (T) -> Unit) {
@@ -17,9 +18,14 @@ interface UnitTest {
     }
 
     fun assertParsesTo(expected: TomlValue, valueToParse: String) {
+        val parsedValue = try {
+            TomlValue.from("test = $valueToParse")
+        } catch (e: TomlException) {
+            fail("Couldn't parse value '$valueToParse'")
+        }
         assertEquals(
             TomlValue.Map(mapOf("test" to expected)),
-            TomlValue.from("test = $valueToParse")
+            parsedValue
         )
     }
 

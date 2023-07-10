@@ -6,10 +6,18 @@
     <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
     <script>var pathToRoot = "../../../";</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
-const savedDarkMode = storage ? JSON.parse(storage) : false
-if(savedDarkMode === true){
-    document.getElementsByTagName("html")[0].classList.add("theme-dark")
-}</script>
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
 <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
 <link href="../../../styles/style.css" rel="Stylesheet">
 <link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
@@ -21,6 +29,7 @@ if(savedDarkMode === true){
 <script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
 </head>
 <body>
 <div class="navigation-wrapper" id="navigation-wrapper">
@@ -31,7 +40,7 @@ if(savedDarkMode === true){
             </a>
     </div>
     <div>
-1.1.0    </div>
+1.2.0    </div>
     <div class="pull-right d-flex">
         <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
         <div id="searchBar"></div>
@@ -43,14 +52,14 @@ if(savedDarkMode === true){
     </div>
     <div id="main">
 <div class="main-content" id="content" pageIds="4koma::cc.ekblad.toml.configuration/TomlSerializerConfigurator/inlineListMode/#cc.ekblad.toml.serialization.InlineListMode/PointingToDeclaration//769193423">
-  <div class="breadcrumbs"><a href="../../../index.html">4koma</a><span class="delimiter">/</span><a href="../index.html">cc.ekblad.toml.configuration</a><span class="delimiter">/</span><a href="index.html">TomlSerializerConfigurator</a><span class="delimiter">/</span><a href="inline-list-mode.html">inlineListMode</a></div>
+  <div class="breadcrumbs"><a href="../../../index.html">4koma</a><span class="delimiter">/</span><a href="../index.html">cc.ekblad.toml.configuration</a><span class="delimiter">/</span><a href="index.html">TomlSerializerConfigurator</a><span class="delimiter">/</span><span class="current">inlineListMode</span></div>
   <div class="cover ">
     <h1 class="cover"><span>inline</span><wbr></wbr><span>List</span><wbr></wbr><span><span>Mode</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="inline-list-mode.html"><span class="token function">inlineListMode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listMode<span class="token operator">: </span><a href="../index.html#-2026439344%2FClasslikes%2F769193423">ListMode</a></span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">How should inline lists be serialized?</p><ul><li><p class="paragraph">If ListMode.SingleLine, inline lists are always serialized on a single line.</p></li><li><p class="paragraph">If ListMode.MultiLine, inline lists are always serialized with one element per line, as long as the TOML spec allows it.</p></li><li><p class="paragraph">If ListMode.Adaptive, inline lists are serialized with one element per line only if they contain one or more list or table, as long as the TOML spec allows it.</p></li></ul><p class="paragraph">Default: ListMode.Adaptive</p></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="inline-list-mode.html"><span class="token function">inlineListMode</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listMode<span class="token operator">: </span><a href="../index.html#-2026439344%2FClasslikes%2F769193423">ListMode</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">How should inline lists be serialized?</p><ul><li><p class="paragraph">If ListMode.SingleLine, inline lists are always serialized on a single line.</p></li><li><p class="paragraph">If ListMode.MultiLine, inline lists are always serialized with one element per line, as long as the TOML spec allows it.</p></li><li><p class="paragraph">If ListMode.Adaptive, inline lists are serialized with one element per line only if they contain one or more list or table, as long as the TOML spec allows it.</p></li></ul><p class="paragraph">Default: ListMode.Adaptive</p></div></div>
 </div>
       <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2022 Copyright</span><span
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span
                 class="pull-right"><span>Generated by </span><a
                 href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
